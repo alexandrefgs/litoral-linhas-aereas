@@ -15,6 +15,7 @@ public sealed class Pilot : Entity
     public string CurrentLocationIcao { get; private set; } = null!;
     public string? SimBriefUsername { get; private set; }
     public int TotalFlightMinutes { get; private set; }
+    public int Points { get; private set; }
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
@@ -50,13 +51,21 @@ public sealed class Pilot : Entity
         TotalFlightMinutes += minutes;
     }
 
-    public void Promote(Rank rank)
-    {
-        if (rank.Level <= Rank.Level)
-            throw new DomainException("Nova patente deve ser superior à atual.");
+        public void AddPoints(int points) => Points += points;
 
-        Rank = rank;
-        RankId = rank.Id;
+    public bool UpdateRank(IEnumerable<Rank> ranks)
+    {
+        var target = ranks
+            .OrderByDescending(r => r.Level)
+            .FirstOrDefault(r => r.IsMetBy(TotalFlightMinutes, Points))
+            ?? throw new DomainException("Nenhuma patente disponível para o piloto.");
+
+        if (target.Id == RankId)
+            return false;
+
+        Rank = target;
+        RankId = target.Id;
+        return true;
     }
 
     public void Deactivate() => IsActive = false;

@@ -177,6 +177,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<int>("PilotNumber")
                         .HasColumnType("int");
 
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("RankId")
                         .HasColumnType("uniqueidentifier");
 
@@ -218,6 +221,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("MinFlightHours")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinPoints")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")

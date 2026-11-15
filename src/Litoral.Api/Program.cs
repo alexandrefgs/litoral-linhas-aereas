@@ -1,4 +1,5 @@
 using Litoral.Infrastructure;
+using Litoral.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    await DbSeeder.SeedAsync(app.Services);
+
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
     {
