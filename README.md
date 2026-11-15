@@ -316,10 +316,10 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] API e front rodando juntos com `npm run dev`
 
 ### 🔜 Fase 1: Autenticação e pilotos
-- [ ] Cadastro com nome, e-mail e senha
-- [ ] Número de piloto automático a partir de 1000
-- [ ] Primeiro usuário cadastrado vira CEO & Founder
-- [ ] Login com JWT e botão Authorize no Swagger
+- [x] Cadastro com nome, e-mail e senha
+- [x] Número de piloto automático a partir de 1000
+- [x] Primeiro usuário cadastrado vira CEO & Founder
+- [x] Login com JWT e botão Authorize no Swagger
 - [ ] Telas de login e cadastro no front
 - [ ] Perfil do piloto: dados, SimBrief Username, horas, pontos e patente
 - [ ] Dashboard do piloto
