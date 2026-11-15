@@ -1,0 +1,6 @@
+@Litoral.Api_HostAddress = http://localhost:5101
+
+GET {{Litoral.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

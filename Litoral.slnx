@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Litoral.Api/Litoral.Api.csproj" />
+    <Project Path="src/Litoral.Application/Litoral.Application.csproj" />
+    <Project Path="src/Litoral.Domain/Litoral.Domain.csproj" />
+    <Project Path="src/Litoral.Infrastructure/Litoral.Infrastructure.csproj" />
+  </Folder>
+</Solution>
