@@ -12,10 +12,11 @@ public sealed class Airport : Entity
     public string Country { get; private set; } = null!;
     public double Latitude { get; private set; }
     public double Longitude { get; private set; }
+    public int MinimumRankLevel { get; private set; } = 1;
 
     private Airport() { }
 
-    public Airport(string icao, string name, string city, string country, double latitude, double longitude)
+    public Airport(string icao, string name, string city, string country, double latitude, double longitude, int minimumRankLevel = 1)
     {
         if (string.IsNullOrWhiteSpace(icao) || icao.Length != 4)
             throw new DomainException("ICAO do aeroporto deve ter 4 letras.");
@@ -26,7 +27,18 @@ public sealed class Airport : Entity
         Country = country;
         Latitude = latitude;
         Longitude = longitude;
+        SetMinimumRankLevel(minimumRankLevel);
     }
+
+    public void SetMinimumRankLevel(int level)
+    {
+        if (level < 1)
+            throw new DomainException("Nível mínimo de patente deve ser 1 ou maior.");
+
+        MinimumRankLevel = level;
+    }
+
+    public bool IsAccessibleTo(Rank rank) => rank.Level >= MinimumRankLevel;
 
     public int DistanceNmTo(Airport other)
     {

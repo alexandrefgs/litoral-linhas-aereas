@@ -30,6 +30,10 @@ public sealed class Booking : Entity
     {
         if (!route.IsActive)
             throw new DomainException("Rota inativa.");
+        if (!route.DepartureAirport.IsAccessibleTo(pilot.Rank))
+            throw new DomainException($"Sua patente não permite operar em {route.DepartureAirport.Icao}.");
+        if (!route.ArrivalAirport.IsAccessibleTo(pilot.Rank))
+            throw new DomainException($"Sua patente não permite operar em {route.ArrivalAirport.Icao}.");
         if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
             throw new DomainException($"O piloto está em {pilot.CurrentLocationIcao}, mas a rota parte de {route.DepartureAirport.Icao}.");
         if (aircraft.AircraftTypeId != route.AircraftTypeId)

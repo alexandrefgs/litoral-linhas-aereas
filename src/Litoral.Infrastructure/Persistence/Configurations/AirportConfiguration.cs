@@ -14,5 +14,6 @@ public sealed class AirportConfiguration : IEntityTypeConfiguration<Airport>
         builder.Property(a => a.Name).HasMaxLength(120).IsRequired();
         builder.Property(a => a.City).HasMaxLength(80).IsRequired();
         builder.Property(a => a.Country).HasMaxLength(60).IsRequired();
+        builder.Property(a => a.MinimumRankLevel).HasDefaultValue(1);
     }
 }
