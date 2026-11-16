@@ -23,7 +23,7 @@ export const routes: Routes = [
   { path: 'pireps', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pireps').then(m => m.Pireps) },
   { path: 'pireps/:id', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pirep-detail').then(m => m.PirepDetail) },
   comingSoon('routes', 'Routes', 'ti-route'),
-  comingSoon('airports', 'Airports', 'ti-building-airport'),
+  { path: 'airports', canActivate: [authGuard], loadComponent: () => import('./pages/airports/airports').then(m => m.Airports) },
   { path: 'points', canActivate: [authGuard], loadComponent: () => import('./pages/points/points').then(m => m.Points) },
   comingSoon('statistics', 'Statistics', 'ti-chart-bar'),
   {

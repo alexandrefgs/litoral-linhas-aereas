@@ -15,6 +15,8 @@ public sealed class Airport : Entity
     public double Longitude { get; private set; }
     public OperationType Operations { get; private set; } = OperationType.Passenger;
     public int MinimumRankLevel { get; private set; } = 1;
+    public string? IataCode { get; private set; }
+    public string? PhotoUrl { get; private set; }
 
     private Airport() { }
 
@@ -75,6 +77,21 @@ public sealed class Airport : Entity
         MinimumRankLevel = level;
     }
 
+    public void SetIataCode(string? iata)
+    {
+        var code = string.IsNullOrWhiteSpace(iata) ? null : iata.Trim().ToUpperInvariant();
+        if (code is not null && (code.Length != 3 || !code.All(char.IsAsciiLetterOrDigit)))
+            throw new DomainException("IATA code must have 3 characters.");
+
+        IataCode = code;
+    }
+
+    public string? SetPhoto(string? url)
+    {
+        var previous = PhotoUrl;
+        PhotoUrl = url;
+        return previous;
+    }
     public bool IsAccessibleTo(Rank rank) => rank.Level >= MinimumRankLevel;
 
     public int DistanceNmTo(Airport other)

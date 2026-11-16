@@ -149,6 +149,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
 
+                    b.Property<string>("IataCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
                     b.Property<string>("Icao")
                         .IsRequired()
                         .HasMaxLength(4)
@@ -172,6 +176,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Operations")
                         .HasColumnType("int");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.HasKey("Id");
 

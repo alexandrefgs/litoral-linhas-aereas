@@ -25,6 +25,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Litoral.Application.Airports;
+using Litoral.Infrastructure.Airports;
 
 namespace Litoral.Infrastructure;
 
@@ -81,6 +83,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPilotSettingsService, PilotSettingsService>();
         services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<IAirportDirectoryService, AirportDirectoryService>();
         services.AddScoped<IReferenceService, ReferenceService>();
         services.AddScoped<IAirportAdminService, AirportAdminService>();
         services.AddScoped<IAirportLookupService, AirportLookupService>();
