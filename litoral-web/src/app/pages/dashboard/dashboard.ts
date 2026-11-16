@@ -7,10 +7,11 @@ import { STAFF_POSITION_NAMES } from '../../core/staff/staff-positions';
 import { AirportMap } from '../../shared/airport-map/airport-map';
 import { FlightTimePipe } from '../../shared/pipes/flight-time.pipe';
 import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
+import { LiveFlights } from '../../shared/live-flights/live-flights';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap],
+    imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap, LiveFlights],
   template: `
     @if (auth.pilot(); as pilot) {
       <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
@@ -51,14 +52,14 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                   <span class="stat-icon"><i class="ti ti-plane" aria-hidden="true"></i></span>
                   <div>
                     <p class="text-sm text-ink">Aircraft</p>
-                    <p class="text-sm text-ink-muted">—</p>
+                    <p class="text-sm font-semibold text-ink-muted">{{ airport()?.aircraftOnGround ?? 0 }}</p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
                   <span class="stat-icon"><i class="ti ti-plane-departure" aria-hidden="true"></i></span>
                   <div>
                     <p class="text-sm text-ink">Departures</p>
-                    <p class="text-sm text-ink-muted">—</p>
+                    <p class="text-sm font-semibold text-ink-muted">{{ airport()?.departures ?? 0 }}</p>
                   </div>
                 </div>
               </div>
@@ -140,18 +141,7 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
           </div>
         </div>
 
-        <div class="panel">
-          <div class="flex items-center justify-between border-b border-line px-6 py-4">
-            <h2 class="flex items-center gap-2 text-lg font-bold text-ink">
-              <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>Live flights
-            </h2>
-            <span class="text-sm text-ink-muted">Pilots flying: 0</span>
-          </div>
-          <div class="flex flex-col items-center gap-2 px-6 py-12 text-center">
-            <i class="ti ti-radar-2 text-4xl text-ink-muted" aria-hidden="true"></i>
-            <p class="text-ink-muted">No Litoral pilots flying right now.</p>
-          </div>
-        </div>
+        <app-live-flights />
 
         <div class="grid gap-6 lg:grid-cols-3">
           @for (block of rankingBlocks; track block.title) {

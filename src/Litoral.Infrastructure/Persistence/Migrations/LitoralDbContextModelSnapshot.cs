@@ -246,6 +246,132 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.FlightSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("AltitudeFt")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Client")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("GroundSpeedKt")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Heading")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastReportAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Network")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Phase")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Simulator")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("PilotId", "Status");
+
+                    b.ToTable("FlightSessions");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.FlightTrackPoint", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("AglFt")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AltitudeFt")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Flaps")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("GearDown")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("GroundSpeedKt")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Heading")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IasKt")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<bool?>("OnGround")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Phase")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("VerticalSpeedFpm")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId", "At");
+
+                    b.ToTable("FlightTrackPoints");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Hub", b =>
                 {
                     b.Property<Guid>("Id")
@@ -363,6 +489,149 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Pilots");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.Pirep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("AirMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AircraftTypeIcao")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<string>("ArrivalIcao")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("BlockMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BlockOffAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("BlockOnAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Callsign")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Conformity")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CruiseAltitudeFt")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DepartureIcao")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<int?>("DistanceNm")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FlightRoute")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid?>("FlightSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("FuelAtPushbackKg")
+                        .HasPrecision(9, 1)
+                        .HasColumnType("decimal(9,1)");
+
+                    b.Property<decimal?>("FuelUsedKg")
+                        .HasPrecision(9, 1)
+                        .HasColumnType("decimal(9,1)");
+
+                    b.Property<bool>("HasRejection")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LandingAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("LandingRateFpm")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Network")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("OnlinePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PlannedArrivalIcao")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<string>("Registration")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ScorePoints")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("TakeoffAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique();
+
+                    b.HasIndex("FlightSessionId");
+
+                    b.HasIndex("PilotId", "SubmittedAt");
+
+                    b.HasIndex("Status", "SubmittedAt");
+
+                    b.ToTable("Pireps");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.PointTransaction", b =>
@@ -882,6 +1151,32 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Navigation("Route");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.FlightSession", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.Pilot", null)
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.FlightTrackPoint", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.FlightSession", null)
+                        .WithMany("Points")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Hub", b =>
                 {
                     b.HasOne("Litoral.Domain.Entities.Airport", "Airport")
@@ -919,6 +1214,129 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Rank");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.Pirep", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.FlightSession", "FlightSession")
+                        .WithMany()
+                        .HasForeignKey("FlightSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("Litoral.Domain.Entities.PirepEvent", "Events", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+
+                            b1.Property<DateTime>("At")
+                                .HasColumnType("datetime2");
+
+                            b1.Property<string>("Detail")
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)");
+
+                            b1.Property<int>("DurationSeconds")
+                                .HasColumnType("int");
+
+                            b1.Property<Guid>("PirepId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Type")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)");
+
+                            b1.Property<decimal?>("Value")
+                                .HasPrecision(9, 2)
+                                .HasColumnType("decimal(9,2)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("PirepId");
+
+                            b1.ToTable("PirepEvents", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("PirepId");
+                        });
+
+                    b.OwnsMany("Litoral.Domain.Entities.PirepScoreItem", "Items", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("Category")
+                                .IsRequired()
+                                .HasMaxLength(40)
+                                .HasColumnType("nvarchar(40)");
+
+                            b1.Property<string>("Check")
+                                .IsRequired()
+                                .HasMaxLength(40)
+                                .HasColumnType("nvarchar(40)");
+
+                            b1.Property<string>("Description")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("nvarchar(200)");
+
+                            b1.Property<bool>("IsManual")
+                                .HasColumnType("bit");
+
+                            b1.Property<string>("Outcome")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)");
+
+                            b1.Property<Guid>("PirepId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int>("Points")
+                                .HasColumnType("int");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("int");
+
+                            b1.Property<Guid?>("RuleId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("PirepId");
+
+                            b1.ToTable("PirepScoreItems", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("PirepId");
+                        });
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Events");
+
+                    b.Navigation("FlightSession");
+
+                    b.Navigation("Items");
+
+                    b.Navigation("Pilot");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.PointTransaction", b =>
@@ -1041,6 +1459,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("RouteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.FlightSession", b =>
+                {
+                    b.Navigation("Points");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>

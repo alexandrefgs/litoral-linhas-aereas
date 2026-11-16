@@ -71,7 +71,10 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support) 
         var pilot = await support.GetPilotAsync(userId, ct);
         var booking = await support.FindOpenBookingAsync(pilot.Id, ct)
             ?? throw new AppException(AppErrorKind.NotFound, "You don't have an open flight.");
-
+        var session = await db.FlightSessions
+            .FirstOrDefaultAsync(s => s.BookingId == booking.Id && s.Status == FlightSessionStatus.Active, ct);
+        
+        session?.Abandon();
         booking.Cancel();
 
         if (booking.Type == BookingType.Special)

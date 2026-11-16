@@ -19,6 +19,8 @@ export const routes: Routes = [
   { path: 'book', canActivate: [authGuard], loadComponent: () => import('./pages/book/book').then(m => m.Book) },
   { path: 'briefing', canActivate: [authGuard], loadComponent: () => import('./pages/briefing/briefing').then(m => m.Briefing) },
   { path: 'fleet', canActivate: [authGuard], loadComponent: () => import('./pages/fleet/fleet').then(m => m.Fleet) },
+  { path: 'pireps', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pireps').then(m => m.Pireps) },
+  { path: 'pireps/:id', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pirep-detail').then(m => m.PirepDetail) },
   comingSoon('routes', 'Routes', 'ti-route'),
   comingSoon('airports', 'Airports', 'ti-building-airport'),
   { path: 'points', canActivate: [authGuard], loadComponent: () => import('./pages/points/points').then(m => m.Points) },

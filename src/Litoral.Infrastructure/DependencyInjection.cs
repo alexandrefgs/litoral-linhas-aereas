@@ -23,6 +23,8 @@ using Litoral.Infrastructure.Bookings;
 using Litoral.Infrastructure.External;
 using Litoral.Application.Scoring;
 using Litoral.Infrastructure.Scoring;
+using Litoral.Application.Flights;
+using Litoral.Infrastructure.Flights;
 
 namespace Litoral.Infrastructure;
 
@@ -95,6 +97,10 @@ public static class DependencyInjection
         services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(10));
         services.AddHttpClient<ISimBriefProvider, SimBriefProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
         services.AddHostedService<BookingExpiryService>();
+        services.AddScoped<PirepFiling>();
+        services.AddScoped<IFlightTrackingService, FlightTrackingService>();
+        services.AddScoped<IPirepService, PirepService>();
+        services.AddScoped<IFlightSimulator, FlightSimulator>();
 
         return services;
     }

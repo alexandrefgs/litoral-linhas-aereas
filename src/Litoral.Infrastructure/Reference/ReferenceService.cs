@@ -39,7 +39,9 @@ public sealed class ReferenceService(LitoralDbContext db) : IReferenceService
                 a.Country,
                 a.Latitude,
                 a.Longitude,
-                db.Hubs.Any(h => h.AirportId == a.Id)))
+                db.Hubs.Any(h => h.AirportId == a.Id),
+                db.Aircraft.Count(x => x.CurrentAirportId == a.Id && x.Status != AircraftStatus.InFlight && x.Status != AircraftStatus.Inactive),
+                db.Routes.Count(r => r.DepartureAirportId == a.Id && r.IsActive)))
             .FirstOrDefaultAsync(ct);
     }
         public async Task<PublicStatsDto> GetPublicStatsAsync(CancellationToken ct) => new(

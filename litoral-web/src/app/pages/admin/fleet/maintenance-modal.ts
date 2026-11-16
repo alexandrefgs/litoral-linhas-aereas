@@ -2,6 +2,7 @@ import { Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminAircraft, AdminFleetService } from '../../../core/admin/admin-fleet.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { DateTimePicker } from '../../../shared/date-time-picker/date-time-picker';
 
 const DEFAULT_DAYS = 2;
 
@@ -14,7 +15,7 @@ function toLocalInput(date: Date): string {
 
 @Component({
   selector: 'app-maintenance-modal',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, DateTimePicker],
   host: { '(document:keydown.escape)': 'close()' },
   template: `
     <div class="fixed inset-0 z-[1200] flex items-center justify-center bg-black/50 p-4" (click)="close()">
@@ -56,7 +57,7 @@ function toLocalInput(date: Date): string {
           @if (form.controls.mode.value === 'date') {
             <div>
               <label for="until" class="field-label">Back in service at</label>
-              <input id="until" type="datetime-local" formControlName="until" [min]="minDate" class="field-input sm:w-2/3" />
+              <app-date-time-picker inputId="until" formControlName="until" [min]="minDate" class="sm:w-2/3" />
               <p class="mt-1 text-xs text-ink-muted">Your local time. The aircraft is released automatically.</p>
             </div>
           }

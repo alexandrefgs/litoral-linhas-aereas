@@ -22,4 +22,6 @@ export interface Airport {
   latitude: number;
   longitude: number;
   isHub: boolean;
+  aircraftOnGround: number;
+  departures: number;
 }

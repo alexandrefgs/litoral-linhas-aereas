@@ -23,6 +23,9 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<ScoringRule> ScoringRules => Set<ScoringRule>();
     public DbSet<MonthlyRoster> MonthlyRosters => Set<MonthlyRoster>();
     public DbSet<RosterLeg> RosterLegs => Set<RosterLeg>();
+    public DbSet<FlightSession> FlightSessions => Set<FlightSession>();
+    public DbSet<FlightTrackPoint> FlightTrackPoints => Set<FlightTrackPoint>();
+    public DbSet<Pirep> Pireps => Set<Pirep>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

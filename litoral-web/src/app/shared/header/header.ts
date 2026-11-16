@@ -150,6 +150,7 @@ export class Header {
     { path: '/routes', icon: 'ti-route', label: 'Routes' },
     { path: '/airports', icon: 'ti-building-airport', label: 'Airports' },
     { path: '/fleet', icon: 'ti-plane', label: 'Fleet' },
+    { path: '/pireps', icon: 'ti-clipboard-list', label: 'PIREPs' },
     { path: '/points', icon: 'ti-star', label: 'Points' },
     { path: '/statistics', icon: 'ti-chart-bar', label: 'Statistics' }
   ];

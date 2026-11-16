@@ -6,13 +6,14 @@ import { Briefing as BriefingData, SimBriefOfp } from '../../core/booking/bookin
 import { BookingService } from '../../core/booking/booking.service';
 import { formatMinutes } from '../../shared/utils/flight';
 import { CurrentBooking } from '../book/current-booking';
+import { FlightActions } from './flight-actions';
 
 const VATSIM_PREFILE = 'https://my.vatsim.net/pilots/flightplan';
 const IVAO_PREFILE = 'https://fpl.ivao.aero/';
 
 @Component({
   selector: 'app-briefing',
-  imports: [DatePipe, RouterLink, CurrentBooking],
+  imports: [DatePipe, RouterLink, CurrentBooking, FlightActions],
   template: `
     <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
       <h1 class="text-2xl font-bold text-ink">Briefing</h1>
@@ -28,6 +29,7 @@ const IVAO_PREFILE = 'https://fpl.ivao.aero/';
       } @else {
         @let brief = data()!;
         <app-current-booking [booking]="brief.booking" [showBriefingLink]="false" (cancelled)="data.set(null)" />
+        <app-flight-actions [booking]="brief.booking" />
 
         <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div class="panel flex flex-col gap-4 p-6">

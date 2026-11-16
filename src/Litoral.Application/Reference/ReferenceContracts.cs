@@ -2,7 +2,16 @@ namespace Litoral.Application.Reference;
 
 public sealed record HubDto(string Icao, string Name, string City, bool Passenger, bool Cargo);
 
-public sealed record AirportDto(string Icao, string Name, string City, string Country, double Latitude, double Longitude, bool IsHub);
+public sealed record AirportDto(
+    string Icao,
+    string Name,
+    string City,
+    string Country,
+    double Latitude,
+    double Longitude,
+    bool IsHub,
+    int AircraftOnGround,
+    int Departures);
 
 public sealed record RankDto(string Code, string Name, int Level, int MinFlightHours, int MinPoints);
 

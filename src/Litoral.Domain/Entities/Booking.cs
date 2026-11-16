@@ -88,12 +88,12 @@ public sealed class Booking : Entity
         StartedAt = DateTime.UtcNow;
     }
 
-    public void Complete(int flightMinutes)
+    public void Complete(int flightMinutes, Airport? arrival = null)
     {
         if (Status != BookingStatus.InProgress)
             throw new DomainException("Only a flight in progress can be completed.");
 
-        Aircraft.CompleteFlight(Route.ArrivalAirport, flightMinutes);
+        Aircraft.CompleteFlight(arrival ?? Route.ArrivalAirport, flightMinutes);
         Status = BookingStatus.Completed;
         CompletedAt = DateTime.UtcNow;
         ClosedAt = CompletedAt;
