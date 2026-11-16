@@ -14,6 +14,7 @@ public sealed class PilotConfiguration : IEntityTypeConfiguration<Pilot>
         builder.HasIndex(p => p.UserId).IsUnique();
         builder.Property(p => p.FirstName).HasMaxLength(60).IsRequired();
         builder.Property(p => p.LastName).HasMaxLength(60).IsRequired();
+        builder.Property(p => p.BaseIcao).HasMaxLength(4).IsRequired();
         builder.Property(p => p.CurrentLocationIcao).HasMaxLength(4).IsRequired();
         builder.Property(p => p.SimBriefUsername).HasMaxLength(60);
 

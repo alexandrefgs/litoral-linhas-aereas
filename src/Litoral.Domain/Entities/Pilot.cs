@@ -15,6 +15,7 @@ public sealed class Pilot : Entity
     public string LastName { get; private set; } = null!;
     public Guid RankId { get; private set; }
     public Rank Rank { get; private set; } = null!;
+    public string BaseIcao { get; private set; } = null!;
     public string CurrentLocationIcao { get; private set; } = null!;
     public string? SimBriefUsername { get; private set; }
     public int TotalFlightMinutes { get; private set; }
@@ -29,7 +30,7 @@ public sealed class Pilot : Entity
 
     private Pilot() { }
 
-    public Pilot(string userId, int pilotNumber, string firstName, string lastName, Rank rank, string currentLocationIcao)
+    public Pilot(string userId, int pilotNumber, string firstName, string lastName, Rank rank, string baseIcao)
     {
         if (pilotNumber < FirstPilotNumber)
             throw new DomainException($"Número do piloto deve começar em {FirstPilotNumber}.");
@@ -40,13 +41,24 @@ public sealed class Pilot : Entity
         LastName = lastName;
         Rank = rank;
         RankId = rank.Id;
-        CurrentLocationIcao = currentLocationIcao.ToUpperInvariant();
+        BaseIcao = baseIcao.ToUpperInvariant();
+        CurrentLocationIcao = BaseIcao;
     }
 
     public void SetSimBriefUsername(string? username) =>
         SimBriefUsername = string.IsNullOrWhiteSpace(username) ? null : username.Trim();
 
     public void MoveTo(string icao) => CurrentLocationIcao = icao.ToUpperInvariant();
+
+    public void JumpseatTo(Airport destination)
+    {
+        if (destination.Icao == CurrentLocationIcao)
+            throw new DomainException($"Você já está em {destination.Icao}.");
+        if (!destination.IsAccessibleTo(Rank))
+            throw new DomainException($"Sua patente não permite ir para {destination.Icao}.");
+
+        MoveTo(destination.Icao);
+    }
 
     public void AddFlightTime(int minutes)
     {
@@ -64,8 +76,11 @@ public sealed class Pilot : Entity
         return transaction;
     }
 
-    public bool UpdateRank(IEnumerable<Rank> ranks)
+    public bool UpdateRank(IEnumerable<Rank> ranks, Airport currentAirport)
     {
+        if (currentAirport.Icao != CurrentLocationIcao)
+            throw new DomainException("O aeroporto informado não é a localização atual do piloto.");
+
         var target = ranks
             .OrderByDescending(r => r.Level)
             .FirstOrDefault(r => r.IsMetBy(TotalFlightMinutes, Points))
@@ -76,6 +91,10 @@ public sealed class Pilot : Entity
 
         Rank = target;
         RankId = target.Id;
+
+        if (!currentAirport.IsAccessibleTo(target))
+            MoveTo(BaseIcao);
+
         return true;
     }
 
