@@ -1,13 +1,8 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
-import { LanguageService } from '../../core/i18n/language.service';
+import { Pipe, PipeTransform } from '@angular/core';
 
-const LOCALES = { pt: 'pt-BR', en: 'en-US', es: 'es-ES' } as const;
-
-@Pipe({ name: 'localeNumber', pure: false })
+@Pipe({ name: 'localeNumber' })
 export class LocaleNumberPipe implements PipeTransform {
-  private readonly language = inject(LanguageService);
-
   transform(value: number | null | undefined): string {
-    return value == null ? '—' : value.toLocaleString(LOCALES[this.language.current()]);
+    return value == null ? '—' : value.toLocaleString('en-US');
   }
 }

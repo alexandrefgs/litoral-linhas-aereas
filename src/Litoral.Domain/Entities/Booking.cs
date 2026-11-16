@@ -29,23 +29,23 @@ public sealed class Booking : Entity
     public Booking(Pilot pilot, Route route, Aircraft aircraft, BookingType type, int pointsCost = 0, string? callsign = null)
     {
         if (!route.IsActive)
-            throw new DomainException("Rota inativa.");
+            throw new DomainException("This route is inactive.");
         if (!route.DepartureAirport.IsAccessibleTo(pilot.Rank))
-            throw new DomainException($"Sua patente não permite operar em {route.DepartureAirport.Icao}.");
+            throw new DomainException($"Your rank does not allow operations at {route.DepartureAirport.Icao}.");
         if (!route.ArrivalAirport.IsAccessibleTo(pilot.Rank))
-            throw new DomainException($"Sua patente não permite operar em {route.ArrivalAirport.Icao}.");
+            throw new DomainException($"Your rank does not allow operations at {route.ArrivalAirport.Icao}.");
         if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
-            throw new DomainException($"O piloto está em {pilot.CurrentLocationIcao}, mas a rota parte de {route.DepartureAirport.Icao}.");
+            throw new DomainException($"The pilot is at {pilot.CurrentLocationIcao}, but the route departs from {route.DepartureAirport.Icao}.");
         if (aircraft.AircraftTypeId != route.AircraftTypeId)
-            throw new DomainException($"A aeronave {aircraft.Registration} não é do tipo desta rota.");
+            throw new DomainException($"Aircraft {aircraft.Registration} is not the type used on this route.");
         if (aircraft.CurrentAirportId != route.DepartureAirportId)
-            throw new DomainException($"A aeronave {aircraft.Registration} não está em {route.DepartureAirport.Icao}.");
+            throw new DomainException($"Aircraft {aircraft.Registration} is not at {route.DepartureAirport.Icao}.");
         if (pointsCost < 0)
-            throw new DomainException("Custo em pontos não pode ser negativo.");
+            throw new DomainException("Points cost cannot be negative.");
 
         var finalCallsign = (callsign ?? route.Callsign).ToUpperInvariant();
         if (!CallsignPattern.IsMatch(finalCallsign))
-            throw new DomainException($"Callsign deve começar com {Airline.Icao} e ter até 4 caracteres depois.");
+            throw new DomainException($"Callsign must start with {Airline.Icao} followed by up to 4 characters.");
 
         aircraft.Reserve();
 
@@ -63,7 +63,7 @@ public sealed class Booking : Entity
     public void Start()
     {
         if (Status != BookingStatus.Booked)
-            throw new DomainException("Só é possível iniciar um booking reservado.");
+            throw new DomainException("Only a booked flight can be started.");
 
         Aircraft.StartFlight();
         Status = BookingStatus.InProgress;
@@ -73,7 +73,7 @@ public sealed class Booking : Entity
     public void Complete()
     {
         if (Status != BookingStatus.InProgress)
-            throw new DomainException("Só é possível concluir um voo em andamento.");
+            throw new DomainException("Only a flight in progress can be completed.");
 
         Aircraft.CompleteFlight(Route.ArrivalAirport);
         Status = BookingStatus.Completed;
@@ -83,7 +83,7 @@ public sealed class Booking : Entity
     public void Cancel()
     {
         if (Status == BookingStatus.Completed)
-            throw new DomainException("Booking concluído não pode ser cancelado.");
+            throw new DomainException("A completed booking cannot be cancelled.");
 
         Aircraft.Release();
         Status = BookingStatus.Cancelled;

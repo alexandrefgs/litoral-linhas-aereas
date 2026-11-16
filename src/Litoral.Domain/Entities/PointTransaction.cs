@@ -17,7 +17,7 @@ public sealed class PointTransaction : Entity
     internal PointTransaction(Pilot pilot, int amount, PointTransactionType type, string description)
     {
         if (string.IsNullOrWhiteSpace(description))
-            throw new DomainException("Descrição do lançamento é obrigatória.");
+            throw new DomainException("Transaction description is required.");
 
         Pilot = pilot;
         PilotId = pilot.Id;

@@ -3,8 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { AdminAirport, AdminAirportsService, AirportPayload } from '../../../core/admin/admin-airports.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
-import { LanguageService } from '../../../core/i18n/language.service';
-import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RankInfo } from '../../../core/reference/reference.models';
 import { ReferenceService } from '../../../core/reference/reference.service';
 import {
@@ -25,24 +23,24 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-admin-airports',
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule],
   host: { '(document:keydown.escape)': 'closeModal()' },
   template: `
     <div class="flex flex-col gap-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-ink">{{ 'admin.airports.title' | t }}</h1>
-          <p class="text-ink-muted">{{ 'admin.airports.subtitle' | t }}</p>
+          <h1 class="text-2xl font-bold text-ink">Airports</h1>
+          <p class="text-ink-muted">Register airports, set the minimum rank and hubs.</p>
         </div>
         <button type="button" class="btn-primary gap-2 px-4 py-2.5" (click)="openCreate()" [disabled]="loading()">
-          <i class="ti ti-plus text-lg" aria-hidden="true"></i>{{ 'admin.airports.new' | t }}
+          <i class="ti ti-plus text-lg" aria-hidden="true"></i>New airport
         </button>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
         <div class="relative min-w-60 flex-1">
           <i class="ti ti-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" aria-hidden="true"></i>
-          <input type="search" class="field-input pl-9" [placeholder]="'admin.airports.search' | t"
+          <input type="search" class="field-input pl-9" placeholder="Search by ICAO, name or city"
             [value]="search()" (input)="search.set($any($event.target).value)" />
         </div>
         <div class="flex rounded-lg border border-line p-1">
@@ -59,24 +57,24 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
 
       <div class="panel overflow-x-auto">
         @if (loading()) {
-          <p class="px-6 py-12 text-center text-ink-muted">{{ 'common.loading' | t }}</p>
+          <p class="px-6 py-12 text-center text-ink-muted">Loading...</p>
         } @else if (loadError()) {
           <div class="flex flex-col items-center gap-3 px-6 py-12 text-center">
-            <p class="text-danger">{{ 'auth.errors.generic' | t }}</p>
-            <button type="button" class="btn-secondary" (click)="load()">{{ 'common.retry' | t }}</button>
+            <p class="text-danger">Something went wrong. Try again.</p>
+            <button type="button" class="btn-secondary" (click)="load()">Try again</button>
           </div>
         } @else if (filtered().length === 0) {
-          <p class="px-6 py-12 text-center text-ink-muted">{{ 'admin.airports.empty' | t }}</p>
+          <p class="px-6 py-12 text-center text-ink-muted">No airports found.</p>
         } @else {
           <table class="w-full text-left text-sm">
             <thead class="border-b border-line text-xs uppercase tracking-wide text-ink-muted">
               <tr>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.icao' | t }}</th>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.name' | t }}</th>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.country' | t }}</th>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.minimumRank' | t }}</th>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.operations' | t }}</th>
-                <th class="px-4 py-3 font-semibold">{{ 'admin.airports.fields.hub' | t }}</th>
+                <th class="px-4 py-3 font-semibold">ICAO</th>
+                <th class="px-4 py-3 font-semibold">Name</th>
+                <th class="px-4 py-3 font-semibold">Country</th>
+                <th class="px-4 py-3 font-semibold">Minimum rank</th>
+                <th class="px-4 py-3 font-semibold">Operation</th>
+                <th class="px-4 py-3 font-semibold">Hub</th>
                 <th class="px-4 py-3"></th>
               </tr>
             </thead>
@@ -98,17 +96,17 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
                   <td class="px-4 py-3">
                     <div class="flex gap-1">
                       @if (airport.passenger) {
-                        <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{{ 'admin.airports.passenger' | t }}</span>
+                        <span class="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Passenger</span>
                       }
                       @if (airport.cargo) {
-                        <span class="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-semibold text-ink">{{ 'admin.airports.cargo' | t }}</span>
+                        <span class="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-semibold text-ink">Cargo</span>
                       }
                     </div>
                   </td>
                   <td class="px-4 py-3">
                     @if (airport.isHub) {
                       <span class="inline-flex items-center gap-1 rounded-full bg-highlight px-2.5 py-1 text-xs font-bold text-on-highlight">
-                        <i class="ti ti-star-filled text-[11px]" aria-hidden="true"></i>{{ 'admin.airports.hub' | t }}
+                        <i class="ti ti-star-filled text-[11px]" aria-hidden="true"></i>Hub
                       </span>
                     } @else {
                       <span class="text-ink-muted">—</span>
@@ -117,17 +115,17 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
                   <td class="px-4 py-3">
                     @if (confirmDelete() === airport.icao) {
                       <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">{{ 'admin.airports.confirmDelete' | t }}</span>
+                        <span class="text-xs text-ink-muted">Delete this airport?</span>
                         <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          (click)="remove(airport.icao)">{{ 'admin.airports.delete' | t }}</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">{{ 'common.cancel' | t }}</button>
+                          (click)="remove(airport.icao)">Delete</button>
+                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
                       </div>
                     } @else {
                       <div class="flex justify-end gap-1">
-                        <button type="button" class="icon-btn h-9 w-9 text-lg" [attr.aria-label]="'admin.airports.edit' | t" (click)="openEdit(airport)">
+                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit airport" (click)="openEdit(airport)">
                           <i class="ti ti-pencil" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" [attr.aria-label]="'admin.airports.delete' | t"
+                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete"
                           (click)="askDelete(airport.icao)">
                           <i class="ti ti-trash" aria-hidden="true"></i>
                         </button>
@@ -150,59 +148,59 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
         <form [formGroup]="form" (ngSubmit)="save()" novalidate (click)="$event.stopPropagation()"
           class="panel flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden shadow-2xl">
           <div class="flex items-center justify-between border-b border-line px-6 py-4">
-            <h2 class="text-lg font-bold text-ink">{{ (editing() ? 'admin.airports.edit' : 'admin.airports.new') | t }}</h2>
-            <button type="button" class="icon-btn h-9 w-9 text-xl" [attr.aria-label]="'common.cancel' | t" (click)="closeModal()">
+            <h2 class="text-lg font-bold text-ink">{{ editing() ? 'Edit airport' : 'New airport' }}</h2>
+            <button type="button" class="icon-btn h-9 w-9 text-xl" aria-label="Cancel" (click)="closeModal()">
               <i class="ti ti-x" aria-hidden="true"></i>
             </button>
           </div>
 
           <div class="grid gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
             <div>
-              <label for="icao" class="field-label">{{ 'admin.airports.fields.icao' | t }}</label>
+              <label for="icao" class="field-label">ICAO</label>
               <input id="icao" formControlName="icao" maxlength="4" class="field-input font-mono uppercase" />
               @if (showError('icao')) {
-                <p class="field-error">{{ 'admin.airports.errors.icao' | t }}</p>
+                <p class="field-error">Enter 4 letters or numbers.</p>
               }
             </div>
             <div>
-              <label for="country" class="field-label">{{ 'admin.airports.fields.country' | t }}</label>
+              <label for="country" class="field-label">Country</label>
               <input id="country" formControlName="country" class="field-input" />
               @if (showError('country')) {
-                <p class="field-error">{{ 'admin.airports.errors.required' | t }}</p>
+                <p class="field-error">Required field.</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <label for="name" class="field-label">{{ 'admin.airports.fields.name' | t }}</label>
+              <label for="name" class="field-label">Name</label>
               <input id="name" formControlName="name" class="field-input" />
               @if (showError('name')) {
-                <p class="field-error">{{ 'admin.airports.errors.required' | t }}</p>
+                <p class="field-error">Required field.</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <label for="city" class="field-label">{{ 'admin.airports.fields.city' | t }}</label>
+              <label for="city" class="field-label">City</label>
               <input id="city" formControlName="city" class="field-input" />
               @if (showError('city')) {
-                <p class="field-error">{{ 'admin.airports.errors.required' | t }}</p>
+                <p class="field-error">Required field.</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <span class="field-label">{{ 'admin.airports.fields.coordinates' | t }}</span>
+              <span class="field-label">Coordinates</span>
               <div class="flex items-center gap-2">
-                <input id="latitude" formControlName="latitude" placeholder="12 54 31S" [attr.aria-label]="'admin.airports.fields.latitude' | t"
+                <input id="latitude" formControlName="latitude" placeholder="12 54 31S" aria-label="Latitude"
                   class="field-input font-mono uppercase" (input)="splitPastedCoordinates()" />
                 <span class="text-xl font-semibold text-ink-muted" aria-hidden="true">/</span>
-                <input id="longitude" formControlName="longitude" placeholder="038 19 21W" [attr.aria-label]="'admin.airports.fields.longitude' | t"
+                <input id="longitude" formControlName="longitude" placeholder="038 19 21W" aria-label="Longitude"
                   class="field-input font-mono uppercase" />
               </div>
               @if (showError('latitude') || showError('longitude')) {
-                <p class="field-error">{{ 'admin.airports.errors.coordinates' | t }}</p>
+                <p class="field-error">Invalid format. Use 12 54 31S/038 19 21W.</p>
               } @else {
-                <p class="mt-1 text-xs text-ink-muted">{{ 'admin.airports.coordsHint' | t }}</p>
+                <p class="mt-1 text-xs text-ink-muted">AISWEB/ROTAER format, with or without spaces. E.g. 12 54 31S / 038 19 21W or 125431S / 0381921W</p>
               }
             </div>
 
             <fieldset class="sm:col-span-2">
-              <legend class="field-label">{{ 'admin.airports.fields.minimumRank' | t }}</legend>
+              <legend class="field-label">Minimum rank</legend>
               <div class="grid gap-2 sm:grid-cols-2">
                 @for (rank of ranks(); track rank.code) {
                   <label class="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3"
@@ -215,27 +213,27 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
                   </label>
                 }
               </div>
-              <p class="mt-1 text-xs text-ink-muted">{{ 'admin.airports.rankHint' | t }}</p>
+              <p class="mt-1 text-xs text-ink-muted">FO: all pilots can operate. CMD: captains only.</p>
             </fieldset>
 
             <fieldset class="sm:col-span-2">
-              <legend class="field-label">{{ 'admin.airports.fields.operations' | t }}</legend>
+              <legend class="field-label">Operation</legend>
               <div class="grid gap-2 sm:grid-cols-2">
                 <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-line px-4 py-3 hover:bg-surface-alt">
                   <input type="checkbox" formControlName="passenger" class="h-4 w-4 accent-primary" />
                   <i class="ti ti-users text-xl text-primary" aria-hidden="true"></i>
-                  <span class="font-medium text-ink">{{ 'admin.airports.passenger' | t }}</span>
+                  <span class="font-medium text-ink">Passenger</span>
                 </label>
                 <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-line px-4 py-3 hover:bg-surface-alt">
                   <input type="checkbox" formControlName="cargo" class="h-4 w-4 accent-primary" />
                   <i class="ti ti-package text-xl text-primary" aria-hidden="true"></i>
-                  <span class="font-medium text-ink">{{ 'admin.airports.cargo' | t }}</span>
+                  <span class="font-medium text-ink">Cargo</span>
                 </label>
               </div>
               @if (form.hasError('operations') && (form.controls.passenger.touched || form.controls.cargo.touched)) {
-                <p class="field-error">{{ 'admin.airports.errors.operations' | t }}</p>
+                <p class="field-error">Select at least one operation.</p>
               } @else {
-                <p class="mt-1 text-xs text-ink-muted">{{ 'admin.airports.operationsHint' | t }}</p>
+                <p class="mt-1 text-xs text-ink-muted">Litoral operations at this airport. Cargo routes require cargo operation at both airports.</p>
               }
             </fieldset>
 
@@ -246,8 +244,8 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
                 <span class="flex items-center gap-3">
                   <i class="ti ti-star text-xl text-primary" aria-hidden="true"></i>
                   <span>
-                    <span class="block font-medium text-ink">{{ 'admin.airports.fields.isHub' | t }}</span>
-                    <span class="block text-xs text-ink-muted">{{ 'admin.airports.hubHint' | t }}</span>
+                    <span class="block font-medium text-ink">Make it a hub</span>
+                    <span class="block text-xs text-ink-muted">Hubs must be FO. Hubs with passenger operation can be chosen as base by pilots.</span>
                   </span>
                 </span>
                 <input type="checkbox" formControlName="isHub" class="h-5 w-5 shrink-0 accent-primary" />
@@ -260,9 +258,9 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
           </div>
 
           <div class="flex justify-end gap-2 border-t border-line px-6 py-4">
-            <button type="button" class="btn-secondary" (click)="closeModal()">{{ 'common.cancel' | t }}</button>
+            <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
             <button type="submit" class="btn-primary px-5" [disabled]="saving()">
-              {{ (saving() ? 'common.loading' : 'common.save') | t }}
+              {{ saving() ? 'Loading...' : 'Save' }}
             </button>
           </div>
         </form>
@@ -273,7 +271,6 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
 export class AdminAirports implements OnInit {
   private readonly api = inject(AdminAirportsService);
   private readonly reference = inject(ReferenceService);
-  private readonly language = inject(LanguageService);
 
   protected readonly airports = signal<AdminAirport[]>([]);
   protected readonly ranks = signal<RankInfo[]>([]);
@@ -293,8 +290,8 @@ export class AdminAirports implements OnInit {
   protected readonly restrictedRank = computed(() => this.ranks()[1]?.code ?? 'CMD');
 
   protected readonly filterOptions = computed<{ value: AirportFilter; label: string }[]>(() => [
-    { value: 'all', label: this.language.translate('admin.airports.filters.all') },
-    { value: 'hubs', label: this.language.translate('admin.airports.filters.hubs') },
+    { value: 'all', label: 'All' },
+    { value: 'hubs', label: 'Hubs' },
     { value: 'base', label: this.baseRank() },
     { value: 'restricted', label: this.restrictedRank() }
   ]);
@@ -320,7 +317,7 @@ export class AdminAirports implements OnInit {
     icao: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{4}$/)]],
     name: ['', [Validators.required, Validators.maxLength(120)]],
     city: ['', [Validators.required, Validators.maxLength(80)]],
-    country: ['Brasil', [Validators.required, Validators.maxLength(60)]],
+    country: ['Brazil', [Validators.required, Validators.maxLength(60)]],
     latitude: ['', [Validators.required, latitudeValidator]],
     longitude: ['', [Validators.required, longitudeValidator]],
     minimumRank: ['FO', Validators.required],
@@ -361,7 +358,7 @@ export class AdminAirports implements OnInit {
       icao: '',
       name: '',
       city: '',
-      country: 'Brasil',
+      country: 'Brazil',
       latitude: '',
       longitude: '',
       minimumRank: this.baseRank(),
@@ -446,7 +443,7 @@ export class AdminAirports implements OnInit {
       this.saving.set(false);
       this.closeModal();
     } catch (error) {
-      this.formError.set(apiErrorMessage(error) ?? this.language.translate('auth.errors.generic'));
+      this.formError.set(apiErrorMessage(error) ?? 'Something went wrong. Try again.');
     } finally {
       this.saving.set(false);
     }
@@ -464,7 +461,7 @@ export class AdminAirports implements OnInit {
       this.confirmDelete.set(null);
     } catch (error) {
       this.confirmDelete.set(null);
-      this.rowError.set({ icao, message: apiErrorMessage(error) ?? this.language.translate('auth.errors.generic') });
+      this.rowError.set({ icao, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     }
   }
 

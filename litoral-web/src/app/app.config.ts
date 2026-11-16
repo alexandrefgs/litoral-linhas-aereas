@@ -4,14 +4,12 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
-import { LanguageService } from './core/i18n/language.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' })),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    provideAppInitializer(() => inject(LanguageService).init()),
-    provideAppInitializer(() => inject(AuthService).init()),
+    provideAppInitializer(() => inject(AuthService).init())
   ]
 };

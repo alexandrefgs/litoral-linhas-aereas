@@ -15,7 +15,7 @@ public sealed class Rank : Entity
     public Rank(string code, string name, int level, int minFlightHours, int minPoints)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new DomainException("Código da patente é obrigatório.");
+            throw new DomainException("Rank code is required.");
 
         Code = code.ToUpperInvariant();
         Name = name;
@@ -26,7 +26,7 @@ public sealed class Rank : Entity
     public void SetRequirements(int minFlightHours, int minPoints)
     {
         if (minFlightHours < 0 || minPoints < 0)
-            throw new DomainException("Requisitos da patente não podem ser negativos.");
+            throw new DomainException("Rank requirements cannot be negative.");
 
         MinFlightHours = minFlightHours;
         MinPoints = minPoints;

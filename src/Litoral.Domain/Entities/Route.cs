@@ -26,19 +26,19 @@ public sealed class Route : Entity
         var block = FlightBlockRules.FromNumber(flightNumber);
 
         if (departure.Id == arrival.Id)
-            throw new DomainException("Origem e destino não podem ser iguais.");
+            throw new DomainException("Departure and arrival cannot be the same.");
         if (aircraftType.IsCargo && block != FlightBlock.FerryAndCargo)
-            throw new DomainException("Voos cargueiros devem usar o bloco 9XXX.");
+            throw new DomainException("Cargo flights must use the 9XXX block.");
         var operation = aircraftType.IsCargo ? OperationType.Cargo : OperationType.Passenger;
-        var operationName = aircraftType.IsCargo ? "cargueiros" : "de passageiros";
+        var operationName = aircraftType.IsCargo ? "cargo" : "passenger";
         if (!departure.Supports(operation))
-            throw new DomainException($"{departure.Icao} não opera voos {operationName}.");
+            throw new DomainException($"{departure.Icao} does not have {operationName} operations.");
         if (!arrival.Supports(operation))
-            throw new DomainException($"{arrival.Icao} não opera voos {operationName}.");
+            throw new DomainException($"{arrival.Icao} does not have {operationName} operations.");
         var distance = departure.DistanceNmTo(arrival);
         if (distance > aircraftType.MaxRangeNm)
             throw new DomainException(
-                $"Distância de {distance} NM excede o alcance do {aircraftType.IcaoCode} ({aircraftType.MaxRangeNm} NM).");
+                $"Distance of {distance} NM exceeds the {aircraftType.IcaoCode} range ({aircraftType.MaxRangeNm} NM).");
 
         FlightNumber = flightNumber;
         DepartureAirport = departure;
@@ -57,7 +57,7 @@ public sealed class Route : Entity
     public void SetEstimatedMinutes(int minutes)
     {
         if (minutes <= 0)
-            throw new DomainException("Duração estimada deve ser maior que zero.");
+            throw new DomainException("Estimated duration must be greater than zero.");
 
         EstimatedMinutes = minutes;
     }

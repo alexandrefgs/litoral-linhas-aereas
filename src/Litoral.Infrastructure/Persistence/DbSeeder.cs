@@ -75,12 +75,12 @@ public static class DbSeeder
         const OperationType passenger = OperationType.Passenger;
         const OperationType mixed = OperationType.Passenger | OperationType.Cargo;
 
-        var sbgr = new Airport("SBGR", "Aeroporto Internacional de São Paulo/Guarulhos", "São Paulo", "Brasil", -23.4356, -46.4731, passenger);
-        var sbfl = new Airport("SBFL", "Aeroporto Internacional de Florianópolis - Hercílio Luz", "Florianópolis", "Brasil", -27.6703, -48.5525, passenger);
-        var sbbr = new Airport("SBBR", "Aeroporto Internacional de Brasília", "Brasília", "Brasil", -15.8711, -47.9186, passenger);
-        var sbeg = new Airport("SBEG", "Aeroporto Internacional Eduardo Gomes", "Manaus", "Brasil", -3.0386, -60.0497, mixed);
-        var sbfz = new Airport("SBFZ", "Aeroporto Internacional Pinto Martins", "Fortaleza", "Brasil", -3.7763, -38.5326, mixed);
-        var sbkp = new Airport("SBKP", "Aeroporto Internacional de Viracopos", "Campinas", "Brasil", -23.0074, -47.1345, OperationType.Cargo);
+        var sbgr = new Airport("SBGR", "Aeroporto Internacional de São Paulo/Guarulhos", "São Paulo", "Brazil", -23.4356, -46.4731, passenger);
+        var sbfl = new Airport("SBFL", "Aeroporto Internacional de Florianópolis - Hercílio Luz", "Florianópolis", "Brazil", -27.6703, -48.5525, passenger);
+        var sbbr = new Airport("SBBR", "Aeroporto Internacional de Brasília", "Brasília", "Brazil", -15.8711, -47.9186, passenger);
+        var sbeg = new Airport("SBEG", "Aeroporto Internacional Eduardo Gomes", "Manaus", "Brazil", -3.0386, -60.0497, mixed);
+        var sbfz = new Airport("SBFZ", "Aeroporto Internacional Pinto Martins", "Fortaleza", "Brazil", -3.7763, -38.5326, mixed);
+        var sbkp = new Airport("SBKP", "Aeroporto Internacional de Viracopos", "Campinas", "Brazil", -23.0074, -47.1345, OperationType.Cargo);
 
         db.Airports.AddRange(sbgr, sbfl, sbbr, sbeg, sbfz, sbkp);
         db.Hubs.AddRange(new Hub(sbgr), new Hub(sbfl), new Hub(sbbr), new Hub(sbeg), new Hub(sbfz), new Hub(sbkp));

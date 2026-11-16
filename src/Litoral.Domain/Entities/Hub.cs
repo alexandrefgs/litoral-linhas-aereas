@@ -12,7 +12,7 @@ public sealed class Hub : Entity
     public Hub(Airport airport)
     {
         if (airport.MinimumRankLevel > 1)
-            throw new DomainException("Hubs precisam ser acessíveis a todos os pilotos (patente mínima FO).");
+            throw new DomainException("Hubs must be accessible to all pilots (minimum rank FO).");
 
         Airport = airport;
         AirportId = airport.Id;

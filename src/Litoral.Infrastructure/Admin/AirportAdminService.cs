@@ -31,7 +31,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         var icao = Normalize(request.Icao);
 
         if (await db.Airports.AnyAsync(a => a.Icao == icao, ct))
-            throw new AppException(AppErrorKind.Conflict, $"O aeroporto {icao} já está cadastrado.");
+            throw new AppException(AppErrorKind.Conflict, $"Airport {icao} is already registered.");
 
         var level = await ResolveRankLevelAsync(request.MinimumRank, ct);
         var airport = new Airport(
@@ -61,7 +61,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         var operations = ToOperations(request.Passenger, request.Cargo);
 
         if (request.IsHub && level > 1)
-            throw new AppException(AppErrorKind.Validation, "Hubs precisam ser acessíveis a todos os pilotos (patente mínima FO).");
+            throw new AppException(AppErrorKind.Validation, "Hubs must be accessible to all pilots (minimum rank FO).");
 
         var wasBase = hub is not null && airport.Supports(OperationType.Passenger);
         var staysBase = request.IsHub && request.Passenger;
@@ -70,7 +70,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
             var basedPilots = await db.Pilots.CountAsync(p => p.BaseIcao == airport.Icao, ct);
             if (basedPilots > 0)
                 throw new AppException(AppErrorKind.Conflict,
-                    $"{basedPilots} piloto(s) têm {airport.Icao} como base. O aeroporto precisa continuar como hub com operação de passageiros.");
+                    $"{basedPilots} pilot(s) have {airport.Icao} as their base. The airport must remain a hub with passenger operations.");
         }
 
         await EnsureNoRoutesUsingAsync(airport, OperationType.Passenger, request.Passenger, ct);
@@ -107,13 +107,13 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         var airport = await FindAsync(icao, ct);
 
         if (await db.Hubs.AnyAsync(h => h.AirportId == airport.Id, ct))
-            throw new AppException(AppErrorKind.Conflict, "Remova o hub antes de excluir o aeroporto.");
+            throw new AppException(AppErrorKind.Conflict, "Remove the hub before deleting the airport.");
         if (await db.Routes.AnyAsync(r => r.DepartureAirportId == airport.Id || r.ArrivalAirportId == airport.Id, ct))
-            throw new AppException(AppErrorKind.Conflict, "Existem rotas usando este aeroporto.");
+            throw new AppException(AppErrorKind.Conflict, "There are routes using this airport.");
         if (await db.Aircraft.AnyAsync(a => a.CurrentAirportId == airport.Id, ct))
-            throw new AppException(AppErrorKind.Conflict, "Existem aeronaves neste aeroporto.");
+            throw new AppException(AppErrorKind.Conflict, "There are aircraft at this airport.");
         if (await db.Pilots.AnyAsync(p => p.CurrentLocationIcao == airport.Icao || p.BaseIcao == airport.Icao, ct))
-            throw new AppException(AppErrorKind.Conflict, "Existem pilotos neste aeroporto.");
+            throw new AppException(AppErrorKind.Conflict, "There are pilots at this airport.");
 
         db.Airports.Remove(airport);
         await db.SaveChangesAsync(ct);
@@ -129,21 +129,21 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
 
         if (inUse)
             throw new AppException(AppErrorKind.Conflict,
-                $"Existem rotas {(isCargo ? "cargueiras" : "de passageiros")} usando {airport.Icao}. Remova-as antes de tirar essa operação.");
+                $"There are {(isCargo ? "cargo" : "passenger")} routes using {airport.Icao}. Remove them before removing this operation.");
     }
 
     private async Task<Airport> FindAsync(string icao, CancellationToken ct)
     {
         var code = Normalize(icao);
         return await db.Airports.FirstOrDefaultAsync(a => a.Icao == code, ct)
-            ?? throw new AppException(AppErrorKind.NotFound, $"Aeroporto {code} não encontrado.");
+            ?? throw new AppException(AppErrorKind.NotFound, $"Airport {code} not found.");
     }
 
     private async Task<int> ResolveRankLevelAsync(string code, CancellationToken ct)
     {
         var normalized = (code ?? string.Empty).Trim().ToUpperInvariant();
         var rank = await db.Ranks.AsNoTracking().FirstOrDefaultAsync(r => r.Code == normalized, ct)
-            ?? throw new AppException(AppErrorKind.Validation, $"Patente '{code}' não existe.");
+            ?? throw new AppException(AppErrorKind.Validation, $"Rank '{code}' does not exist.");
 
         return rank.Level;
     }
@@ -178,7 +178,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         if (cargo) operations |= OperationType.Cargo;
 
         if (operations == 0)
-            throw new AppException(AppErrorKind.Validation, "Selecione ao menos uma operação (passageiros ou cargueiro).");
+            throw new AppException(AppErrorKind.Validation, "Select at least one operation (passenger or cargo).");
 
         return operations;
     }

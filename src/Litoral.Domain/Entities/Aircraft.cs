@@ -26,7 +26,7 @@ public sealed class Aircraft : Entity
     {
         var normalized = registration.Trim().ToUpperInvariant();
         if (!RegistrationPattern.IsMatch(normalized))
-            throw new DomainException("Matrícula deve seguir o padrão brasileiro, por exemplo PS-LTA.");
+            throw new DomainException("Registration must follow the Brazilian format, e.g. PS-LTA.");
 
         Registration = normalized;
         AircraftType = aircraftType;
@@ -45,7 +45,7 @@ public sealed class Aircraft : Entity
     public void Reserve()
     {
         if (Status != AircraftStatus.Available)
-            throw new DomainException($"A aeronave {Registration} não está disponível.");
+            throw new DomainException($"Aircraft {Registration} is not available.");
 
         Status = AircraftStatus.Reserved;
     }
@@ -59,7 +59,7 @@ public sealed class Aircraft : Entity
     public void StartFlight()
     {
         if (Status != AircraftStatus.Reserved)
-            throw new DomainException($"A aeronave {Registration} precisa estar reservada para iniciar o voo.");
+            throw new DomainException($"Aircraft {Registration} must be reserved to start the flight.");
 
         Status = AircraftStatus.InFlight;
     }
@@ -67,7 +67,7 @@ public sealed class Aircraft : Entity
     public void CompleteFlight(Airport destination)
     {
         if (Status != AircraftStatus.InFlight)
-            throw new DomainException($"A aeronave {Registration} não está em voo.");
+            throw new DomainException($"Aircraft {Registration} is not in flight.");
 
         MoveTo(destination);
         Status = AircraftStatus.Available;
@@ -77,7 +77,7 @@ public sealed class Aircraft : Entity
     public void Relocate(Airport destination)
     {
         if (Status != AircraftStatus.Available)
-            throw new DomainException($"Só é possível mover a aeronave {Registration} quando ela está disponível.");
+            throw new DomainException($"Aircraft {Registration} can only be moved when it is available.");
 
         MoveTo(destination);
     }
@@ -85,7 +85,7 @@ public sealed class Aircraft : Entity
     public void SendToMaintenance()
     {
         if (Status is AircraftStatus.Reserved or AircraftStatus.InFlight)
-            throw new DomainException($"A aeronave {Registration} está em uso e não pode entrar em manutenção.");
+            throw new DomainException($"Aircraft {Registration} is in use and cannot go into maintenance.");
 
         Status = AircraftStatus.Maintenance;
     }

@@ -13,10 +13,10 @@ public sealed class PilotService(LitoralDbContext db, UserManager<ApplicationUse
     public async Task<PilotSummary> UpdateSimBriefAsync(string userId, UpdateSimBriefRequest request, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(userId)
-            ?? throw new AppException(AppErrorKind.NotFound, "Usuário não encontrado.");
+            ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
 
         var pilot = await db.Pilots.Include(p => p.Rank).FirstOrDefaultAsync(p => p.UserId == userId, ct)
-            ?? throw new AppException(AppErrorKind.NotFound, "Piloto não encontrado.");
+            ?? throw new AppException(AppErrorKind.NotFound, "Pilot not found.");
 
         pilot.SetSimBriefUsername(request.SimBriefUsername);
         await db.SaveChangesAsync(ct);

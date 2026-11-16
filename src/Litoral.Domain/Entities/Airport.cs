@@ -29,7 +29,7 @@ public sealed class Airport : Entity
         int minimumRankLevel = 1)
     {
         if (string.IsNullOrWhiteSpace(icao) || icao.Trim().Length != 4 || !icao.Trim().All(char.IsLetterOrDigit))
-            throw new DomainException("ICAO do aeroporto deve ter 4 caracteres (letras ou números).");
+            throw new DomainException("Airport ICAO must have 4 characters (letters or numbers).");
 
         Icao = icao.Trim().ToUpperInvariant();
         Update(name, city, country, latitude, longitude);
@@ -40,15 +40,15 @@ public sealed class Airport : Entity
     public void Update(string name, string city, string country, double latitude, double longitude)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new DomainException("Nome do aeroporto é obrigatório.");
+            throw new DomainException("Airport name is required.");
         if (string.IsNullOrWhiteSpace(city))
-            throw new DomainException("Cidade do aeroporto é obrigatória.");
+            throw new DomainException("Airport city is required.");
         if (string.IsNullOrWhiteSpace(country))
-            throw new DomainException("País do aeroporto é obrigatório.");
+            throw new DomainException("Airport country is required.");
         if (latitude is < -90 or > 90)
-            throw new DomainException("Latitude deve estar entre -90 e 90.");
+            throw new DomainException("Latitude must be between -90 and 90.");
         if (longitude is < -180 or > 180)
-            throw new DomainException("Longitude deve estar entre -180 e 180.");
+            throw new DomainException("Longitude must be between -180 and 180.");
 
         Name = name.Trim();
         City = city.Trim();
@@ -60,7 +60,7 @@ public sealed class Airport : Entity
     public void SetOperations(OperationType operations)
     {
         if (operations == 0)
-            throw new DomainException("O aeroporto precisa ter ao menos um tipo de operação.");
+            throw new DomainException("The airport must have at least one type of operation.");
 
         Operations = operations;
     }
@@ -70,7 +70,7 @@ public sealed class Airport : Entity
     public void SetMinimumRankLevel(int level)
     {
         if (level < 1)
-            throw new DomainException("Nível mínimo de patente deve ser 1 ou maior.");
+            throw new DomainException("Minimum rank level must be 1 or higher.");
 
         MinimumRankLevel = level;
     }

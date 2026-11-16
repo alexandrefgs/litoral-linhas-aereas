@@ -39,7 +39,7 @@ public static class DependencyInjection
 
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
         var jwt = jwtSection.Get<JwtOptions>()
-            ?? throw new InvalidOperationException("Configuração 'Jwt' não encontrada.");
+            ?? throw new InvalidOperationException("'Jwt' configuration not found.");
 
         services.Configure<JwtOptions>(jwtSection);
 

@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { Airport, RankInfo } from '../../core/reference/reference.models';
 import { ReferenceService } from '../../core/reference/reference.service';
 import { STAFF_POSITION_NAMES } from '../../core/staff/staff-positions';
@@ -11,16 +10,16 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, TranslatePipe, FlightTimePipe, LocaleNumberPipe, AirportMap],
+  imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap],
   template: `
     @if (auth.pilot(); as pilot) {
       <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
         @if (!pilot.simBriefUsername) {
           <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-highlight px-5 py-3 text-on-highlight">
             <p class="flex items-center gap-2 font-medium">
-              <i class="ti ti-alert-triangle text-xl" aria-hidden="true"></i>{{ 'dashboard.simbriefMissing' | t }}
+              <i class="ti ti-alert-triangle text-xl" aria-hidden="true"></i>Add your SimBrief username in your profile to book flights.
             </p>
-            <a routerLink="/profile" class="rounded-md bg-surface px-4 py-2 text-sm font-medium text-ink hover:bg-surface-alt">{{ 'dashboard.goToProfile' | t }}</a>
+            <a routerLink="/profile" class="rounded-md bg-surface px-4 py-2 text-sm font-medium text-ink hover:bg-surface-alt">Go to profile</a>
           </div>
         }
 
@@ -35,7 +34,7 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
             }
             <div class="flex flex-col gap-4 p-5">
               <div class="flex items-center justify-between">
-                <span class="rounded-md bg-surface-alt px-2 py-1 text-sm text-ink-muted">{{ 'dashboard.location' | t }}</span>
+                <span class="rounded-md bg-surface-alt px-2 py-1 text-sm text-ink-muted">Current location</span>
                 @if (airport()?.isHub) {
                   <span class="rounded-md bg-primary px-2 py-0.5 text-xs font-bold text-on-primary">HUB</span>
                 }
@@ -51,14 +50,14 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                 <div class="flex items-center gap-3">
                   <span class="stat-icon"><i class="ti ti-plane" aria-hidden="true"></i></span>
                   <div>
-                    <p class="text-sm text-ink">{{ 'dashboard.aircraft' | t }}</p>
+                    <p class="text-sm text-ink">Aircraft</p>
                     <p class="text-sm text-ink-muted">—</p>
                   </div>
                 </div>
                 <div class="flex items-center gap-3">
                   <span class="stat-icon"><i class="ti ti-plane-departure" aria-hidden="true"></i></span>
                   <div>
-                    <p class="text-sm text-ink">{{ 'dashboard.departures' | t }}</p>
+                    <p class="text-sm text-ink">Departures</p>
                     <p class="text-sm text-ink-muted">—</p>
                   </div>
                 </div>
@@ -73,15 +72,15 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.rankName }}</p>
                     <p class="text-sm text-ink-muted">
-                      {{ 'dashboard.nextRank' | t }}:
-                      <span class="font-semibold text-ink">{{ nextRank()?.name ?? ('dashboard.maxLevel' | t) }}</span>
+                      Next rank:
+                      <span class="font-semibold text-ink">{{ nextRank()?.name ?? 'Max level' }}</span>
                     </p>
                   </div>
                   <img [src]="'images/ranks/' + pilot.rankCode.toLowerCase() + '.png'" [alt]="pilot.rankName" class="h-10 w-auto object-contain" />
                 </div>
                 <div class="progress"><div class="progress-bar bg-highlight" [style.width.%]="rankProgress()"></div></div>
                 <div class="flex justify-between text-xs text-ink-muted">
-                  <span>{{ 'dashboard.progress' | t }}</span><span class="font-semibold">{{ rankProgress() }}%</span>
+                  <span>Progress</span><span class="font-semibold">{{ rankProgress() }}%</span>
                 </div>
               </div>
 
@@ -89,13 +88,13 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.totalFlightMinutes | flightTime }}</p>
-                    <p class="text-sm text-ink-muted">{{ 'dashboard.hours' | t }}</p>
+                    <p class="text-sm text-ink-muted">Flight hours</p>
                   </div>
                   <span class="text-sm font-semibold text-ink">{{ hoursProgress() }}%</span>
                 </div>
                 <div class="progress"><div class="progress-bar bg-primary" [style.width.%]="hoursProgress()"></div></div>
                 <div class="flex justify-between text-xs text-ink-muted">
-                  <span>{{ 'dashboard.goal' | t }}</span><span>{{ nextRank()?.minFlightHours ?? '—' }}h</span>
+                  <span>Goal</span><span>{{ nextRank()?.minFlightHours ?? '—' }}h</span>
                 </div>
               </div>
 
@@ -103,30 +102,30 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.points | localeNumber }}</p>
-                    <p class="text-sm text-ink-muted">{{ 'dashboard.points' | t }}</p>
+                    <p class="text-sm text-ink-muted">Points</p>
                   </div>
                   <span class="text-sm font-semibold text-ink">{{ pointsProgress() }}%</span>
                 </div>
                 <div class="progress"><div class="progress-bar bg-accent" [style.width.%]="pointsProgress()"></div></div>
                 <div class="flex justify-between text-xs text-ink-muted">
-                  <span>{{ 'dashboard.goal' | t }}</span><span>{{ nextRank()?.minPoints | localeNumber }}</span>
+                  <span>Goal</span><span>{{ nextRank()?.minPoints | localeNumber }}</span>
                 </div>
               </div>
             </div>
 
             <div class="panel flex-1">
               <div class="border-b border-line px-6 py-4">
-                <h2 class="text-lg font-bold text-ink">{{ 'dashboard.lastFlights' | t }}</h2>
-                <p class="text-sm text-ink-muted">{{ 'dashboard.noFlightsYet' | t }}</p>
+                <h2 class="text-lg font-bold text-ink">Your last flights</h2>
+                <p class="text-sm text-ink-muted">You haven't flown with Litoral yet.</p>
               </div>
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                   <thead class="text-xs uppercase text-ink-muted">
                     <tr class="border-b border-line">
                       <th class="px-6 py-3 font-semibold">ID</th>
-                      <th class="px-6 py-3 font-semibold">{{ 'dashboard.flight' | t }}</th>
-                      <th class="px-6 py-3 font-semibold">{{ 'dashboard.origin' | t }}</th>
-                      <th class="px-6 py-3 font-semibold">{{ 'dashboard.destination' | t }}</th>
+                      <th class="px-6 py-3 font-semibold">Flight</th>
+                      <th class="px-6 py-3 font-semibold">Origin</th>
+                      <th class="px-6 py-3 font-semibold">Destination</th>
                       <th class="px-6 py-3 font-semibold">Status</th>
                     </tr>
                   </thead>
@@ -134,8 +133,8 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
               </div>
               <div class="flex flex-col items-center gap-3 px-6 py-10 text-center">
                 <i class="ti ti-plane-off text-4xl text-ink-muted" aria-hidden="true"></i>
-                <p class="text-ink-muted">{{ 'dashboard.emptyFlights' | t }}</p>
-                <a routerLink="/book" class="btn-primary"><i class="ti ti-world-search mr-2" aria-hidden="true"></i>{{ 'nav.book' | t }}</a>
+                <p class="text-ink-muted">Your approved flights show up here. How about the first one?</p>
+                <a routerLink="/book" class="btn-primary"><i class="ti ti-world-search mr-2" aria-hidden="true"></i>Book flight</a>
               </div>
             </div>
           </div>
@@ -144,31 +143,31 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
         <div class="panel">
           <div class="flex items-center justify-between border-b border-line px-6 py-4">
             <h2 class="flex items-center gap-2 text-lg font-bold text-ink">
-              <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>{{ 'dashboard.liveFlights' | t }}
+              <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>Live flights
             </h2>
-            <span class="text-sm text-ink-muted">{{ 'dashboard.pilotsFlying' | t }}: 0</span>
+            <span class="text-sm text-ink-muted">Pilots flying: 0</span>
           </div>
           <div class="flex flex-col items-center gap-2 px-6 py-12 text-center">
             <i class="ti ti-radar-2 text-4xl text-ink-muted" aria-hidden="true"></i>
-            <p class="text-ink-muted">{{ 'dashboard.noLiveFlights' | t }}</p>
+            <p class="text-ink-muted">No Litoral pilots flying right now.</p>
           </div>
         </div>
 
         <div class="grid gap-6 lg:grid-cols-3">
-          @for (block of rankingBlocks; track block.titleKey) {
+          @for (block of rankingBlocks; track block.title) {
             <div class="panel">
               <div class="flex items-center gap-2 border-b border-line px-6 py-4">
                 <i class="ti {{ block.icon }} text-xl text-primary" aria-hidden="true"></i>
-                <h2 class="text-lg font-bold text-ink">{{ block.titleKey | t }}</h2>
+                <h2 class="text-lg font-bold text-ink">{{ block.title }}</h2>
               </div>
-              <p class="px-6 py-10 text-center text-sm text-ink-muted">{{ 'dashboard.rankingEmpty' | t }}</p>
+              <p class="px-6 py-10 text-center text-sm text-ink-muted">Data shows up after the first flights.</p>
             </div>
           }
         </div>
 
         @if (pilot.staffPositions.length) {
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm text-ink-muted">{{ 'dashboard.staff' | t }}:</span>
+            <span class="text-sm text-ink-muted">Staff positions:</span>
             @for (position of pilot.staffPositions; track position) {
               <span class="rounded-full bg-accent px-3 py-1 text-sm font-medium text-on-accent">{{ staffNames[position] ?? position }}</span>
             }
@@ -187,9 +186,9 @@ export class Dashboard implements OnInit {
   protected readonly airport = signal<Airport | null>(null);
 
   protected readonly rankingBlocks = [
-    { titleKey: 'dashboard.topPilots', icon: 'ti-trophy' },
-    { titleKey: 'dashboard.monthStats', icon: 'ti-chart-pie' },
-    { titleKey: 'dashboard.topRoutes', icon: 'ti-route' }
+    { title: 'Top pilots', icon: 'ti-trophy' },
+    { title: 'Monthly statistics', icon: 'ti-chart-pie' },
+    { title: 'Top routes', icon: 'ti-route' }
   ];
 
   protected readonly nextRank = computed(() => {

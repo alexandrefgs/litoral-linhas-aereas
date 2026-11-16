@@ -24,7 +24,7 @@ public sealed class AuthService(
         var email = request.Email.Trim();
 
         if (await userManager.FindByEmailAsync(email) is not null)
-            throw new AppException(AppErrorKind.Conflict, "Este e-mail já está cadastrado.");
+            throw new AppException(AppErrorKind.Conflict, "This email is already registered.");
 
         var hubIcao = string.IsNullOrWhiteSpace(request.HubIcao)
             ? DefaultHubIcao
@@ -34,7 +34,7 @@ public sealed class AuthService(
             h => h.Airport.Icao == hubIcao && (h.Airport.Operations & OperationType.Passenger) == OperationType.Passenger, ct);
 
         if (!isPassengerHub)
-            throw new AppException(AppErrorKind.Validation, $"{hubIcao} não é um hub de passageiros da Litoral.");
+            throw new AppException(AppErrorKind.Validation, $"{hubIcao} is not a Litoral passenger hub.");
 
         var initialRank = await db.Ranks.OrderBy(r => r.Level).FirstAsync(ct);
 
@@ -58,7 +58,7 @@ public sealed class AuthService(
         {
             var roleResult = await userManager.AddToRoleAsync(user, StaffPositions.CeoFounder);
             if (!roleResult.Succeeded)
-                throw new InvalidOperationException("Não foi possível atribuir a posição de CEO & Founder.");
+                throw new InvalidOperationException("Could not assign the CEO & Founder position.");
         }
 
         await transaction.CommitAsync(ct);
@@ -71,7 +71,7 @@ public sealed class AuthService(
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
 
         if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
-            throw new AppException(AppErrorKind.Unauthorized, "E-mail ou senha inválidos.");
+            throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
 
         var pilot = await LoadPilotAsync(user.Id, ct);
         return await BuildResponseAsync(user, pilot);
@@ -80,7 +80,7 @@ public sealed class AuthService(
     public async Task<PilotSummary> GetCurrentAsync(string userId, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(userId)
-            ?? throw new AppException(AppErrorKind.NotFound, "Usuário não encontrado.");
+            ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
 
         var pilot = await LoadPilotAsync(userId, ct);
         var roles = await userManager.GetRolesAsync(user);
@@ -90,7 +90,7 @@ public sealed class AuthService(
 
     private async Task<Pilot> LoadPilotAsync(string userId, CancellationToken ct) =>
         await db.Pilots.Include(p => p.Rank).FirstOrDefaultAsync(p => p.UserId == userId, ct)
-        ?? throw new AppException(AppErrorKind.NotFound, "Piloto não encontrado.");
+        ?? throw new AppException(AppErrorKind.NotFound, "Pilot not found.");
 
     private async Task<AuthResponse> BuildResponseAsync(ApplicationUser user, Pilot pilot)
     {

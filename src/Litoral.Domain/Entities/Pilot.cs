@@ -33,7 +33,7 @@ public sealed class Pilot : Entity
     public Pilot(string userId, int pilotNumber, string firstName, string lastName, Rank rank, string baseIcao)
     {
         if (pilotNumber < FirstPilotNumber)
-            throw new DomainException($"Número do piloto deve começar em {FirstPilotNumber}.");
+            throw new DomainException($"Pilot number must start at {FirstPilotNumber}.");
 
         UserId = userId;
         PilotNumber = pilotNumber;
@@ -53,9 +53,9 @@ public sealed class Pilot : Entity
     public void JumpseatTo(Airport destination)
     {
         if (destination.Icao == CurrentLocationIcao)
-            throw new DomainException($"Você já está em {destination.Icao}.");
+            throw new DomainException($"You are already at {destination.Icao}.");
         if (!destination.IsAccessibleTo(Rank))
-            throw new DomainException($"Sua patente não permite ir para {destination.Icao}.");
+            throw new DomainException($"Your rank does not allow you to go to {destination.Icao}.");
 
         MoveTo(destination.Icao);
     }
@@ -63,7 +63,7 @@ public sealed class Pilot : Entity
     public void AddFlightTime(int minutes)
     {
         if (minutes <= 0)
-            throw new DomainException("Tempo de voo deve ser maior que zero.");
+            throw new DomainException("Flight time must be greater than zero.");
 
         TotalFlightMinutes += minutes;
     }
@@ -79,12 +79,12 @@ public sealed class Pilot : Entity
     public bool UpdateRank(IEnumerable<Rank> ranks, Airport currentAirport)
     {
         if (currentAirport.Icao != CurrentLocationIcao)
-            throw new DomainException("O aeroporto informado não é a localização atual do piloto.");
+            throw new DomainException("The given airport is not the pilot's current location.");
 
         var target = ranks
             .OrderByDescending(r => r.Level)
             .FirstOrDefault(r => r.IsMetBy(TotalFlightMinutes, Points))
-            ?? throw new DomainException("Nenhuma patente disponível para o piloto.");
+            ?? throw new DomainException("No rank available for the pilot.");
 
         if (target.Id == RankId)
             return false;
