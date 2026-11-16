@@ -46,6 +46,7 @@ O sistema reúne em um só lugar:
 - Cadastro de pilotos, base e carreira (FO → CMD)
 - Frota com **localização real**: cada avião fica onde pousou pela última vez
 - Reserva de voos aleatórios, personalizados, **escala mensal** e escalas especiais
+- Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - Briefing integrado ao **SimBrief**
 - Acompanhamento do voo via **ACARS** e envio automático de **PIREP**
 - Pontuação por desempenho, extrato de pontos e promoção automática
@@ -155,7 +156,7 @@ Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto
 
 - No cadastro o piloto escolhe a sua **base** entre os hubs de passageiros.
 - O piloto tem uma **localização atual**: começa na base e muda a cada voo concluído.
-- **Jumpseat:** o piloto pode se deslocar para outro aeroporto sem voar, desde que a patente permita.
+- **Jumpseat:** pela página de aeroportos, o piloto pode se deslocar para outro aeroporto sem voar, desde que a patente permita. É **grátis para as bases** e custa **50 pontos** para os demais aeroportos.
 - **Rebaixamento:** se o piloto estiver em um aeroporto só de CMD quando voltar a ser FO, ele é **movido automaticamente para a base**.
 
 ---
@@ -171,7 +172,20 @@ O piloto sempre parte da **sua localização atual**, com uma aeronave que **est
 | **Escala mensal** | Sequência de voos gerada para o mês (veja abaixo). | Grátis, com bônus |
 | **Escala especial** | Voos criados pelo staff. O primeiro piloto que reservar fica com o voo. | Definido pelo staff |
 
-Depois da reserva, o callsign do voo aparece no menu no lugar de "Reservar voo", com a opção de cancelar.
+Depois da reserva, o callsign do voo aparece no menu no lugar de "Reservar voo", com a opção de cancelar. O piloto só pode ter **um voo reservado por vez**.
+
+**Expiração:** toda reserva expira em **24 h** se o voo não for iniciado. A aeronave volta a ficar disponível. Na escala mensal, o voo só é reservado quando o piloto clica no card, e a contagem começa a partir daí. Se expirar, o voo continua na escala como o próximo a ser feito.
+
+### Tripulação
+
+Todo voo tem um **segundo piloto da VA** escalado automaticamente na reserva:
+
+- Quem reserva é **FO** → o sistema escala um **CMD**. Quem reserva é **CMD** → o sistema escala um **FO**.
+- O piloto escalado não precisa fazer nada. Ele só aparece no briefing, simulando a tripulação.
+- Só pode ser escalado quem está ativo, **não tem reserva própria em aberto** e não está escalado em outro voo. Entre os livres, vai **quem foi escalado há mais tempo**.
+- Se ninguém estiver livre, o voo sai **sem segundo piloto**.
+- Quando o voo é concluído, o piloto escalado ganha **10 pontos** (sem horas de voo).
+- Se o voo for cancelado ou expirar, o piloto escalado é liberado e não ganha nada. A expiração **não gera punição** para quem fez a reserva.
 
 ### Escala mensal
 
@@ -180,7 +194,12 @@ Depois da reserva, o callsign do voo aparece no menu no lugar de "Reservar voo",
 - A escala **sempre começa e termina na base** do piloto.
 - É dividida em **sequências de 5 a 7 voos**. Cada sequência termina na base, como um "tiro" da vida real, e a próxima começa de lá.
   - Exemplo: `SBFL → SBGR → SBSV → SBGR → SBFZ → SBGR → SBFL` · `SBFL → SBPA → SBCT → SBRJ → SBSP → SBFL`
+  - Totais que não fecham em 5 a 7 são divididos o mais igualmente possível (ex.: 8 voos → 4 + 4). Abaixo de 5 voos, a escala tem uma sequência só. O mínimo é de 2 voos.
+  - No simulador não há folga entre as sequências: ao voltar à base, a próxima já começa de lá.
 - Mistura voos de **passageiros e cargueiros** (bloco `9xxx`).
+- Os voos são feitos **em ordem**: só o próximo voo da escala pode ser reservado.
+- Se o piloto não estiver no aeroporto de partida de um voo da escala, o card mostra a tag **Indisponível**. Ao reservar, ele faz um **jumpseat automático e sem custo** até a partida.
+- Com um voo aleatório ou personalizado em aberto, a escala avisa que já existe um voo em aberto.
 - Usa apenas rotas e aeroportos que a patente do piloto permite.
 - Bônus de **100 pontos por voo** da escala ao concluí-la.
 - Quem terminar a escala antes do fim do mês só recebe uma nova no mês seguinte.
@@ -195,6 +214,8 @@ Todo movimento de pontos fica registrado no **extrato do piloto**:
 |---|---|
 | Pontuação do voo | Pontos ganhos ou perdidos conforme o desempenho |
 | Custo de reserva | Voo personalizado para fora das bases |
+| Jumpseat | Deslocamento para aeroportos que não são base |
+| Tripulação | 10 pontos por voo concluído em que o piloto foi escalado |
 | Bônus de escala mensal | 100 pontos por voo da escala concluída |
 | Escala especial | Bônus definido pelo staff |
 | Penalidade | Aplicada na análise do PIREP |
@@ -416,19 +437,21 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Menu administrativo exibido conforme as posições do usuário
 
 ### Fase 2B: Páginas do piloto
-- [ ] Aeroportos com jumpseat, filtrados pela patente
+- [ ] Aeroportos com jumpseat filtrado pela patente (grátis para bases, 50 pontos para os demais)
 - [ ] Frota, com localização e status de cada matrícula
 - [ ] Rotas
 - [ ] Extrato de pontos e tabela de regras
+- [ ] Documentos da tripulação (PDFs para download)
 
 ### Fase 3: Reserva de voos
 - [ ] Voo aleatório com filtro de duração
 - [ ] Voo personalizado (custo de 50 pontos fora das bases)
-- [ ] Escala mensal (passageiros e cargueiros) com sequências de 5 a 7 voos começando e terminando na base
+- [ ] Escala mensal (passageiros e cargueiros) com sequências de 5 a 7 voos começando e terminando na base, com jumpseat automático até a partida
 - [ ] Escolha da aeronave e translado de aeronave sem custo
+- [ ] Escala automática do segundo piloto (FO ↔ CMD)
 - [ ] Confirmação da reserva e callsign no menu
 - [ ] Briefing: SimBrief, METAR e prefile
-- [ ] Cancelamento e expiração da reserva
+- [ ] Cancelamento e expiração da reserva em 24 h
 
 ### Fase 3B: Escalas especiais
 - [ ] **Director of Operations:** criação de escalas especiais
@@ -443,6 +466,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] **Safety Manager:** fila de PIREPs pendentes com logs de telemetria
 - [ ] Aprovação e rejeição de PIREP
 - [ ] Soma de horas e pontos, localização da aeronave e do piloto, e atualização da patente
+- [ ] Pontos de tripulação para o segundo piloto escalado
 - [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
 
 ### Fase 5: Estatísticas e comunidade
