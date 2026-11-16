@@ -345,9 +345,6 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AircraftTypeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ArrivalAirportId")
                         .HasColumnType("uniqueidentifier");
 
@@ -366,9 +363,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.HasKey("Id");
+                    b.Property<bool>("IsCargo")
+                        .HasColumnType("bit");
 
-                    b.HasIndex("AircraftTypeId");
+                    b.HasKey("Id");
 
                     b.HasIndex("ArrivalAirportId");
 
@@ -625,6 +623,21 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RouteAircraftTypes", b =>
+                {
+                    b.Property<Guid>("RouteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AircraftTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("RouteId", "AircraftTypeId");
+
+                    b.HasIndex("AircraftTypeId");
+
+                    b.ToTable("RouteAircraftTypes");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Aircraft", b =>
                 {
                     b.HasOne("Litoral.Domain.Entities.AircraftType", "AircraftType")
@@ -712,12 +725,6 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Litoral.Domain.Entities.Route", b =>
                 {
-                    b.HasOne("Litoral.Domain.Entities.AircraftType", "AircraftType")
-                        .WithMany()
-                        .HasForeignKey("AircraftTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Litoral.Domain.Entities.Airport", "ArrivalAirport")
                         .WithMany()
                         .HasForeignKey("ArrivalAirportId")
@@ -729,8 +736,6 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("DepartureAirportId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("AircraftType");
 
                     b.Navigation("ArrivalAirport");
 
@@ -784,6 +789,21 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.HasOne("Litoral.Infrastructure.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RouteAircraftTypes", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.AircraftType", null)
+                        .WithMany()
+                        .HasForeignKey("AircraftTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.Route", null)
+                        .WithMany()
+                        .HasForeignKey("RouteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

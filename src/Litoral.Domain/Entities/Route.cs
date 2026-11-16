@@ -5,51 +5,71 @@ namespace Litoral.Domain.Entities;
 
 public sealed class Route : Entity
 {
+    private readonly List<AircraftType> _aircraftTypes = [];
+
     public int FlightNumber { get; private set; }
     public Guid DepartureAirportId { get; private set; }
     public Airport DepartureAirport { get; private set; } = null!;
     public Guid ArrivalAirportId { get; private set; }
     public Airport ArrivalAirport { get; private set; } = null!;
-    public Guid AircraftTypeId { get; private set; }
-    public AircraftType AircraftType { get; private set; } = null!;
+    public bool IsCargo { get; private set; }
     public int DistanceNm { get; private set; }
     public int EstimatedMinutes { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    public IReadOnlyCollection<AircraftType> AircraftTypes => _aircraftTypes;
     public FlightBlock Block => FlightBlockRules.FromNumber(FlightNumber);
     public string Callsign => $"{Airline.Icao}{FlightNumber}";
 
     private Route() { }
 
-    public Route(int flightNumber, Airport departure, Airport arrival, AircraftType aircraftType)
+    public Route(int flightNumber, Airport departure, Airport arrival, IEnumerable<AircraftType> aircraftTypes, int? estimatedMinutes = null)
+    {
+        Update(flightNumber, departure, arrival, aircraftTypes, estimatedMinutes);
+    }
+
+    public void Update(int flightNumber, Airport departure, Airport arrival, IEnumerable<AircraftType> aircraftTypes, int? estimatedMinutes = null)
     {
         var block = FlightBlockRules.FromNumber(flightNumber);
+        var types = aircraftTypes.DistinctBy(t => t.Id).ToList();
 
+        if (types.Count == 0)
+            throw new DomainException("Select at least one aircraft type.");
+        if (types.Select(t => t.IsCargo).Distinct().Count() > 1)
+            throw new DomainException("A route cannot mix passenger and cargo aircraft.");
         if (departure.Id == arrival.Id)
             throw new DomainException("Departure and arrival cannot be the same.");
-        if (aircraftType.IsCargo && block != FlightBlock.FerryAndCargo)
+
+        var isCargo = types[0].IsCargo;
+        if (isCargo && block != FlightBlock.FerryAndCargo)
             throw new DomainException("Cargo flights must use the 9XXX block.");
-        var operation = aircraftType.IsCargo ? OperationType.Cargo : OperationType.Passenger;
-        var operationName = aircraftType.IsCargo ? "cargo" : "passenger";
+
+        var operation = isCargo ? OperationType.Cargo : OperationType.Passenger;
+        var operationName = isCargo ? "cargo" : "passenger";
         if (!departure.Supports(operation))
             throw new DomainException($"{departure.Icao} does not have {operationName} operations.");
         if (!arrival.Supports(operation))
             throw new DomainException($"{arrival.Icao} does not have {operationName} operations.");
+
         var distance = departure.DistanceNmTo(arrival);
-        if (distance > aircraftType.MaxRangeNm)
-            throw new DomainException(
-                $"Distance of {distance} NM exceeds the {aircraftType.IcaoCode} range ({aircraftType.MaxRangeNm} NM).");
+        var outOfRange = types.Where(t => distance > t.MaxRangeNm).Select(t => $"{t.IcaoCode} ({t.MaxRangeNm} NM)").ToList();
+        if (outOfRange.Count > 0)
+            throw new DomainException($"Distance of {distance} NM exceeds the range of {string.Join(", ", outOfRange)}.");
 
         FlightNumber = flightNumber;
         DepartureAirport = departure;
         DepartureAirportId = departure.Id;
         ArrivalAirport = arrival;
         ArrivalAirportId = arrival.Id;
-        AircraftType = aircraftType;
-        AircraftTypeId = aircraftType.Id;
+        IsCargo = isCargo;
         DistanceNm = distance;
-        EstimatedMinutes = EstimateBlockMinutes(distance);
+        SetEstimatedMinutes(estimatedMinutes ?? EstimateBlockMinutes(distance));
+
+        _aircraftTypes.Clear();
+        _aircraftTypes.AddRange(types);
     }
+
+    public bool AllowsAircraftType(Guid aircraftTypeId) => _aircraftTypes.Any(t => t.Id == aircraftTypeId);
 
     public static int EstimateBlockMinutes(int distanceNm) =>
         (int)Math.Round(distanceNm / 430.0 * 60 + 25);

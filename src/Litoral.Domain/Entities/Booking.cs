@@ -36,8 +36,8 @@ public sealed class Booking : Entity
             throw new DomainException($"Your rank does not allow operations at {route.ArrivalAirport.Icao}.");
         if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
             throw new DomainException($"The pilot is at {pilot.CurrentLocationIcao}, but the route departs from {route.DepartureAirport.Icao}.");
-        if (aircraft.AircraftTypeId != route.AircraftTypeId)
-            throw new DomainException($"Aircraft {aircraft.Registration} is not the type used on this route.");
+        if (!route.AllowsAircraftType(aircraft.AircraftTypeId))
+            throw new DomainException($"Aircraft {aircraft.Registration} is not one of the types allowed on this route.");
         if (aircraft.CurrentAirportId != route.DepartureAirportId)
             throw new DomainException($"Aircraft {aircraft.Registration} is not at {route.DepartureAirport.Icao}.");
         if (pointsCost < 0)

@@ -15,7 +15,7 @@ import {
 } from '../../../shared/utils/coordinates';
 
 type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
-type LookupState = 'idle' | 'loading' | 'found' | 'notFound';
+type LookupState = 'idle' | 'loading' | 'found' | 'notFound' | 'exists';
 
 function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
   const { passenger, cargo } = group.value as { passenger?: boolean; cargo?: boolean };
@@ -168,6 +168,8 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
               </div>
               @if (showError('icao')) {
                 <p class="field-error">Enter 4 letters or numbers.</p>
+              } @else if (lookupState() === 'exists') {
+                <p class="field-error">This airport is already registered.</p>
               } @else if (lookupState() === 'found') {
                 <p class="mt-1 text-xs text-ink-muted">Filled from the airport catalog. Review before saving.</p>
               } @else if (lookupState() === 'notFound') {
@@ -265,11 +267,13 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
                 <input type="checkbox" formControlName="isHub" class="h-5 w-5 shrink-0 accent-primary" />
               </label>
             </div>
-
-            @if (formError(); as message) {
-              <p class="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger sm:col-span-2">{{ message }}</p>
-            }
           </div>
+
+          @if (formError(); as message) {
+            <p class="border-t border-danger/30 bg-danger/10 px-6 py-3 text-sm text-danger">
+              <i class="ti ti-alert-circle mr-1" aria-hidden="true"></i>{{ message }}
+            </p>
+          }
 
           <div class="flex justify-end gap-2 border-t border-line px-6 py-4">
             <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
@@ -298,9 +302,9 @@ export class AdminAirports implements OnInit {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly confirmDelete = signal<string | null>(null);
+  protected readonly rowError = signal<{ icao: string; message: string } | null>(null);
   protected readonly lookupState = signal<LookupState>('idle');
   private lastLookup = '';
-  protected readonly rowError = signal<{ icao: string; message: string } | null>(null);
 
   protected readonly baseRank = computed(() => this.ranks()[0]?.code ?? 'FO');
   protected readonly restrictedRank = computed(() => this.ranks()[1]?.code ?? 'CMD');
@@ -441,6 +445,12 @@ export class AdminAirports implements OnInit {
 
     if (icao === this.lastLookup) return;
     this.lastLookup = icao;
+
+    if (this.airports().some(a => a.icao === icao)) {
+      this.lookupState.set('exists');
+      return;
+    }
+
     this.lookupState.set('loading');
 
     try {
@@ -463,6 +473,11 @@ export class AdminAirports implements OnInit {
   protected async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      return;
+    }
+
+    if (this.lookupState() === 'exists') {
+      this.formError.set('This airport is already registered. Edit it from the list instead.');
       return;
     }
 

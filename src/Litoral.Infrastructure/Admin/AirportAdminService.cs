@@ -125,7 +125,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
 
         var isCargo = operation == OperationType.Cargo;
         var inUse = await db.Routes.AnyAsync(
-            r => (r.DepartureAirportId == airport.Id || r.ArrivalAirportId == airport.Id) && r.AircraftType.IsCargo == isCargo, ct);
+            r => (r.DepartureAirportId == airport.Id || r.ArrivalAirportId == airport.Id) && r.IsCargo == isCargo, ct);
 
         if (inUse)
             throw new AppException(AppErrorKind.Conflict,

@@ -24,4 +24,14 @@ public static class FlightBlockRules
         >= 9000 and <= 9999 => FlightBlock.FerryAndCargo,
         _ => throw new DomainException("Flight number must be between 1000 and 9999.")
     };
+
+    public static (int Min, int Max) Range(FlightBlock block) => block switch
+    {
+        FlightBlock.Domestic => (1000, 4999),
+        FlightBlock.SouthAmerica => (5000, 5999),
+        FlightBlock.CentralNorthAmerica => (6000, 6999),
+        FlightBlock.Seasonal => (7000, 7999),
+        FlightBlock.EuropeAndOthers => (8000, 8999),
+        _ => (9000, 9999)
+    };
 }

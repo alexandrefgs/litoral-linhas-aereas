@@ -16,6 +16,15 @@ public sealed class RouteConfiguration : IEntityTypeConfiguration<Route>
 
         builder.HasOne(r => r.DepartureAirport).WithMany().HasForeignKey(r => r.DepartureAirportId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(r => r.ArrivalAirport).WithMany().HasForeignKey(r => r.ArrivalAirportId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(r => r.AircraftType).WithMany().HasForeignKey(r => r.AircraftTypeId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(r => r.AircraftTypes)
+            .WithMany()
+            .UsingEntity<Dictionary<string, object>>(
+                "RouteAircraftTypes",
+                right => right.HasOne<AircraftType>().WithMany().HasForeignKey("AircraftTypeId").OnDelete(DeleteBehavior.Restrict),
+                left => left.HasOne<Route>().WithMany().HasForeignKey("RouteId").OnDelete(DeleteBehavior.Cascade),
+                join => join.HasKey("RouteId", "AircraftTypeId"));
+
+        builder.Navigation(r => r.AircraftTypes).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
