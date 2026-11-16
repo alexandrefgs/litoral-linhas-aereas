@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { BookingService } from '../../core/booking/booking.service';
 import { STAFF_POSITION_NAMES } from '../../core/staff/staff-positions';
 import { ThemeMode, ThemeService } from '../../core/theme/theme.service';
 import { ClickOutsideDirective } from '../directives/click-outside.directive';
@@ -153,11 +154,25 @@ export class Header {
     { path: '/statistics', icon: 'ti-chart-bar', label: 'Statistics' }
   ];
 
-  protected readonly navItems = computed(() =>
-    this.auth.isStaff()
-      ? [...this.pilotNavItems, { path: '/admin', icon: 'ti-shield-lock', label: 'Admin' }]
-      : this.pilotNavItems
-  );
+  private readonly booking = inject(BookingService);
+
+  protected readonly navItems = computed(() => {
+    const current = this.booking.current();
+    const items = this.pilotNavItems.map(item =>
+      item.path === '/book' && current
+        ? { path: '/briefing', icon: 'ti-plane-departure', label: current.callsign }
+        : item
+    );
+
+    return this.auth.isStaff() ? [...items, { path: '/admin', icon: 'ti-shield-lock', label: 'Admin' }] : items;
+  });
+
+  constructor() {
+    effect(() => {
+      const signedIn = !!this.auth.pilot();
+      untracked(() => (signedIn ? this.booking.refreshCurrent() : this.booking.current.set(null)));
+    });
+  }
 
   protected readonly publicLinks = [
     { fragment: 'inicio', label: 'Home' },

@@ -13,10 +13,13 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(b => b.Type).HasConversion<string>().HasMaxLength(20);
         builder.HasIndex(b => new { b.PilotId, b.Status });
+        builder.HasIndex(b => new { b.Status, b.ExpiresAt });
+        builder.HasIndex(b => new { b.CrewPilotId, b.Status });
 
         builder.Ignore(b => b.IsOpen);
 
         builder.HasOne(b => b.Pilot).WithMany().HasForeignKey(b => b.PilotId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(b => b.CrewPilot).WithMany().HasForeignKey(b => b.CrewPilotId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(b => b.Route).WithMany().HasForeignKey(b => b.RouteId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(b => b.Aircraft).WithMany().HasForeignKey(b => b.AircraftId).OnDelete(DeleteBehavior.Restrict);
     }

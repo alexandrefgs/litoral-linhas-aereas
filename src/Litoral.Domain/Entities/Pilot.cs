@@ -21,6 +21,7 @@ public sealed class Pilot : Entity
     public int TotalFlightMinutes { get; private set; }
     public int Points { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public DateTime? LastCrewAssignedAt { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
     public IReadOnlyCollection<PointTransaction> PointTransactions => _pointTransactions;
@@ -75,6 +76,18 @@ public sealed class Pilot : Entity
         Points += amount;
         return transaction;
     }
+
+    public PointTransaction Spend(int amount, PointTransactionType type, string description)
+    {
+        if (amount <= 0)
+            throw new DomainException("The amount must be greater than zero.");
+        if (Points < amount)
+            throw new DomainException($"You need {amount} points and you have {Points}.");
+
+        return AddPoints(-amount, type, description);
+    }
+
+    internal void MarkCrewAssigned() => LastCrewAssignedAt = DateTime.UtcNow;
 
     public bool UpdateRank(IEnumerable<Rank> ranks, Airport currentAirport)
     {

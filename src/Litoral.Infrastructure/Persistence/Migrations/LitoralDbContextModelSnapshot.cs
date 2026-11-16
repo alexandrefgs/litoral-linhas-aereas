@@ -194,10 +194,19 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(7)
                         .HasColumnType("nvarchar(7)");
 
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CrewPilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("PilotId")
@@ -228,7 +237,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RouteId");
 
+                    b.HasIndex("CrewPilotId", "Status");
+
                     b.HasIndex("PilotId", "Status");
+
+                    b.HasIndex("Status", "ExpiresAt");
 
                     b.ToTable("Bookings");
                 });
@@ -247,6 +260,42 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Hubs");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BaseIcao")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FlightsPerDay")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilotId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("MonthlyRosters");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>
@@ -274,6 +323,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastCrewAssignedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -377,6 +429,41 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Ranks");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.RosterLeg", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RosterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RouteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("RouteId");
+
+                    b.HasIndex("RosterId", "Order")
+                        .IsUnique();
+
+                    b.ToTable("RosterLegs");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Route", b =>
@@ -704,6 +791,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "CrewPilot")
+                        .WithMany()
+                        .HasForeignKey("CrewPilotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
                         .WithMany()
                         .HasForeignKey("PilotId")
@@ -717,6 +809,8 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Aircraft");
+
+                    b.Navigation("CrewPilot");
 
                     b.Navigation("Pilot");
 
@@ -732,6 +826,17 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Airport");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pilot");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>
@@ -760,6 +865,32 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Pilot");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.RosterLeg", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Litoral.Domain.Entities.MonthlyRoster", "Roster")
+                        .WithMany("Legs")
+                        .HasForeignKey("RosterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.Route", "Route")
+                        .WithMany()
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Roster");
+
+                    b.Navigation("Route");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Route", b =>
@@ -845,6 +976,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("RouteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
+                {
+                    b.Navigation("Legs");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>

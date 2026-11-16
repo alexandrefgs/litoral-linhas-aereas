@@ -16,10 +16,11 @@ export const routes: Routes = [
   { path: 'register', canActivate: [guestGuard], loadComponent: () => import('./pages/auth/register/register').then(m => m.Register) },
   { path: 'dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },
-  comingSoon('book', 'Book flight', 'ti-world-search'),
+  { path: 'book', canActivate: [authGuard], loadComponent: () => import('./pages/book/book').then(m => m.Book) },
+  { path: 'briefing', canActivate: [authGuard], loadComponent: () => import('./pages/briefing/briefing').then(m => m.Briefing) },
+  { path: 'fleet', canActivate: [authGuard], loadComponent: () => import('./pages/fleet/fleet').then(m => m.Fleet) },
   comingSoon('routes', 'Routes', 'ti-route'),
   comingSoon('airports', 'Airports', 'ti-building-airport'),
-  comingSoon('fleet', 'Fleet', 'ti-plane'),
   comingSoon('points', 'Points', 'ti-star'),
   comingSoon('statistics', 'Statistics', 'ti-chart-bar'),
   {

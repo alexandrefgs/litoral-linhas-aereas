@@ -18,6 +18,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Litoral.Infrastructure.Storage;
+using Litoral.Application.Bookings;
+using Litoral.Infrastructure.Bookings;
+using Litoral.Infrastructure.External;
 
 namespace Litoral.Infrastructure;
 
@@ -81,6 +84,14 @@ public static class DependencyInjection
         services.AddScoped<IFleetAdminService, FleetAdminService>();
         services.AddSingleton<IPhotoStorage, LocalPhotoStorage>();
         services.AddHostedService<MaintenanceReleaseService>();
+        services.AddScoped<BookingSupport>();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IRosterService, RosterService>();
+        services.AddScoped<IPilotFleetService, PilotFleetService>();
+        services.AddScoped<IBriefingService, BriefingService>();
+        services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<ISimBriefProvider, SimBriefProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddHostedService<BookingExpiryService>();
 
         return services;
     }

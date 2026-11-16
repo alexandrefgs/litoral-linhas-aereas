@@ -20,6 +20,14 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<Aircraft> Aircraft => Set<Aircraft>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<AirportCatalogEntry> AirportCatalog => Set<AirportCatalogEntry>();
+    public DbSet<MonthlyRoster> MonthlyRosters => Set<MonthlyRoster>();
+    public DbSet<RosterLeg> RosterLegs => Set<RosterLeg>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        builder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        builder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
+    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

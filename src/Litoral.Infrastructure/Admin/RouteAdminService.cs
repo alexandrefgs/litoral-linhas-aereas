@@ -74,6 +74,8 @@ public sealed class RouteAdminService(LitoralDbContext db) : IRouteAdminService
 
         if (await db.Bookings.AnyAsync(b => b.RouteId == id, ct))
             throw new AppException(AppErrorKind.Conflict, "This route has bookings. Deactivate it instead of deleting.");
+        if (await db.RosterLegs.AnyAsync(l => l.RouteId == id, ct))
+            throw new AppException(AppErrorKind.Conflict, "This route is part of a monthly roster. Deactivate it instead of deleting.");
 
         db.Routes.Remove(route);
         await db.SaveChangesAsync(ct);

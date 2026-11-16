@@ -6,10 +6,15 @@ namespace Litoral.Domain.Entities;
 
 public sealed class Booking : Entity
 {
+    public static readonly TimeSpan DefaultValidity = TimeSpan.FromHours(24);
+    public static readonly TimeSpan SpecialValidity = TimeSpan.FromHours(48);
+
     private static readonly Regex CallsignPattern = new($"^{Airline.Icao}[0-9A-Z]{{1,4}}$");
 
     public Guid PilotId { get; private set; }
     public Pilot Pilot { get; private set; } = null!;
+    public Guid? CrewPilotId { get; private set; }
+    public Pilot? CrewPilot { get; private set; }
     public Guid RouteId { get; private set; }
     public Route Route { get; private set; } = null!;
     public Guid AircraftId { get; private set; }
@@ -19,8 +24,10 @@ public sealed class Booking : Entity
     public string Callsign { get; private set; } = null!;
     public BookingStatus Status { get; private set; } = BookingStatus.Booked;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime ExpiresAt { get; private set; }
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
+    public DateTime? ClosedAt { get; private set; }
 
     public bool IsOpen => Status is BookingStatus.Booked or BookingStatus.InProgress;
 
@@ -35,7 +42,7 @@ public sealed class Booking : Entity
         if (!route.ArrivalAirport.IsAccessibleTo(pilot.Rank))
             throw new DomainException($"Your rank does not allow operations at {route.ArrivalAirport.Icao}.");
         if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
-            throw new DomainException($"The pilot is at {pilot.CurrentLocationIcao}, but the route departs from {route.DepartureAirport.Icao}.");
+            throw new DomainException($"You are at {pilot.CurrentLocationIcao}, but the route departs from {route.DepartureAirport.Icao}.");
         if (!route.AllowsAircraftType(aircraft.AircraftTypeId))
             throw new DomainException($"Aircraft {aircraft.Registration} is not one of the types allowed on this route.");
         if (aircraft.CurrentAirportId != route.DepartureAirportId)
@@ -58,6 +65,17 @@ public sealed class Booking : Entity
         Type = type;
         PointsCost = pointsCost;
         Callsign = finalCallsign;
+        ExpiresAt = CreatedAt + (type == BookingType.Special ? SpecialValidity : DefaultValidity);
+    }
+
+    public void AssignCrew(Pilot crew)
+    {
+        if (crew.Id == PilotId)
+            throw new DomainException("The pilot cannot be their own crew.");
+
+        CrewPilot = crew;
+        CrewPilotId = crew.Id;
+        crew.MarkCrewAssigned();
     }
 
     public void Start()
@@ -78,14 +96,27 @@ public sealed class Booking : Entity
         Aircraft.CompleteFlight(Route.ArrivalAirport, flightMinutes);
         Status = BookingStatus.Completed;
         CompletedAt = DateTime.UtcNow;
+        ClosedAt = CompletedAt;
     }
 
     public void Cancel()
     {
-        if (Status == BookingStatus.Completed)
-            throw new DomainException("A completed booking cannot be cancelled.");
+        if (!IsOpen)
+            throw new DomainException("This booking is already closed.");
 
         Aircraft.Release();
         Status = BookingStatus.Cancelled;
+        ClosedAt = DateTime.UtcNow;
+    }
+
+    public bool Expire(DateTime now)
+    {
+        if (Status != BookingStatus.Booked || now < ExpiresAt)
+            return false;
+
+        Aircraft.Release();
+        Status = BookingStatus.Expired;
+        ClosedAt = now;
+        return true;
     }
 }

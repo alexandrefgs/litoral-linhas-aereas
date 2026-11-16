@@ -7,5 +7,8 @@ public enum PointTransactionType
     MonthlyBonus,
     SpecialSchedule,
     Penalty,
-    ManualAdjustment
+    ManualAdjustment,
+    Jumpseat,
+    CrewDuty,
+    AircraftTransfer
 }
