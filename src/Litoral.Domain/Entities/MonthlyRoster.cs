@@ -18,6 +18,7 @@ public sealed class MonthlyRoster : Entity
     public string BaseIcao { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; private set; }
+    public DateTime? BonusPaidAt { get; private set; }
 
     public IReadOnlyCollection<RosterLeg> Legs => _legs;
     public RosterLeg? NextLeg => _legs.Where(l => l.CompletedAt is null).OrderBy(l => l.Order).FirstOrDefault();
@@ -47,6 +48,14 @@ public sealed class MonthlyRoster : Entity
     }
 
     public int Bonus => _legs.Count * BonusPerFlight;
+
+    public bool CanPayBonus => CompletedAt is not null && BonusPaidAt is null;
+
+    public void MarkBonusPaid()
+    {
+        if (!CanPayBonus) throw new DomainException("The roster bonus can't be paid.");
+        BonusPaidAt = DateTime.UtcNow;
+    }
 
     public bool CompleteLeg(Guid bookingId)
     {

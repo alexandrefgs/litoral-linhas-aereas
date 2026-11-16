@@ -68,6 +68,7 @@ public sealed class Pirep : Entity
     public IReadOnlyCollection<PirepEvent> Events => _events;
 
     public bool IsDiversion => ArrivalIcao != PlannedArrivalIcao;
+    public bool IsPending => Status == PirepStatus.Pending;
 
     private Pirep() { }
 
@@ -129,17 +130,83 @@ public sealed class Pirep : Entity
 
     public void ApplyEvaluation(EvaluationResult result)
     {
-        if (Status != PirepStatus.Pending)
-            throw new DomainException("Only a pending PIREP can be evaluated.");
+        EnsurePending();
 
         _items.RemoveAll(i => !i.IsManual);
         _items.AddRange(result.Items.Select(i => new PirepScoreItem(i.RuleId, i.Category, i.Check, i.Description, i.Outcome, i.Points, i.Quantity, false)));
         Recalculate();
     }
 
+    public void AddReviewItem(ScoringRule rule, int quantity)
+    {
+        EnsurePending();
+
+        if (ScoringCatalog.Get(rule.Check).Source != ScoringSource.Review)
+            throw new DomainException("Only review rules can be added manually.");
+        if (!rule.IsActive)
+            throw new DomainException("This rule is inactive.");
+        if (quantity is < 1 or > 100)
+            throw new DomainException("The quantity must be between 1 and 100.");
+
+        _items.RemoveAll(i => i.RuleId == rule.Id && i.IsManual);
+
+        var applied = rule.Mode == ScoringMode.Once ? 1 : quantity;
+        var points = rule.Outcome == ScoringOutcome.Reject ? 0 : rule.Points * applied;
+        _items.Add(new PirepScoreItem(rule.Id, rule.Category, rule.Check, rule.Description, rule.Outcome, points, applied, true));
+        Recalculate();
+    }
+
+    public void RemoveItem(Guid ruleId)
+    {
+        EnsurePending();
+
+        var item = _items.FirstOrDefault(i => i.RuleId == ruleId)
+            ?? throw new DomainException("Item not found in this PIREP.");
+
+        if (item.IsManual) _items.Remove(item);
+        else item.SetVoided(!item.IsVoided);
+
+        Recalculate();
+    }
+
+    public void Approve(string reviewerUserId, string? note)
+    {
+        EnsurePending();
+        if (HasRejection)
+            throw new DomainException("This PIREP has a rejection item. Remove it or reject the PIREP.");
+
+        Close(PirepStatus.Approved, reviewerUserId, note);
+    }
+
+    public void Reject(string reviewerUserId, string? note)
+    {
+        EnsurePending();
+        if (string.IsNullOrWhiteSpace(note))
+            throw new DomainException("Explain to the pilot why the PIREP was rejected.");
+
+        Close(PirepStatus.Rejected, reviewerUserId, note);
+    }
+
+    private void Close(PirepStatus status, string reviewerUserId, string? note)
+    {
+        note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        if (note is { Length: > 1000 }) throw new DomainException("The review note must have up to 1000 characters.");
+
+        Status = status;
+        ReviewedAt = DateTime.UtcNow;
+        ReviewedBy = reviewerUserId;
+        ReviewNote = note;
+    }
+
+    private void EnsurePending()
+    {
+        if (Status != PirepStatus.Pending)
+            throw new DomainException("This PIREP was already reviewed.");
+    }
+
     private void Recalculate()
     {
-        var items = _items.Select(i => new ScoreResultItem(i.RuleId ?? Guid.Empty, i.Category, i.Check, i.Description, i.Outcome, i.Points, i.Quantity)).ToList();
+        var items = _items.Where(i => !i.IsVoided).Select(i => new ScoreResultItem(i.RuleId ?? Guid.Empty, i.Category, i.Check, i.Description, i.Outcome, i.Points, i.Quantity)).ToList();
         ScorePoints = items.Sum(i => i.Points);
         HasRejection = items.Any(i => i.Outcome == ScoringOutcome.Reject);
         Conformity = EvaluationResult.ConformityOf(items);
@@ -156,8 +223,11 @@ public sealed class PirepScoreItem
     public int Points { get; private set; }
     public int Quantity { get; private set; }
     public bool IsManual { get; private set; }
+    public bool IsVoided { get; private set; }
 
     private PirepScoreItem() { }
+
+    internal void SetVoided(bool voided) => IsVoided = voided;
 
     internal PirepScoreItem(Guid? ruleId, ScoringCategory category, ScoringCheck check, string description,
         ScoringOutcome outcome, int points, int quantity, bool isManual)

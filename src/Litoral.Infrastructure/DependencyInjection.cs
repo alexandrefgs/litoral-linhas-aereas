@@ -100,6 +100,7 @@ public static class DependencyInjection
         services.AddScoped<PirepFiling>();
         services.AddScoped<IFlightTrackingService, FlightTrackingService>();
         services.AddScoped<IPirepService, PirepService>();
+        services.AddScoped<IPirepReviewService, PirepReviewService>();
         services.AddScoped<IFlightSimulator, FlightSimulator>();
 
         return services;

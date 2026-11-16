@@ -46,6 +46,16 @@ export const routes: Routes = [
         canActivate: [staffGuard('fleet')],
         loadComponent: () => import('./pages/admin/fleet/admin-fleet').then(m => m.AdminFleet)
       },
+            {
+        path: 'pireps',
+        canActivate: [staffGuard('pireps')],
+        loadComponent: () => import('./pages/admin/pireps/admin-pireps').then(m => m.AdminPireps)
+      },
+      {
+        path: 'pireps/:id',
+        canActivate: [staffGuard('pireps')],
+        loadComponent: () => import('./pages/admin/pireps/admin-pirep-review').then(m => m.AdminPirepReview)
+      },
       {
         path: 'scoring',
         canActivate: [staffGuard('pireps')],

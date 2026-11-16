@@ -13,6 +13,7 @@ public sealed class PirepFiling(LitoralDbContext db)
 {
     public const decimal KgPerPound = 0.45359237m;
     private const int MaxTrackPoints = 1500;
+    private static readonly TimeSpan ScheduledMaintenanceDuration = TimeSpan.FromDays(2);
 
     public async Task<Pirep> FileAsync(
         Booking booking,
@@ -56,6 +57,10 @@ public sealed class PirepFiling(LitoralDbContext db)
         pirep.ApplyEvaluation(evaluation);
 
         booking.Complete(pirep.BlockMinutes, landedAt);
+        if (booking.Aircraft.IsMaintenanceDue)
+            booking.Aircraft.SendToMaintenance(
+                $"Scheduled maintenance ({booking.Aircraft.AircraftType.MaintenanceIntervalHours}h interval)",
+                DateTime.UtcNow.Add(ScheduledMaintenanceDuration));
         booking.Pilot.AddFlightTime(pirep.BlockMinutes);
         booking.Pilot.MoveTo(landedAt.Icao);
 
@@ -111,8 +116,7 @@ public sealed class PirepFiling(LitoralDbContext db)
             pirep.Items
                 .OrderBy(i => i.Outcome == ScoringOutcome.Reject ? 0 : 1)
                 .ThenBy(i => i.Category)
-                .Select(i => new PirepScoreItemDto(i.Category.ToString(), i.Check.ToString(), i.Description, i.Outcome.ToString(), i.Points, i.Quantity, i.IsManual))
-                .ToList(),
+                .Select(i => new PirepScoreItemDto(i.RuleId, i.Category.ToString(), i.Check.ToString(), i.Description, i.Outcome.ToString(), i.Points, i.Quantity, i.IsManual, i.IsVoided))                .ToList(),
             pirep.Events
                 .OrderBy(e => e.At)
                 .Select(e => new PirepEventDto(e.Type.ToString(), e.At, e.DurationSeconds, e.Value, e.Detail))

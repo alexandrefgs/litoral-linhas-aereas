@@ -77,13 +77,15 @@ public sealed record FlightSessionDto(
     DateTime? LastReportAt);
 
 public sealed record PirepScoreItemDto(
+    Guid? RuleId,
     string Category,
     string Check,
     string Description,
     string Outcome,
     int Points,
     int Quantity,
-    bool IsManual);
+    bool IsManual,
+    bool IsVoided);
 
 public sealed record PirepEventDto(string Type, DateTime At, int DurationSeconds, decimal? Value, string? Detail);
 

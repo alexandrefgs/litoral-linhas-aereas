@@ -38,7 +38,8 @@ public static class ScoringCatalog
         new(ScoringCategory.Cancellation, "Booking cancellation", "Applied after confirmation"),
         new(ScoringCategory.Inactivity, "Inactivity", "Only applied when the VA has open positions"),
         new(ScoringCategory.PilotsOfTheMonth, "Pilots of the month", "Granted after all reviews of the previous month are complete"),
-        new(ScoringCategory.AccountLoss, "Account loss", "Deleted automatically, without recovery")
+        new(ScoringCategory.AccountLoss, "Account loss", "Deleted automatically, without recovery"),
+        new(ScoringCategory.RejectionPenalties, "Rejected PIREPs", "Counted per calendar month. Rejected flights earn no points.")
     ];
 
     public static readonly IReadOnlyList<ScoringCheckInfo> Checks =
@@ -93,7 +94,9 @@ public static class ScoringCatalog
         new(ScoringCheck.BookingCancelled, "Booking cancelled", ScoringSource.Pilot, [ScoringMode.Once, ScoringMode.PerOccurrence]),
         new(ScoringCheck.Inactivity, "Inactivity", ScoringSource.Pilot, [ScoringMode.Once, ScoringMode.PerDay], "After (days)"),
         new(ScoringCheck.PilotOfTheMonth, "Pilot of the month", ScoringSource.Pilot, Once, "Place"),
-        new(ScoringCheck.AccountLoss, "Account loss", ScoringSource.Pilot, Once, null, "Balance at or below (pts)")
+        new(ScoringCheck.AccountLoss, "Account loss", ScoringSource.Pilot, Once, null, "Balance at or below (pts)"),
+        new(ScoringCheck.MonthlyRejection, "Rejected PIREP in the month", ScoringSource.Pilot, Once, "Rejection # in the month"),
+        new(ScoringCheck.RejectionDeactivation, "Account deactivated after rejections", ScoringSource.Pilot, Once, "Rejection # in the month")
     ];
 
     private static readonly Dictionary<ScoringCheck, ScoringCheckInfo> ByCheck = Checks.ToDictionary(c => c.Check);

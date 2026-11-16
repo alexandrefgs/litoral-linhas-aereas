@@ -94,10 +94,11 @@ public sealed class Pilot : Entity
         if (currentAirport.Icao != CurrentLocationIcao)
             throw new DomainException("The given airport is not the pilot's current location.");
 
-        var target = ranks
-            .OrderByDescending(r => r.Level)
-            .FirstOrDefault(r => r.IsMetBy(TotalFlightMinutes, Points))
-            ?? throw new DomainException("No rank available for the pilot.");
+        var ordered = ranks.OrderByDescending(r => r.Level).ToList();
+        if (ordered.Count == 0)
+            throw new DomainException("No ranks are configured.");
+
+        var target = ordered.FirstOrDefault(r => r.IsMetBy(TotalFlightMinutes, Points)) ?? ordered[^1];
 
         if (target.Id == RankId)
             return false;

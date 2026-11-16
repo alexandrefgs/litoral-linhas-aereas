@@ -102,13 +102,13 @@ import { formatMinutes } from '../../shared/utils/flight';
               <table class="w-full border border-line text-left text-sm">
                 <tbody>
                   @for (item of p.items; track $index) {
-                    <tr class="border-b border-line last:border-0">
+                    <tr class="border-b border-line last:border-0" [class.opacity-50]="item.isVoided">
                       <td class="w-36 border-r border-line px-4 py-2.5 font-bold" [class]="toneClass(item)">
                         <span class="flex items-center gap-2 whitespace-nowrap">
                           <i class="ti {{ toneIcon(item) }}" aria-hidden="true"></i>{{ value(item) }}
                         </span>
                       </td>
-                      <td class="px-4 py-2.5 text-ink">
+                      <td class="px-4 py-2.5 text-ink" [class.line-through]="item.isVoided">
                         {{ item.description }}
                         @if (item.quantity > 1) {
                           <span class="text-xs text-ink-muted">· ×{{ item.quantity }}</span>

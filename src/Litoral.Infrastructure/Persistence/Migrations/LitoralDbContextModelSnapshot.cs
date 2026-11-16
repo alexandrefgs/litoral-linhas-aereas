@@ -398,6 +398,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(4)
                         .HasColumnType("nvarchar(4)");
 
+                    b.Property<DateTime?>("BonusPaidAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -1299,6 +1302,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                                 .HasColumnType("nvarchar(200)");
 
                             b1.Property<bool>("IsManual")
+                                .HasColumnType("bit");
+
+                            b1.Property<bool>("IsVoided")
                                 .HasColumnType("bit");
 
                             b1.Property<string>("Outcome")

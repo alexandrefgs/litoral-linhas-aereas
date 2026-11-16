@@ -21,7 +21,8 @@ public enum ScoringCategory
     Cancellation,
     Inactivity,
     PilotsOfTheMonth,
-    AccountLoss
+    AccountLoss,
+    RejectionPenalties
 }
 
 public enum ScoringOutcome
@@ -98,5 +99,7 @@ public enum ScoringCheck
     BookingCancelled,
     Inactivity,
     PilotOfTheMonth,
-    AccountLoss
+    AccountLoss,
+    MonthlyRejection,
+    RejectionDeactivation
 }

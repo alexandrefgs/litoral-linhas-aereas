@@ -31,6 +31,8 @@ public sealed class BookingSupport(LitoralDbContext db)
 
     public async Task EnsureNoOpenBookingAsync(Guid pilotId, CancellationToken ct)
     {
+        if (!await db.Pilots.AnyAsync(p => p.Id == pilotId && p.IsActive, ct))
+            throw new AppException(AppErrorKind.Conflict, "Your account is inactive. Contact the Head of HR.");
         var open = await FindOpenBookingAsync(pilotId, ct);
         if (open is not null)
             throw new AppException(AppErrorKind.Conflict, $"You already have an open flight ({open.Callsign}). Cancel it or complete it first.");

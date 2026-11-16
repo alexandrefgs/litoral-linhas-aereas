@@ -28,6 +28,7 @@ public sealed class PirepConfiguration : IEntityTypeConfiguration<Pirep>
         builder.Property(p => p.OnlinePercent).HasPrecision(5, 2);
 
         builder.Ignore(p => p.IsDiversion);
+        builder.Ignore(p => p.IsPending);
 
         builder.HasOne(p => p.Booking).WithMany().HasForeignKey(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Pilot).WithMany().HasForeignKey(p => p.PilotId).OnDelete(DeleteBehavior.Restrict);

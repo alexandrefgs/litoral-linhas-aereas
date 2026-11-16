@@ -22,6 +22,7 @@ export interface PirepSummary {
 }
 
 export interface PirepScoreItem {
+  ruleId: string | null;
   category: string;
   check: string;
   description: string;
@@ -29,6 +30,7 @@ export interface PirepScoreItem {
   points: number;
   quantity: number;
   isManual: boolean;
+  isVoided: boolean;
 }
 
 export interface PirepEvent {
@@ -114,3 +116,36 @@ export const PIREP_STATUS_CLASS: Record<PirepStatus, string> = {
   Approved: 'bg-onda-500/15 text-onda-600',
   Rejected: 'bg-danger/10 text-danger'
 };
+
+export interface AdminPirepListItem {
+  summary: PirepSummary;
+  pilotId: string;
+  pilotName: string;
+  isDiversion: boolean;
+  reviewedAt: string | null;
+}
+
+export interface ReviewRule {
+  id: string;
+  category: string;
+  description: string;
+  outcome: 'Points' | 'Reject';
+  points: number;
+  mode: string;
+}
+
+export interface RejectionPreview {
+  rejectionNumber: number;
+  penalty: number;
+  deactivatesAccount: boolean;
+}
+
+export interface AdminPirep {
+  pirep: Pirep;
+  pilotEmail: string;
+  pilotPoints: number;
+  pilotIsActive: boolean;
+  reviewedByName: string | null;
+  reviewRules: ReviewRule[];
+  rejectionPreview: RejectionPreview;
+}

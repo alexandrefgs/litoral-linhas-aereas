@@ -24,6 +24,7 @@ public static class DbSeeder
         await SeedAircraftTypesAsync(db);
         await SeedAirportsAndHubsAsync(db);
         await SeedScoringRulesAsync(db);
+        await SeedRejectionPenaltiesAsync(db);
 
         await db.SaveChangesAsync();
         await scope.ServiceProvider.GetRequiredService<AirportCatalogImporter>().ImportIfEmptyAsync();
@@ -213,5 +214,20 @@ public static class DbSeeder
         ];
 
         db.ScoringRules.AddRange(rules);
+    }
+    private static async Task SeedRejectionPenaltiesAsync(LitoralDbContext db)
+    {
+        if (await db.ScoringRules.AnyAsync(r => r.Category == ScoringCategory.RejectionPenalties)) return;
+
+        const ScoringCategory category = ScoringCategory.RejectionPenalties;
+        const ScoringOutcome pts = ScoringOutcome.Points;
+        const ScoringMode once = ScoringMode.Once;
+
+        db.ScoringRules.AddRange(
+            new ScoringRule(category, ScoringCheck.MonthlyRejection, "1st rejection in the month", pts, -1000, once, 1, order: 1),
+            new ScoringRule(category, ScoringCheck.MonthlyRejection, "2nd rejection in the month", pts, -1500, once, 2, order: 2),
+            new ScoringRule(category, ScoringCheck.MonthlyRejection, "3rd rejection in the month", pts, -2000, once, 3, order: 3),
+            new ScoringRule(category, ScoringCheck.MonthlyRejection, "4th rejection in the month", pts, -10000, once, 4, order: 4),
+            new ScoringRule(category, ScoringCheck.RejectionDeactivation, "4th rejection in the month: account deactivated", ScoringOutcome.Reject, 0, once, 4, order: 5));
     }
 }

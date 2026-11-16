@@ -14,6 +14,7 @@ public sealed class MonthlyRosterConfiguration : IEntityTypeConfiguration<Monthl
 
         builder.Ignore(r => r.NextLeg);
         builder.Ignore(r => r.Bonus);
+        builder.Ignore(r => r.CanPayBonus);
 
         builder.HasOne(r => r.Pilot).WithMany().HasForeignKey(r => r.PilotId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(r => r.Legs).WithOne(l => l.Roster).HasForeignKey(l => l.RosterId).OnDelete(DeleteBehavior.Cascade);
