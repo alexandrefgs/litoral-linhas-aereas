@@ -18,16 +18,32 @@ public sealed class Airport : Entity
 
     public Airport(string icao, string name, string city, string country, double latitude, double longitude, int minimumRankLevel = 1)
     {
-        if (string.IsNullOrWhiteSpace(icao) || icao.Length != 4)
-            throw new DomainException("ICAO do aeroporto deve ter 4 letras.");
+        if (string.IsNullOrWhiteSpace(icao) || icao.Trim().Length != 4 || !icao.Trim().All(char.IsLetterOrDigit))
+            throw new DomainException("ICAO do aeroporto deve ter 4 caracteres (letras ou números).");
 
-        Icao = icao.ToUpperInvariant();
-        Name = name;
-        City = city;
-        Country = country;
+        Icao = icao.Trim().ToUpperInvariant();
+        Update(name, city, country, latitude, longitude);
+        SetMinimumRankLevel(minimumRankLevel);
+    }
+
+    public void Update(string name, string city, string country, double latitude, double longitude)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("Nome do aeroporto é obrigatório.");
+        if (string.IsNullOrWhiteSpace(city))
+            throw new DomainException("Cidade do aeroporto é obrigatória.");
+        if (string.IsNullOrWhiteSpace(country))
+            throw new DomainException("País do aeroporto é obrigatório.");
+        if (latitude is < -90 or > 90)
+            throw new DomainException("Latitude deve estar entre -90 e 90.");
+        if (longitude is < -180 or > 180)
+            throw new DomainException("Longitude deve estar entre -180 e 180.");
+
+        Name = name.Trim();
+        City = city.Trim();
+        Country = country.Trim();
         Latitude = latitude;
         Longitude = longitude;
-        SetMinimumRankLevel(minimumRankLevel);
     }
 
     public void SetMinimumRankLevel(int level)

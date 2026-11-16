@@ -1,18 +1,22 @@
 using System.Text;
+using Litoral.Application.Admin;
 using Litoral.Application.Auth;
+using Litoral.Application.Common;
+using Litoral.Application.Pilots;
+using Litoral.Application.Reference;
+using Litoral.Domain.Staff;
+using Litoral.Infrastructure.Admin;
 using Litoral.Infrastructure.Auth;
 using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
+using Litoral.Infrastructure.Pilots;
+using Litoral.Infrastructure.Reference;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Litoral.Application.Pilots;
-using Litoral.Application.Reference;
-using Litoral.Infrastructure.Pilots;
-using Litoral.Infrastructure.Reference;
 
 namespace Litoral.Infrastructure;
 
@@ -59,12 +63,17 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            foreach (var (policy, positions) in StaffPolicies.Positions)
+                options.AddPolicy(policy, p => p.RequireRole(positions.Prepend(StaffPositions.CeoFounder)));
+        });
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPilotService, PilotService>();
         services.AddScoped<IReferenceService, ReferenceService>();
+        services.AddScoped<IAirportAdminService, AirportAdminService>();
 
         return services;
     }

@@ -13,11 +13,19 @@ public sealed class Hub : Entity
 
     public Hub(Airport airport, OperationType operations)
     {
-        if (operations == 0)
-            throw new DomainException("Hub precisa ter ao menos um tipo de operação.");
+        if (airport.MinimumRankLevel > 1)
+            throw new DomainException("Hubs precisam ser acessíveis a todos os pilotos (patente mínima FO).");
 
         Airport = airport;
         AirportId = airport.Id;
+        SetOperations(operations);
+    }
+
+    public void SetOperations(OperationType operations)
+    {
+        if (operations == 0)
+            throw new DomainException("Hub precisa ter ao menos um tipo de operação.");
+
         Operations = operations;
     }
 
