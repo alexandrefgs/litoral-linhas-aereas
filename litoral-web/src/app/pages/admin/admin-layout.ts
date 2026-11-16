@@ -12,7 +12,7 @@ interface AdminMenuItem {
 
 const MENU: AdminMenuItem[] = [
   { area: 'routes', label: 'Airports', icon: 'ti-building-airport', path: '/admin/airports' },
-  { area: 'routes', label: 'Routes', icon: 'ti-route' },
+  { area: 'routes', label: 'Routes', icon: 'ti-route', path: '/admin/routes' },
   { area: 'fleet', label: 'Fleet', icon: 'ti-plane' },
   { area: 'pilots', label: 'Pilots', icon: 'ti-users' },
   { area: 'staff', label: 'Staff', icon: 'ti-shield-lock' },

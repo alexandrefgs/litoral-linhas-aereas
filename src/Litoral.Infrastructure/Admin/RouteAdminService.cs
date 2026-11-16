@@ -79,10 +79,10 @@ public sealed class RouteAdminService(LitoralDbContext db) : IRouteAdminService
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task<FlightNumberSuggestionDto> SuggestFlightNumberAsync(string departureIcao, string arrivalIcao, bool cargo, CancellationToken ct)
+    public async Task<FlightNumberSuggestionDto> SuggestFlightNumberAsync(string? departureIcao, string? arrivalIcao, bool cargo, CancellationToken ct)
     {
-        var block = cargo
-            ? FlightBlock.FerryAndCargo
+        var block = cargo ? FlightBlock.FerryAndCargo
+            : string.IsNullOrWhiteSpace(departureIcao) || string.IsNullOrWhiteSpace(arrivalIcao) ? FlightBlock.Domestic
             : await ResolveBlockAsync(Normalize(departureIcao), Normalize(arrivalIcao), ct);
 
         var (min, max) = FlightBlockRules.Range(block);
@@ -203,5 +203,5 @@ public sealed class RouteAdminService(LitoralDbContext db) : IRouteAdminService
             route.IsActive);
     }
 
-    private static string Normalize(string icao) => (icao ?? string.Empty).Trim().ToUpperInvariant();
+    private static string Normalize(string? icao) => (icao ?? string.Empty).Trim().ToUpperInvariant();
 }

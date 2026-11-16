@@ -20,7 +20,7 @@ public class AdminRoutesController(IRouteAdminService routes) : ControllerBase
 
     [HttpGet("next-number")]
     public async Task<ActionResult<FlightNumberSuggestionDto>> NextNumber(
-        [FromQuery] string departure, [FromQuery] string arrival, [FromQuery] bool cargo, CancellationToken ct) =>
+        [FromQuery] string? departure, [FromQuery] string? arrival, [FromQuery] bool cargo, CancellationToken ct) =>
         Ok(await routes.SuggestFlightNumberAsync(departure, arrival, cargo, ct));
 
     [HttpGet("{id:guid}")]

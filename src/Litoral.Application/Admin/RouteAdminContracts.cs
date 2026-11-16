@@ -44,6 +44,6 @@ public interface IRouteAdminService
     Task<IReadOnlyList<AdminRouteDto>> CreateAsync(CreateRouteRequest request, CancellationToken ct);
     Task<AdminRouteDto> UpdateAsync(Guid id, UpdateRouteRequest request, CancellationToken ct);
     Task DeleteAsync(Guid id, CancellationToken ct);
-    Task<FlightNumberSuggestionDto> SuggestFlightNumberAsync(string departureIcao, string arrivalIcao, bool cargo, CancellationToken ct);
+    Task<FlightNumberSuggestionDto> SuggestFlightNumberAsync(string? departureIcao, string? arrivalIcao, bool cargo, CancellationToken ct);
     Task<IReadOnlyList<AircraftTypeDto>> ListAircraftTypesAsync(CancellationToken ct);
 }

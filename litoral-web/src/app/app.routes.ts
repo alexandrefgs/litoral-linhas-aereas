@@ -32,6 +32,11 @@ export const routes: Routes = [
         path: 'airports',
         canActivate: [staffGuard('routes')],
         loadComponent: () => import('./pages/admin/airports/admin-airports').then(m => m.AdminAirports)
+      },
+      {
+        path: 'routes',
+        canActivate: [staffGuard('routes')],
+        loadComponent: () => import('./pages/admin/routes/admin-routes').then(m => m.AdminRoutes)
       }
     ]
   },
