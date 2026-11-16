@@ -13,6 +13,10 @@ public class AcarsController(IFlightTrackingService tracking) : ControllerBase
     [HttpGet("live")]
     public async Task<ActionResult<IReadOnlyList<LiveFlightDto>>> Live(CancellationToken ct) =>
         Ok(await tracking.LiveAsync(ct));
+    
+    [HttpGet("live/{sessionId:guid}/track")]
+    public async Task<ActionResult<IReadOnlyList<TrackPointDto>>> LiveTrack(Guid sessionId, CancellationToken ct) =>
+        Ok(await tracking.LiveTrackAsync(sessionId, ct));
 
     [HttpGet("flight")]
     public async Task<ActionResult<FlightSessionDto?>> Active(CancellationToken ct) =>

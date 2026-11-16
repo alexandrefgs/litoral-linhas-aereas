@@ -138,6 +138,7 @@ public interface IFlightTrackingService
     Task<int> ReportPositionsAsync(string userId, PositionBatchRequest request, CancellationToken ct);
     Task<PirepDto> CompleteAsync(string userId, CompleteFlightRequest request, CancellationToken ct);
     Task<IReadOnlyList<LiveFlightDto>> LiveAsync(CancellationToken ct);
+    Task<IReadOnlyList<TrackPointDto>> LiveTrackAsync(Guid sessionId, CancellationToken ct);
 }
 
 public interface IPirepService
@@ -147,6 +148,8 @@ public interface IPirepService
     Task<PirepDto> FileManualAsync(string userId, ManualPirepRequest request, CancellationToken ct);
 }
 
+public sealed record LiveAirportDto(string Icao, string City, string Country, double Latitude, double Longitude);
+
 public sealed record LiveFlightDto(
     Guid Id,
     string Callsign,
@@ -154,15 +157,24 @@ public sealed record LiveFlightDto(
     string PilotName,
     string Registration,
     string AircraftTypeIcao,
-    string DepartureIcao,
-    string ArrivalIcao,
+    string AircraftTypeName,
+    string? PhotoUrl,
+    string? PhotoCredit,
+    bool IsCargo,
+    LiveAirportDto Departure,
+    LiveAirportDto Arrival,
     string Network,
+    string? Simulator,
     double Latitude,
     double Longitude,
     int AltitudeFt,
     int GroundSpeedKt,
     int Heading,
     string? Phase,
+    int DistanceNm,
+    int RemainingNm,
+    int Progress,
+    int? MinutesToArrival,
     DateTime LastReportAt);
 
 public interface IFlightSimulator

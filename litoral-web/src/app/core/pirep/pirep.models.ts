@@ -89,6 +89,26 @@ export const NETWORK_LABELS: Record<FlightNetwork, string> = {
   Ivao: 'IVAO'
 };
 
+export const NETWORK_LOGOS: Partial<Record<FlightNetwork, string>> = {
+  Vatsim: '/networks/vatsim.png',
+  Ivao: '/networks/ivao.png'
+};
+
+export const NETWORK_LOGO_LIGHT_INVERT: Partial<Record<FlightNetwork, boolean>> = {
+  Ivao: true,
+  Vatsim: true
+};
+
+const NETWORK_TRACKERS: Partial<Record<FlightNetwork, { name: string; url: (callsign: string) => string }>> = {
+  Vatsim: { name: 'VATSIM Radar', url: callsign => `https://vatsim-radar.com/?pilot=${encodeURIComponent(callsign)}` },
+  Ivao: { name: 'Webeye', url: callsign => `https://webeye.ivao.aero/?callsign=${encodeURIComponent(callsign)}` }
+};
+
+export function networkTracker(network: FlightNetwork, callsign: string): { name: string; url: string } | null {
+  const tracker = NETWORK_TRACKERS[network];
+  return tracker ? { name: tracker.name, url: tracker.url(callsign) } : null;
+}
+
 export const PIREP_STATUS_CLASS: Record<PirepStatus, string> = {
   Pending: 'bg-highlight/20 text-ink',
   Approved: 'bg-onda-500/15 text-onda-600',

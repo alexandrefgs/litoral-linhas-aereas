@@ -12,7 +12,7 @@ namespace Litoral.Infrastructure.Flights;
 public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport support, PirepFiling filing) : IFlightTrackingService
 {
     private const int MaxPositionsPerBatch = 500;
-
+    private const int MaxLiveTrackPoints = 1000;
     private static readonly TimeSpan LiveTimeout = TimeSpan.FromMinutes(10);
 
     public async Task<IReadOnlyList<LiveFlightDto>> LiveAsync(CancellationToken ct)
@@ -28,23 +28,72 @@ public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport su
             .OrderBy(s => s.Booking.Callsign)
             .ToListAsync(ct);
 
-        return sessions.Select(s => new LiveFlightDto(
+        return sessions.Select(ToLive).ToList();
+    }
+
+    public async Task<IReadOnlyList<TrackPointDto>> LiveTrackAsync(Guid sessionId, CancellationToken ct)
+    {
+        var points = await db.FlightTrackPoints.AsNoTracking()
+            .Where(p => p.SessionId == sessionId)
+            .OrderBy(p => p.At)
+            .Select(p => new TrackPointDto(p.At, p.Latitude, p.Longitude, p.AltitudeFt, p.GroundSpeedKt))
+            .ToListAsync(ct);
+
+        var step = Math.Max(1, (int)Math.Ceiling(points.Count / (double)MaxLiveTrackPoints));
+        return points.Where((_, i) => i % step == 0 || i == points.Count - 1).ToList();
+    }
+
+    private static LiveFlightDto ToLive(FlightSession s)
+    {
+        var booking = s.Booking;
+        var from = booking.Route.DepartureAirport;
+        var to = booking.Route.ArrivalAirport;
+        var latitude = s.Latitude!.Value;
+        var longitude = s.Longitude!.Value;
+        var groundSpeed = s.GroundSpeedKt ?? 0;
+
+        var total = Math.Max(1, booking.Route.DistanceNm);
+        var remaining = (int)Math.Round(DistanceNm(latitude, longitude, to.Latitude, to.Longitude));
+        var progress = Math.Clamp((int)Math.Round(100.0 * (total - remaining) / total), 0, 100);
+        int? eta = groundSpeed >= 50 ? (int)Math.Round(remaining / (double)groundSpeed * 60) : null;
+
+        return new LiveFlightDto(
             s.Id,
-            s.Booking.Callsign,
-            s.Booking.Pilot.DisplayId,
-            $"{s.Booking.Pilot.FirstName} {s.Booking.Pilot.LastName}",
-            s.Booking.Aircraft.Registration,
-            s.Booking.Aircraft.AircraftType.IcaoCode,
-            s.Booking.Route.DepartureAirport.Icao,
-            s.Booking.Route.ArrivalAirport.Icao,
+            booking.Callsign,
+            booking.Pilot.DisplayId,
+            $"{booking.Pilot.FirstName} {booking.Pilot.LastName}",
+            booking.Aircraft.Registration,
+            booking.Aircraft.AircraftType.IcaoCode,
+            booking.Aircraft.AircraftType.Name,
+            booking.Aircraft.PhotoUrl,
+            booking.Aircraft.PhotoCredit,
+            booking.Route.IsCargo,
+            new LiveAirportDto(from.Icao, from.City, from.Country, from.Latitude, from.Longitude),
+            new LiveAirportDto(to.Icao, to.City, to.Country, to.Latitude, to.Longitude),
             s.Network.ToString(),
-            s.Latitude!.Value,
-            s.Longitude!.Value,
+            s.Simulator,
+            latitude,
+            longitude,
             s.AltitudeFt ?? 0,
-            s.GroundSpeedKt ?? 0,
+            groundSpeed,
             s.Heading ?? 0,
             s.Phase,
-            s.LastReportAt!.Value)).ToList();
+            total,
+            remaining,
+            progress,
+            eta,
+            s.LastReportAt!.Value);
+    }
+
+    private static double DistanceNm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double earthRadiusNm = 3440.065;
+        static double Rad(double deg) => deg * Math.PI / 180;
+
+        var dLat = Rad(lat2 - lat1);
+        var dLon = Rad(lon2 - lon1);
+        var a = Math.Pow(Math.Sin(dLat / 2), 2) + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2)) * Math.Pow(Math.Sin(dLon / 2), 2);
+        return 2 * earthRadiusNm * Math.Asin(Math.Sqrt(a));
     }
 
     public async Task<FlightSessionDto?> GetActiveAsync(string userId, CancellationToken ct)
