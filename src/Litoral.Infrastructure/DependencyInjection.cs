@@ -21,6 +21,8 @@ using Litoral.Infrastructure.Storage;
 using Litoral.Application.Bookings;
 using Litoral.Infrastructure.Bookings;
 using Litoral.Infrastructure.External;
+using Litoral.Application.Scoring;
+using Litoral.Infrastructure.Scoring;
 
 namespace Litoral.Infrastructure;
 
@@ -82,6 +84,7 @@ public static class DependencyInjection
         services.AddHttpClient<AirportCatalogImporter>(client => client.Timeout = TimeSpan.FromMinutes(2));
         services.AddScoped<IRouteAdminService, RouteAdminService>();
         services.AddScoped<IFleetAdminService, FleetAdminService>();
+        services.AddScoped<IScoringRuleService, ScoringRuleService>();
         services.AddSingleton<IPhotoStorage, LocalPhotoStorage>();
         services.AddHostedService<MaintenanceReleaseService>();
         services.AddScoped<BookingSupport>();

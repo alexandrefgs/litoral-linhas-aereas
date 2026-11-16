@@ -20,6 +20,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<Aircraft> Aircraft => Set<Aircraft>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<AirportCatalogEntry> AirportCatalog => Set<AirportCatalogEntry>();
+    public DbSet<ScoringRule> ScoringRules => Set<ScoringRule>();
     public DbSet<MonthlyRoster> MonthlyRosters => Set<MonthlyRoster>();
     public DbSet<RosterLeg> RosterLegs => Set<RosterLeg>();
 
