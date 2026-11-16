@@ -2,6 +2,7 @@ using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace Litoral.Api.Controllers.Admin;
 
@@ -39,4 +40,19 @@ public class AdminAirportsController(IAirportAdminService airports, IAirportLook
         await airports.DeleteAsync(icao, ct);
         return NoContent();
     }
+        [HttpPost("{icao}/photo")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<ActionResult<AdminAirportDto>> UploadPhoto(string icao, IFormFile file, [FromForm] string? credit, CancellationToken ct)
+    {
+        await using var stream = file.OpenReadStream();
+        return Ok(await airports.UploadPhotoAsync(icao, new PhotoUpload(stream, file.FileName, file.ContentType, file.Length, credit), ct));
+    }
+
+    [HttpPut("{icao}/photo/credit")]
+    public async Task<ActionResult<AdminAirportDto>> UpdatePhotoCredit(string icao, AirportPhotoCreditRequest request, CancellationToken ct) =>
+        Ok(await airports.UpdatePhotoCreditAsync(icao, request.Credit, ct));
+
+    [HttpDelete("{icao}/photo")]
+    public async Task<ActionResult<AdminAirportDto>> RemovePhoto(string icao, CancellationToken ct) =>
+        Ok(await airports.RemovePhotoAsync(icao, ct));
 }

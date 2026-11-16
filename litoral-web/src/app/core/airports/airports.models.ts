@@ -16,6 +16,7 @@ export interface DirectoryAirport {
   latitude: number;
   longitude: number;
   photoUrl: string | null;
+  photoCredit: string | null;
   isBase: boolean;
   passenger: boolean;
   cargo: boolean;

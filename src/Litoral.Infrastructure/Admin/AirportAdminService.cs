@@ -7,8 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Admin;
 
-public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminService
+public sealed class AirportAdminService(LitoralDbContext db, IPhotoStorage photos) : IAirportAdminService
 {
+    private const string PhotoFolder = "airports";
     public async Task<IReadOnlyList<AdminAirportDto>> ListAsync(CancellationToken ct)
     {
         var rankCodes = await LoadRankCodesAsync(ct);
@@ -43,7 +44,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
             request.Longitude,
             ToOperations(request.Passenger, request.Cargo),
             level);
-
+        airport.SetIataCode(request.Iata);
         db.Airports.Add(airport);
 
         if (request.IsHub)
@@ -77,6 +78,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         await EnsureNoRoutesUsingAsync(airport, OperationType.Cargo, request.Cargo, ct);
 
         airport.Update(request.Name, request.City, request.Country, request.Latitude, request.Longitude);
+        airport.SetIataCode(request.Iata);
         airport.SetOperations(operations);
 
         if (hub is not null && !request.IsHub)
@@ -115,8 +117,37 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         if (await db.Pilots.AnyAsync(p => p.CurrentLocationIcao == airport.Icao || p.BaseIcao == airport.Icao, ct))
             throw new AppException(AppErrorKind.Conflict, "There are pilots at this airport.");
 
+                var photo = airport.PhotoUrl;
         db.Airports.Remove(airport);
         await db.SaveChangesAsync(ct);
+        photos.Delete(photo);
+    }
+
+    public async Task<AdminAirportDto> UploadPhotoAsync(string icao, PhotoUpload upload, CancellationToken ct)
+    {
+        var airport = await FindAsync(icao, ct);
+        var url = await photos.SaveAsync(PhotoFolder, upload, ct);
+        var previous = airport.SetPhoto(url, upload.Credit);
+        await db.SaveChangesAsync(ct);
+        photos.Delete(previous);
+        return await ToDtoAsync(airport, ct);
+    }
+
+    public async Task<AdminAirportDto> UpdatePhotoCreditAsync(string icao, string? credit, CancellationToken ct)
+    {
+        var airport = await FindAsync(icao, ct);
+        airport.SetPhotoCredit(credit);
+        await db.SaveChangesAsync(ct);
+        return await ToDtoAsync(airport, ct);
+    }
+
+    public async Task<AdminAirportDto> RemovePhotoAsync(string icao, CancellationToken ct)
+    {
+        var airport = await FindAsync(icao, ct);
+        var previous = airport.SetPhoto(null, null);
+        await db.SaveChangesAsync(ct);
+        photos.Delete(previous);
+        return await ToDtoAsync(airport, ct);
     }
 
     private async Task EnsureNoRoutesUsingAsync(Airport airport, OperationType operation, bool keeps, CancellationToken ct)
@@ -161,6 +192,7 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
 
     private static AdminAirportDto ToDto(Airport airport, bool isHub, Dictionary<int, string> rankCodes) => new(
         airport.Icao,
+        airport.IataCode,
         airport.Name,
         airport.City,
         airport.Country,
@@ -169,7 +201,9 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         rankCodes.GetValueOrDefault(airport.MinimumRankLevel, airport.MinimumRankLevel.ToString()),
         airport.Supports(OperationType.Passenger),
         airport.Supports(OperationType.Cargo),
-        isHub);
+        isHub,
+        airport.PhotoUrl,
+        airport.PhotoCredit);
 
     private static OperationType ToOperations(bool passenger, bool cargo)
     {

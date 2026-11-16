@@ -66,7 +66,21 @@ type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
             <tbody>
               @for (airport of filtered(); track airport.icao) {
                 <tr class="border-b border-line last:border-0 hover:bg-surface-alt/50">
-                  <td class="px-4 py-3 font-mono font-bold text-ink">{{ airport.icao }}</td>
+                                    <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <div class="flex h-9 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
+                        @if (airport.photoUrl) {
+                          <img [src]="airport.photoUrl" alt="" class="h-full w-full object-cover" />
+                        } @else {
+                          <i class="ti ti-photo-off text-ink-muted" aria-hidden="true"></i>
+                        }
+                      </div>
+                      <div>
+                        <p class="font-mono font-bold text-ink">{{ airport.icao }}</p>
+                        <p class="font-mono text-xs text-ink-muted">{{ airport.iata ?? '—' }}</p>
+                      </div>
+                    </div>
+                  </td>
                   <td class="px-4 py-3">
                     <p class="font-medium text-ink">{{ airport.name }}</p>
                     <p class="text-xs text-ink-muted">{{ airport.city }}</p>

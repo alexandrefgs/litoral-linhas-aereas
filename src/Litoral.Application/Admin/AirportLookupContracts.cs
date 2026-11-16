@@ -2,6 +2,7 @@ namespace Litoral.Application.Admin;
 
 public sealed record AirportLookupDto(
     string Icao,
+    string? Iata,
     string Name,
     string City,
     string Country,

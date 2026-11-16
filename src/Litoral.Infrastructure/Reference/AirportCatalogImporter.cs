@@ -16,19 +16,40 @@ public sealed partial class AirportCatalogImporter(
 
     private static readonly HashSet<string> AirportTypes = ["large_airport", "medium_airport", "small_airport"];
 
-    public async Task ImportIfEmptyAsync(CancellationToken ct = default)
+        public async Task ImportIfEmptyAsync(CancellationToken ct = default)
     {
-        if (await db.AirportCatalog.AnyAsync(ct)) return;
+        if (!await db.AirportCatalog.AnyAsync(a => a.IataCode != null, ct))
+        {
+            try
+            {
+                var count = await ImportAsync(ct);
+                logger.LogInformation("Airport catalog imported: {Count} airports.", count);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                logger.LogWarning(ex, "Could not download the airport catalog. ICAO lookup will be unavailable until the next start.");
+                return;
+            }
+        }
 
-        try
-        {
-            var count = await ImportAsync(ct);
-            logger.LogInformation("Airport catalog imported: {Count} airports.", count);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            logger.LogWarning(ex, "Could not download the airport catalog. ICAO lookup will be unavailable until the next start.");
-        }
+        await FillMissingIataAsync(ct);
+    }
+
+    private async Task FillMissingIataAsync(CancellationToken ct)
+    {
+        var airports = await db.Airports.Where(a => a.IataCode == null).ToListAsync(ct);
+        if (airports.Count == 0) return;
+
+        var icaos = airports.Select(a => a.Icao).ToList();
+        var codes = await db.AirportCatalog.AsNoTracking()
+            .Where(c => icaos.Contains(c.Icao) && c.IataCode != null)
+            .ToDictionaryAsync(c => c.Icao, c => c.IataCode!, ct);
+
+        foreach (var airport in airports)
+            if (codes.TryGetValue(airport.Icao, out var iata))
+                airport.SetIataCode(iata);
+
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task<int> ImportAsync(CancellationToken ct = default)
@@ -62,6 +83,7 @@ public sealed partial class AirportCatalogImporter(
             entries[icao] = new AirportCatalogEntry
             {
                 Icao = icao,
+                IataCode = IataPattern().IsMatch(row[h["iata_code"]]) ? row[h["iata_code"]] : null,
                 Name = Truncate(row[h["name"]], 150),
                 City = Truncate(row[h["municipality"]], 100),
                 CountryCode = Truncate(countryCode, 2),
@@ -106,4 +128,7 @@ public sealed partial class AirportCatalogImporter(
 
     [GeneratedRegex("^[A-Z]{4}$")]
     private static partial Regex GpsPattern();
+
+    [GeneratedRegex("^[A-Z0-9]{3}$")]
+    private static partial Regex IataPattern();
 }

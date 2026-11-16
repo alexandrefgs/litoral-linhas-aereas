@@ -17,6 +17,7 @@ public sealed class Airport : Entity
     public int MinimumRankLevel { get; private set; } = 1;
     public string? IataCode { get; private set; }
     public string? PhotoUrl { get; private set; }
+    public string? PhotoCredit { get; private set; }
 
     private Airport() { }
 
@@ -86,11 +87,21 @@ public sealed class Airport : Entity
         IataCode = code;
     }
 
-    public string? SetPhoto(string? url)
+    public string? SetPhoto(string? url, string? credit)
     {
         var previous = PhotoUrl;
-        PhotoUrl = url;
+        PhotoUrl = string.IsNullOrWhiteSpace(url) ? null : url.Trim();
+        SetPhotoCredit(credit);
         return previous;
+    }
+
+    public void SetPhotoCredit(string? credit)
+    {
+        var clean = PhotoUrl is null || string.IsNullOrWhiteSpace(credit) ? null : credit.Trim();
+        if (clean?.Length > 150)
+            throw new DomainException("Photo credit must have up to 150 characters.");
+
+        PhotoCredit = clean;
     }
     public bool IsAccessibleTo(Rank rank) => rank.Level >= MinimumRankLevel;
 

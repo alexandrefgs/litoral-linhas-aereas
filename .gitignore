@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 
 src/Litoral.Api/wwwroot/uploads/*
 !src/Litoral.Api/wwwroot/uploads/.gitkeep
+/uploads/

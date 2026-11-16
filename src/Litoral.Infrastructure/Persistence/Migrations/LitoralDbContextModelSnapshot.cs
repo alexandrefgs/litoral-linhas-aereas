@@ -177,6 +177,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<int>("Operations")
                         .HasColumnType("int");
 
+                    b.Property<string>("PhotoCredit")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
@@ -1003,6 +1006,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IataCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("float");

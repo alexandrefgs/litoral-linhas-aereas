@@ -3,6 +3,7 @@ namespace Litoral.Infrastructure.Reference;
 public sealed class AirportCatalogEntry
 {
     public string Icao { get; set; } = null!;
+    public string? IataCode { get; set; }
     public string Name { get; set; } = null!;
     public string City { get; set; } = null!;
     public string CountryCode { get; set; } = null!;

@@ -14,7 +14,7 @@ public sealed class AirportLookupService(LitoralDbContext db) : IAirportLookupSe
         return await db.AirportCatalog
             .AsNoTracking()
             .Where(a => a.Icao == code)
-            .Select(a => new AirportLookupDto(a.Icao, a.Name, a.City, a.CountryName, a.CountryCode, a.Continent, a.Latitude, a.Longitude))
+            .Select(a => new AirportLookupDto(a.Icao, a.IataCode, a.Name, a.City, a.CountryName, a.CountryCode, a.Continent, a.Latitude, a.Longitude))
             .FirstOrDefaultAsync(ct)
             ?? throw new AppException(AppErrorKind.NotFound, $"Airport {code} was not found in the catalog.");
     }

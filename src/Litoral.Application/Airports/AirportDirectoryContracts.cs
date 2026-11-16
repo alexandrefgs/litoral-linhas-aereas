@@ -11,6 +11,7 @@ public sealed record AirportListItemDto(
     double Latitude,
     double Longitude,
     string? PhotoUrl,
+    string? PhotoCredit,
     bool IsBase,
     bool Passenger,
     bool Cargo,
@@ -35,6 +36,7 @@ public sealed record AirportAircraftDto(
     string TypeIcao,
     string TypeName,
     string? PhotoUrl,
+    string? PhotoCredit,
     string Status,
     string? LastCallsign,
     DateTime? LastFlightAt);

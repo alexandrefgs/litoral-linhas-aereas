@@ -92,6 +92,9 @@ const FILTERS: { key: AirportFilter; label: string }[] = [
                 @if (!a.photoUrl) {
                   <i class="ti ti-building-airport absolute inset-0 m-auto h-fit w-fit text-5xl text-white/40" aria-hidden="true"></i>
                 }
+                @if (a.photoCredit) {
+                  <span class="absolute bottom-1 left-2 max-w-[60%] truncate text-[10px] text-white/80 [text-shadow:0_1px_2px_rgba(0,0,0,.8)]">© {{ a.photoCredit }}</span>
+                }
                 @if (current) {
                   <span class="absolute bottom-2 right-2 rounded-md bg-accent px-2.5 py-1 text-xs font-bold text-on-accent shadow">You are here</span>
                 }

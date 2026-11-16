@@ -1,13 +1,15 @@
 using Litoral.Application.Admin;
 using Litoral.Application.Common;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Litoral.Infrastructure.Storage;
 
-public sealed class LocalPhotoStorage(IWebHostEnvironment environment) : IPhotoStorage
+public sealed class LocalPhotoStorage(IHostEnvironment environment, IConfiguration configuration) : IPhotoStorage
 {
+    public const string RequestPath = "/uploads";
+
     private const long MaxBytes = 5 * 1024 * 1024;
-    private const string UploadsRoot = "uploads";
 
     private static readonly Dictionary<string, string> Extensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -15,6 +17,20 @@ public sealed class LocalPhotoStorage(IWebHostEnvironment environment) : IPhotoS
         ["image/png"] = ".png",
         ["image/webp"] = ".webp"
     };
+
+    private readonly string _root = ResolveRoot(environment, configuration);
+
+    public static string ResolveRoot(IHostEnvironment environment, IConfiguration configuration)
+    {
+        var configured = configuration["Storage:UploadsPath"];
+        var path = string.IsNullOrWhiteSpace(configured)
+            ? Path.Combine(environment.ContentRootPath, "..", "..", "uploads")
+            : Path.IsPathRooted(configured) ? configured : Path.Combine(environment.ContentRootPath, configured);
+
+        var full = Path.GetFullPath(path);
+        Directory.CreateDirectory(full);
+        return full;
+    }
 
     public async Task<string> SaveAsync(string folder, PhotoUpload upload, CancellationToken ct)
     {
@@ -25,7 +41,7 @@ public sealed class LocalPhotoStorage(IWebHostEnvironment environment) : IPhotoS
         if (!Extensions.TryGetValue(upload.ContentType, out var extension))
             throw new AppException(AppErrorKind.Validation, "Use a JPG, PNG or WEBP photo.");
 
-        var directory = Path.Combine(WebRoot(), UploadsRoot, folder);
+        var directory = Path.Combine(_root, folder);
         Directory.CreateDirectory(directory);
 
         var fileName = $"{Guid.CreateVersion7():N}{extension}";
@@ -34,23 +50,17 @@ public sealed class LocalPhotoStorage(IWebHostEnvironment environment) : IPhotoS
             await upload.Content.CopyToAsync(file, ct);
         }
 
-        return $"/{UploadsRoot}/{folder}/{fileName}";
+        return $"{RequestPath}/{folder}/{fileName}";
     }
 
     public void Delete(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url) || !url.StartsWith($"/{UploadsRoot}/", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(url) || !url.StartsWith($"{RequestPath}/", StringComparison.Ordinal))
             return;
 
-        var root = Path.GetFullPath(Path.Combine(WebRoot(), UploadsRoot));
-        var path = Path.GetFullPath(Path.Combine(WebRoot(), url.TrimStart('/')));
+        var path = Path.GetFullPath(Path.Combine(_root, url[(RequestPath.Length + 1)..]));
 
-        if (path.StartsWith(root, StringComparison.Ordinal) && File.Exists(path))
+        if (path.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.Ordinal) && File.Exists(path))
             File.Delete(path);
     }
-
-    private string WebRoot() =>
-        string.IsNullOrEmpty(environment.WebRootPath)
-            ? Path.Combine(environment.ContentRootPath, "wwwroot")
-            : environment.WebRootPath;
 }

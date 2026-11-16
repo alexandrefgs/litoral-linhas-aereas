@@ -11,6 +11,7 @@ public sealed class AirportCatalogEntryConfiguration : IEntityTypeConfiguration<
         builder.ToTable("AirportCatalog");
         builder.HasKey(a => a.Icao);
         builder.Property(a => a.Icao).HasMaxLength(4);
+        builder.Property(a => a.IataCode).HasMaxLength(3);
         builder.Property(a => a.Name).HasMaxLength(150).IsRequired();
         builder.Property(a => a.City).HasMaxLength(100).IsRequired();
         builder.Property(a => a.CountryCode).HasMaxLength(2).IsRequired();

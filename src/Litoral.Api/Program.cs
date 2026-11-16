@@ -2,6 +2,8 @@ using Litoral.Api.Errors;
 using Litoral.Api.OpenApi;
 using Litoral.Infrastructure;
 using Litoral.Infrastructure.Persistence;
+using Litoral.Infrastructure.Storage;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(LocalPhotoStorage.ResolveRoot(app.Environment, app.Configuration)),
+    RequestPath = LocalPhotoStorage.RequestPath
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

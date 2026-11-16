@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { AdminAirport, AdminAirportsService, AirportPayload } from '../../../core/admin/admin-airports.service';
@@ -15,6 +15,9 @@ import {
 } from '../../../shared/utils/coordinates';
 
 type LookupState = 'idle' | 'loading' | 'found' | 'notFound' | 'exists';
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
   const { passenger, cargo } = group.value as { passenger?: boolean; cargo?: boolean };
@@ -60,10 +63,10 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
             }
           </div>
           <div>
-            <label for="country" class="field-label">Country</label>
-            <input id="country" formControlName="country" class="field-input" />
-            @if (showError('country')) {
-              <p class="field-error">Required field.</p>
+            <label for="iata" class="field-label">IATA</label>
+            <input id="iata" formControlName="iata" maxlength="3" class="field-input font-mono uppercase" placeholder="FLN" />
+            @if (showError('iata')) {
+              <p class="field-error">Enter 3 letters or numbers.</p>
             }
           </div>
           <div class="sm:col-span-2">
@@ -73,10 +76,17 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
               <p class="field-error">Required field.</p>
             }
           </div>
-          <div class="sm:col-span-2">
+          <div>
             <label for="city" class="field-label">City</label>
             <input id="city" formControlName="city" class="field-input" />
             @if (showError('city')) {
+              <p class="field-error">Required field.</p>
+            }
+          </div>
+          <div>
+            <label for="country" class="field-label">Country</label>
+            <input id="country" formControlName="country" class="field-input" />
+            @if (showError('country')) {
               <p class="field-error">Required field.</p>
             }
           </div>
@@ -148,6 +158,39 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
               <input type="checkbox" formControlName="isHub" class="h-5 w-5 shrink-0 accent-primary" />
             </label>
           </div>
+
+          <fieldset class="sm:col-span-2">
+            <legend class="field-label">Photo</legend>
+            <div class="grid gap-4 sm:grid-cols-[220px_1fr]">
+              <div class="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-line bg-surface-alt">
+                @if (previewUrl(); as url) {
+                  <img [src]="url" alt="Airport photo" class="h-full w-full object-cover" />
+                } @else {
+                  <i class="ti ti-building-airport text-4xl text-ink-muted" aria-hidden="true"></i>
+                }
+              </div>
+              <div class="flex flex-col gap-3">
+                <div class="flex flex-wrap gap-2">
+                  <label class="btn-secondary cursor-pointer gap-2 px-3 py-2 text-sm">
+                    <i class="ti ti-upload" aria-hidden="true"></i>{{ previewUrl() ? 'Change photo' : 'Upload photo' }}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" (change)="onFileSelected($event)" />
+                  </label>
+                  @if (previewUrl()) {
+                    <button type="button" class="btn-secondary px-3 py-2 text-sm hover:text-danger" (click)="removePhoto()">Remove</button>
+                  }
+                </div>
+                <div>
+                  <label for="photoCredit" class="field-label">Photo credit</label>
+                  <input id="photoCredit" formControlName="photoCredit" maxlength="150" placeholder="Author / Wikimedia Commons" class="field-input" />
+                </div>
+                @if (photoError(); as message) {
+                  <p class="field-error">{{ message }}</p>
+                } @else {
+                  <p class="text-xs text-ink-muted">Wide image, JPG, PNG or WEBP up to 5 MB. Use only photos you own or with a free license, and credit the author.</p>
+                }
+              </div>
+            </div>
+          </fieldset>
         </div>
 
         @if (formError(); as message) {
@@ -166,7 +209,7 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
     </div>
   `
 })
-export class AirportFormModal implements OnInit {
+export class AirportFormModal implements OnInit, OnDestroy {
   private readonly api = inject(AdminAirportsService);
   private readonly reference = inject(ReferenceService);
 
@@ -182,12 +225,23 @@ export class AirportFormModal implements OnInit {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly lookupState = signal<LookupState>('idle');
+  protected readonly photoError = signal<string | null>(null);
+  protected readonly photoFile = signal<File | null>(null);
+  protected readonly photoRemoved = signal(false);
+  protected readonly localPreview = signal<string | null>(null);
+
+  protected readonly previewUrl = computed(() => {
+    if (this.localPreview()) return this.localPreview();
+    if (this.photoRemoved()) return null;
+    return this.airport()?.photoUrl ?? null;
+  });
   private lastLookup = '';
 
   private readonly baseRank = computed(() => this.ranks()[0]?.code ?? 'FO');
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     icao: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]{4}$/)]],
+    iata: ['', Validators.pattern(/^[A-Za-z0-9]{3}$/)],
     name: ['', [Validators.required, Validators.maxLength(120)]],
     city: ['', [Validators.required, Validators.maxLength(80)]],
     country: ['Brazil', [Validators.required, Validators.maxLength(60)]],
@@ -196,7 +250,8 @@ export class AirportFormModal implements OnInit {
     minimumRank: ['FO', Validators.required],
     passenger: [true],
     cargo: [false],
-    isHub: [false]
+    isHub: [false],
+    photoCredit: ['', Validators.maxLength(150)]
   }, { validators: atLeastOneOperation });
 
   constructor() {
@@ -211,6 +266,7 @@ export class AirportFormModal implements OnInit {
     if (airport) {
       this.form.reset({
         icao: airport.icao,
+        iata: airport.iata ?? '',
         name: airport.name,
         city: airport.city,
         country: airport.country,
@@ -219,7 +275,8 @@ export class AirportFormModal implements OnInit {
         minimumRank: airport.minimumRank,
         passenger: airport.passenger,
         cargo: airport.cargo || this.requireCargo(),
-        isHub: airport.isHub
+        isHub: airport.isHub,
+        photoCredit: airport.photoCredit ?? ''
       });
       this.form.controls.icao.disable();
     } else {
@@ -240,8 +297,41 @@ export class AirportFormModal implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.revokePreview();
+  }
+
   protected close(): void {
     if (!this.saving()) this.closed.emit();
+  }
+
+  protected onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!PHOTO_TYPES.includes(file.type)) {
+      this.photoError.set('Use a JPG, PNG or WEBP photo.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      this.photoError.set('The photo must be 5 MB or smaller.');
+      return;
+    }
+
+    this.photoError.set(null);
+    this.revokePreview();
+    this.photoFile.set(file);
+    this.photoRemoved.set(false);
+    this.localPreview.set(URL.createObjectURL(file));
+  }
+
+  protected removePhoto(): void {
+    this.revokePreview();
+    this.photoFile.set(null);
+    this.photoRemoved.set(true);
+    this.form.controls.photoCredit.setValue('');
   }
 
   protected showError(control: keyof typeof this.form.controls): boolean {
@@ -284,6 +374,7 @@ export class AirportFormModal implements OnInit {
       if (this.lastLookup !== icao) return;
 
       this.form.patchValue({
+        iata: airport.iata ?? '',
         name: airport.name,
         city: airport.city,
         country: airport.country,
@@ -309,6 +400,7 @@ export class AirportFormModal implements OnInit {
 
     const value = this.form.getRawValue();
     const payload: AirportPayload = {
+      iata: value.iata.trim().toUpperCase() || null,
       name: value.name.trim(),
       city: value.city.trim(),
       country: value.country.trim(),
@@ -325,9 +417,19 @@ export class AirportFormModal implements OnInit {
 
     try {
       const current = this.airport();
-      const result = current
+      let result = current
         ? await this.api.update(current.icao, payload)
         : await this.api.create(value.icao.trim().toUpperCase(), payload);
+
+      const credit = value.photoCredit.trim() || null;
+      const file = this.photoFile();
+      if (file) {
+        result = await this.api.uploadPhoto(result.icao, file, credit);
+      } else if (this.photoRemoved() && result.photoUrl) {
+        result = await this.api.removePhoto(result.icao);
+      } else if (result.photoUrl && credit !== result.photoCredit) {
+        result = await this.api.updatePhotoCredit(result.icao, credit);
+      }
 
       this.saving.set(false);
       this.saved.emit(result);
@@ -336,6 +438,12 @@ export class AirportFormModal implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private revokePreview(): void {
+    const url = this.localPreview();
+    if (url) URL.revokeObjectURL(url);
+    this.localPreview.set(null);
   }
 
   private syncHubControl(rank: string): void {

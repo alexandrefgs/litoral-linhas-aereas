@@ -34,6 +34,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
                 a.Latitude,
                 a.Longitude,
                 a.PhotoUrl,
+                a.PhotoCredit,
                 a.Operations,
                 a.MinimumRankLevel,
                 OnGround = db.Aircraft.Count(x => x.CurrentAirportId == a.Id && x.Status != AircraftStatus.InFlight && x.Status != AircraftStatus.Inactive),
@@ -61,6 +62,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
                     a.Latitude,
                     a.Longitude,
                     a.PhotoUrl,
+                    a.PhotoCredit,
                     bases.Contains(a.Icao),
                     (a.Operations & OperationType.Passenger) == OperationType.Passenger,
                     (a.Operations & OperationType.Cargo) == OperationType.Cargo,
@@ -97,6 +99,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
                 a.AircraftType.IcaoCode,
                 a.AircraftType.Name,
                 a.PhotoUrl,
+                a.PhotoCredit,
                 a.Status.ToString(),
                 db.Pireps.Where(p => p.Registration == a.Registration).OrderByDescending(p => p.BlockOnAt).Select(p => p.Callsign).FirstOrDefault(),
                 a.LastFlightAt))
