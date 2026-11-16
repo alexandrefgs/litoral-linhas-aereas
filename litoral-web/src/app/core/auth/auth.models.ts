@@ -11,6 +11,8 @@ export interface PilotSummary {
   points: number;
   simBriefUsername: string | null;
   staffPositions: string[];
+  displayName: string;
+  photoUrl: string | null;
 }
 
 export interface AuthResponse {

@@ -25,6 +25,8 @@ public sealed record PilotSummary(
     int TotalFlightMinutes,
     int Points,
     string? SimBriefUsername,
-    IReadOnlyList<string> StaffPositions);
+    IReadOnlyList<string> StaffPositions,
+    string DisplayName,
+    string? PhotoUrl);
 
 public sealed record AuthResponse(string Token, DateTime ExpiresAt, PilotSummary Pilot);

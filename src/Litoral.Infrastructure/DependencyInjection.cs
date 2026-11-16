@@ -1,30 +1,30 @@
 using System.Text;
 using Litoral.Application.Admin;
 using Litoral.Application.Auth;
+using Litoral.Application.Bookings;
 using Litoral.Application.Common;
+using Litoral.Application.Flights;
 using Litoral.Application.Pilots;
 using Litoral.Application.Reference;
+using Litoral.Application.Scoring;
 using Litoral.Domain.Staff;
 using Litoral.Infrastructure.Admin;
 using Litoral.Infrastructure.Auth;
+using Litoral.Infrastructure.Bookings;
+using Litoral.Infrastructure.External;
+using Litoral.Infrastructure.Flights;
 using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
 using Litoral.Infrastructure.Pilots;
 using Litoral.Infrastructure.Reference;
+using Litoral.Infrastructure.Scoring;
+using Litoral.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Litoral.Infrastructure.Storage;
-using Litoral.Application.Bookings;
-using Litoral.Infrastructure.Bookings;
-using Litoral.Infrastructure.External;
-using Litoral.Application.Scoring;
-using Litoral.Infrastructure.Scoring;
-using Litoral.Application.Flights;
-using Litoral.Infrastructure.Flights;
 
 namespace Litoral.Infrastructure;
 
@@ -79,7 +79,8 @@ public static class DependencyInjection
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IPilotService, PilotService>();
+        services.AddScoped<IPilotSettingsService, PilotSettingsService>();
+        services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IReferenceService, ReferenceService>();
         services.AddScoped<IAirportAdminService, AirportAdminService>();
         services.AddScoped<IAirportLookupService, AirportLookupService>();

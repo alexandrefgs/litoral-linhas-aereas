@@ -17,5 +17,7 @@ internal static class PilotSummaryMapper
         pilot.TotalFlightMinutes,
         pilot.Points,
         pilot.SimBriefUsername,
-        roles);
+        roles,
+        pilot.PublicName,
+        pilot.PhotoUrl);
 }

@@ -50,7 +50,7 @@ const IVAO_PREFILE = 'https://fpl.ivao.aero/';
 
             @if (!brief.simBriefUsername) {
               <p class="rounded-lg border border-highlight bg-highlight/15 px-4 py-3 text-sm text-ink">
-                Set your SimBrief username in your <a routerLink="/profile" class="font-semibold text-primary hover:underline">profile</a> to load the OFP here.
+                Set your SimBrief username in your <a routerLink="/profile" [queryParams]="{ tab: 'settings' }" class="font-semibold text-primary hover:underline">settings</a> to load the OFP here.
               </p>
             }
             @if (ofpError(); as message) {

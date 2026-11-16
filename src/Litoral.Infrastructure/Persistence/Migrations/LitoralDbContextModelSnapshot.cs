@@ -437,6 +437,21 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(4)
                         .HasColumnType("nvarchar(4)");
 
+                    b.Property<DateOnly?>("BirthDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<string>("CoverUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -444,6 +459,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(4)
                         .HasColumnType("nvarchar(4)");
+
+                    b.Property<string>("DiscordId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -453,6 +472,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<string>("IvaoId")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<DateTime?>("LastCrewAssignedAt")
                         .HasColumnType("datetime2");
 
@@ -460,6 +483,17 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("NameFormat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("FirstInitialAndLast");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<int>("PilotNumber")
                         .HasColumnType("int");
@@ -470,7 +504,15 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("RankId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SimAircraftTypes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("SimBriefUsername")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("State")
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
 
@@ -481,7 +523,15 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("VatsimId")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("IvaoId")
+                        .IsUnique()
+                        .HasFilter("[IvaoId] IS NOT NULL");
 
                     b.HasIndex("PilotNumber")
                         .IsUnique();
@@ -490,6 +540,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId")
                         .IsUnique();
+
+                    b.HasIndex("VatsimId")
+                        .IsUnique()
+                        .HasFilter("[VatsimId] IS NOT NULL");
 
                     b.ToTable("Pilots");
                 });

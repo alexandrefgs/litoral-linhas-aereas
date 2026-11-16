@@ -16,6 +16,7 @@ export const routes: Routes = [
   { path: 'register', canActivate: [guestGuard], loadComponent: () => import('./pages/auth/register/register').then(m => m.Register) },
   { path: 'dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },
+    { path: 'profile/:number', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },
   { path: 'book', canActivate: [authGuard], loadComponent: () => import('./pages/book/book').then(m => m.Book) },
   { path: 'briefing', canActivate: [authGuard], loadComponent: () => import('./pages/briefing/briefing').then(m => m.Briefing) },
   { path: 'fleet', canActivate: [authGuard], loadComponent: () => import('./pages/fleet/fleet').then(m => m.Fleet) },

@@ -7,6 +7,8 @@ public sealed class Pilot : Entity
 {
     public const int FirstPilotNumber = 1000;
 
+    public const int MinimumAge = 13;
+
     private readonly List<PointTransaction> _pointTransactions = [];
 
     public string UserId { get; private set; } = null!;
@@ -23,10 +25,24 @@ public sealed class Pilot : Entity
     public bool IsActive { get; private set; } = true;
     public DateTime? LastCrewAssignedAt { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateOnly? BirthDate { get; private set; }
+    public string? CountryCode { get; private set; }
+    public string? State { get; private set; }
+    public string? City { get; private set; }
+    public string? VatsimId { get; private set; }
+    public string? IvaoId { get; private set; }
+    public string? DiscordId { get; private set; }
+    public string? PhotoUrl { get; private set; }
+    public string? CoverUrl { get; private set; }
+    public string? SimAircraftTypes { get; private set; }
+    public NameFormat NameFormat { get; private set; } = NameFormat.FirstInitialAndLast;
 
     public IReadOnlyCollection<PointTransaction> PointTransactions => _pointTransactions;
 
     public string DisplayId => $"{Rank.Code}{PilotNumber}";
+    public string PublicName => FormatName(NameFormat);
+    public IReadOnlyList<string> SimAircraftList =>
+        string.IsNullOrWhiteSpace(SimAircraftTypes) ? [] : SimAircraftTypes.Split(',', StringSplitOptions.RemoveEmptyEntries);
     public string NetworkCallsign => $"{Airline.Icao}9{PilotNumber % 1000:D3}";
 
     private Pilot() { }
@@ -48,6 +64,99 @@ public sealed class Pilot : Entity
 
     public void SetSimBriefUsername(string? username) =>
         SimBriefUsername = string.IsNullOrWhiteSpace(username) ? null : username.Trim();
+
+        public int? AgeOn(DateOnly date)
+    {
+        if (BirthDate is not DateOnly birth) return null;
+        var age = date.Year - birth.Year;
+        if (date < birth.AddYears(age)) age--;
+        return age;
+    }
+
+    public void UpdatePersonal(string firstName, string lastName, DateOnly? birthDate, string? countryCode, string? state, string? city)
+    {
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            throw new DomainException("First and last name are required.");
+        if (firstName.Trim().Length > 60 || lastName.Trim().Length > 60)
+            throw new DomainException("First and last name must have up to 60 characters.");
+        if (Clean(state)?.Length > 60 || Clean(city)?.Length > 80)
+            throw new DomainException("State must have up to 60 characters and city up to 80.");
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (birthDate is DateOnly birth)
+        {
+            if (birth < today.AddYears(-100))
+                throw new DomainException("Enter a valid birth date.");
+            if (birth > today.AddYears(-MinimumAge))
+                throw new DomainException($"You must be at least {MinimumAge} years old.");
+        }
+
+        var country = Clean(countryCode)?.ToUpperInvariant();
+        if (country is not null && (country.Length != 2 || !country.All(char.IsAsciiLetter)))
+            throw new DomainException("Use the 2-letter country code (e.g. BR).");
+
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        BirthDate = birthDate;
+        CountryCode = country;
+        State = Clean(state);
+        City = Clean(city);
+    }
+
+    public string FormatName(NameFormat format) => format switch
+    {
+        NameFormat.FirstName => FirstName,
+        NameFormat.LastName => LastName,
+        NameFormat.FullName => $"{FirstName} {LastName}",
+        NameFormat.FirstAndLastInitial => $"{FirstName} {LastName[..1]}.",
+        _ => $"{FirstName[..1]}. {LastName}"
+    };
+
+    public void SetNameFormat(NameFormat format)
+    {
+        if (!Enum.IsDefined(format))
+            throw new DomainException("Invalid name format.");
+
+        NameFormat = format;
+    }
+
+    public void SetNetworkIds(string? vatsimId, string? ivaoId, string? discordId)
+    {
+        VatsimId = Digits(vatsimId, "VATSIM ID", 4, 10);
+        IvaoId = Digits(ivaoId, "IVAO ID", 4, 10);
+        DiscordId = Digits(discordId, "Discord ID", 17, 20);
+    }
+
+    public void SetSimAircraft(IEnumerable<string> icaoCodes)
+    {
+        var codes = icaoCodes.Select(c => c.Trim().ToUpperInvariant()).Where(c => c.Length > 0).Distinct().ToList();
+        SimAircraftTypes = codes.Count == 0 ? null : string.Join(',', codes);
+    }
+
+    public string? SetPhoto(string? url)
+    {
+        var previous = PhotoUrl;
+        PhotoUrl = url;
+        return previous;
+    }
+
+    public string? SetCover(string? url)
+    {
+        var previous = CoverUrl;
+        CoverUrl = url;
+        return previous;
+    }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string? Digits(string? value, string label, int min, int max)
+    {
+        var clean = Clean(value);
+        if (clean is null) return null;
+        if (!clean.All(char.IsAsciiDigit) || clean.Length < min || clean.Length > max)
+            throw new DomainException($"The {label} must have {min} to {max} digits.");
+        return clean;
+    }
 
     public void MoveTo(string icao) => CurrentLocationIcao = icao.ToUpperInvariant();
 

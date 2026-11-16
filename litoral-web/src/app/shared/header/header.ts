@@ -90,21 +90,31 @@ interface NavItem {
             @if (auth.pilot(); as pilot) {
               <div class="relative ml-1">
                 <button type="button" (click)="toggle('user')" aria-label="My account"
-                  class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-on-primary ring-2 ring-accent ring-offset-2 ring-offset-surface">
-                  {{ initials() }}
+                  class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-on-primary ring-2 ring-accent ring-offset-2 ring-offset-surface">
+                  @if (pilot.photoUrl) {
+                    <img [src]="pilot.photoUrl" alt="" class="h-full w-full object-cover" />
+                  } @else {
+                    {{ initials() }}
+                  }
                 </button>
                 @if (openMenu() === 'user') {
                   <div class="menu-panel w-64">
                     <div class="flex items-center gap-3 border-b border-line px-4 py-3">
-                      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-on-primary">{{ initials() }}</span>
+                      <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-bold text-on-primary">
+                        @if (pilot.photoUrl) {
+                          <img [src]="pilot.photoUrl" alt="" class="h-full w-full object-cover" />
+                        } @else {
+                          {{ initials() }}
+                        }
+                      </span>
                       <div class="min-w-0">
-                        <p class="truncate font-semibold text-ink">{{ pilot.firstName.charAt(0) }}. {{ pilot.lastName }}</p>
+                        <p class="truncate font-semibold text-ink">{{ pilot.displayName }}</p>
                         <p class="truncate text-sm text-ink-muted">{{ pilot.displayId }} · {{ roleLabel() }}</p>
                       </div>
                     </div>
                     <div class="p-2">
-                      <a routerLink="/profile" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
-                        <i class="ti ti-user text-xl" aria-hidden="true"></i>Profile
+                      <a routerLink="/profile" [queryParams]="{ tab: 'settings' }" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-settings text-xl" aria-hidden="true"></i>Settings
                       </a>
                     </div>
                     <div class="border-t border-line p-3">
