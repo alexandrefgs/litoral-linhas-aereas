@@ -121,8 +121,8 @@ import { altitudeFt, initials, minutesLabel } from './live-format';
                     <div>
                       @if (tracker(f); as t) {
                         <a [href]="t.url" target="_blank" rel="noopener" [title]="'Open on ' + t.name" (click)="$event.stopPropagation()"
-                          class="flex items-center gap-1 font-mono font-bold text-onda-500 hover:underline">
-                          {{ f.callsign }}<i class="ti ti-external-link text-xs" aria-hidden="true"></i>
+                          class="font-mono font-bold text-onda-500 transition-colors hover:text-onda-300">
+                          {{ f.callsign }}
                         </a>
                       } @else {
                         <p class="font-mono font-bold text-onda-500">{{ f.callsign }}</p>
