@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild } from '@angular/core';
 import * as L from 'leaflet';
+import { APP_CONFIG } from '../../core/config/app-config';
 import { ThemeService } from '../../core/theme/theme.service';
 
 const TILE_URL = {
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  light: `https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key=${APP_CONFIG.cartoApiKey}`,
+  dark: `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=${APP_CONFIG.cartoApiKey}`
 };
 
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
@@ -68,7 +69,6 @@ export class AirportMap implements AfterViewInit, OnDestroy {
     this.tiles?.remove();
     this.tiles = L.tileLayer(dark ? TILE_URL.dark : TILE_URL.light, {
       attribution: ATTRIBUTION,
-      subdomains: 'abcd',
       maxZoom: 19
     }).addTo(this.map!);
   }

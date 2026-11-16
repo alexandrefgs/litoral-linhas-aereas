@@ -21,6 +21,7 @@ public sealed class PilotConfiguration : IEntityTypeConfiguration<Pilot>
         builder.Ignore(p => p.NetworkCallsign);
 
         builder.HasOne(p => p.Rank).WithMany().HasForeignKey(p => p.RankId).OnDelete(DeleteBehavior.Restrict);
+        builder.Navigation(p => p.PointTransactions).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.HasOne<ApplicationUser>().WithOne().HasForeignKey<Pilot>(p => p.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

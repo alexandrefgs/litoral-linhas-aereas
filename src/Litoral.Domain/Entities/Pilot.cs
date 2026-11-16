@@ -1,10 +1,13 @@
 using Litoral.Domain.Common;
+using Litoral.Domain.Enums;
 
 namespace Litoral.Domain.Entities;
 
 public sealed class Pilot : Entity
 {
     public const int FirstPilotNumber = 1000;
+
+    private readonly List<PointTransaction> _pointTransactions = [];
 
     public string UserId { get; private set; } = null!;
     public int PilotNumber { get; private set; }
@@ -18,6 +21,8 @@ public sealed class Pilot : Entity
     public int Points { get; private set; }
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+
+    public IReadOnlyCollection<PointTransaction> PointTransactions => _pointTransactions;
 
     public string DisplayId => $"{Rank.Code}{PilotNumber}";
     public string NetworkCallsign => $"{Airline.Icao}9{PilotNumber % 1000:D3}";
@@ -51,7 +56,13 @@ public sealed class Pilot : Entity
         TotalFlightMinutes += minutes;
     }
 
-        public void AddPoints(int points) => Points += points;
+    public PointTransaction AddPoints(int amount, PointTransactionType type, string description)
+    {
+        var transaction = new PointTransaction(this, amount, type, description);
+        _pointTransactions.Add(transaction);
+        Points += amount;
+        return transaction;
+    }
 
     public bool UpdateRank(IEnumerable<Rank> ranks)
     {

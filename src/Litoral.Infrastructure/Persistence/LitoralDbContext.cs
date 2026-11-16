@@ -16,6 +16,8 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<Pilot> Pilots => Set<Pilot>();
     public DbSet<Route> Routes => Set<Route>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<Aircraft> Aircraft => Set<Aircraft>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

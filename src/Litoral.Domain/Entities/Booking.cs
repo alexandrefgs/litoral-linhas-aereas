@@ -12,6 +12,10 @@ public sealed class Booking : Entity
     public Pilot Pilot { get; private set; } = null!;
     public Guid RouteId { get; private set; }
     public Route Route { get; private set; } = null!;
+    public Guid AircraftId { get; private set; }
+    public Aircraft Aircraft { get; private set; } = null!;
+    public BookingType Type { get; private set; }
+    public int PointsCost { get; private set; }
     public string Callsign { get; private set; } = null!;
     public BookingStatus Status { get; private set; } = BookingStatus.Booked;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
@@ -22,19 +26,33 @@ public sealed class Booking : Entity
 
     private Booking() { }
 
-    public Booking(Pilot pilot, Route route, string? callsign = null)
+    public Booking(Pilot pilot, Route route, Aircraft aircraft, BookingType type, int pointsCost = 0, string? callsign = null)
     {
         if (!route.IsActive)
             throw new DomainException("Rota inativa.");
+        if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
+            throw new DomainException($"O piloto está em {pilot.CurrentLocationIcao}, mas a rota parte de {route.DepartureAirport.Icao}.");
+        if (aircraft.AircraftTypeId != route.AircraftTypeId)
+            throw new DomainException($"A aeronave {aircraft.Registration} não é do tipo desta rota.");
+        if (aircraft.CurrentAirportId != route.DepartureAirportId)
+            throw new DomainException($"A aeronave {aircraft.Registration} não está em {route.DepartureAirport.Icao}.");
+        if (pointsCost < 0)
+            throw new DomainException("Custo em pontos não pode ser negativo.");
 
         var finalCallsign = (callsign ?? route.Callsign).ToUpperInvariant();
         if (!CallsignPattern.IsMatch(finalCallsign))
             throw new DomainException($"Callsign deve começar com {Airline.Icao} e ter até 4 caracteres depois.");
 
+        aircraft.Reserve();
+
         Pilot = pilot;
         PilotId = pilot.Id;
         Route = route;
         RouteId = route.Id;
+        Aircraft = aircraft;
+        AircraftId = aircraft.Id;
+        Type = type;
+        PointsCost = pointsCost;
         Callsign = finalCallsign;
     }
 
@@ -43,6 +61,7 @@ public sealed class Booking : Entity
         if (Status != BookingStatus.Booked)
             throw new DomainException("Só é possível iniciar um booking reservado.");
 
+        Aircraft.StartFlight();
         Status = BookingStatus.InProgress;
         StartedAt = DateTime.UtcNow;
     }
@@ -52,6 +71,7 @@ public sealed class Booking : Entity
         if (Status != BookingStatus.InProgress)
             throw new DomainException("Só é possível concluir um voo em andamento.");
 
+        Aircraft.CompleteFlight(Route.ArrivalAirport);
         Status = BookingStatus.Completed;
         CompletedAt = DateTime.UtcNow;
     }
@@ -61,6 +81,7 @@ public sealed class Booking : Entity
         if (Status == BookingStatus.Completed)
             throw new DomainException("Booking concluído não pode ser cancelado.");
 
+        Aircraft.Release();
         Status = BookingStatus.Cancelled;
     }
 }

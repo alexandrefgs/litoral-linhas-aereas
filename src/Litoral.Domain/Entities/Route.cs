@@ -13,6 +13,7 @@ public sealed class Route : Entity
     public Guid AircraftTypeId { get; private set; }
     public AircraftType AircraftType { get; private set; } = null!;
     public int DistanceNm { get; private set; }
+    public int EstimatedMinutes { get; private set; }
     public bool IsActive { get; private set; } = true;
 
     public FlightBlock Block => FlightBlockRules.FromNumber(FlightNumber);
@@ -42,6 +43,18 @@ public sealed class Route : Entity
         AircraftType = aircraftType;
         AircraftTypeId = aircraftType.Id;
         DistanceNm = distance;
+        EstimatedMinutes = EstimateBlockMinutes(distance);
+    }
+
+    public static int EstimateBlockMinutes(int distanceNm) =>
+        (int)Math.Round(distanceNm / 430.0 * 60 + 25);
+
+    public void SetEstimatedMinutes(int minutes)
+    {
+        if (minutes <= 0)
+            throw new DomainException("Duração estimada deve ser maior que zero.");
+
+        EstimatedMinutes = minutes;
     }
 
     public void Deactivate() => IsActive = false;

@@ -22,6 +22,50 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Litoral.Domain.Entities.Aircraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AircraftTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CurrentAirportId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("LastFlightAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Registration")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Variant")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AircraftTypeId");
+
+                    b.HasIndex("Registration")
+                        .IsUnique();
+
+                    b.HasIndex("CurrentAirportId", "Status");
+
+                    b.ToTable("Aircraft");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.AircraftType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -95,6 +139,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AircraftId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Callsign")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -109,6 +156,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("PilotId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("PointsCost")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("RouteId")
                         .HasColumnType("uniqueidentifier");
 
@@ -120,7 +170,14 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AircraftId");
 
                     b.HasIndex("RouteId");
 
@@ -207,6 +264,37 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("Pilots");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.PointTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilotId", "CreatedAt");
+
+                    b.ToTable("PointTransactions");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Rank", b =>
                 {
                     b.Property<Guid>("Id")
@@ -257,6 +345,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("DistanceNm")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EstimatedMinutes")
                         .HasColumnType("int");
 
                     b.Property<int>("FlightNumber")
@@ -477,8 +568,33 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.Aircraft", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.AircraftType", "AircraftType")
+                        .WithMany()
+                        .HasForeignKey("AircraftTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.Airport", "CurrentAirport")
+                        .WithMany()
+                        .HasForeignKey("CurrentAirportId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AircraftType");
+
+                    b.Navigation("CurrentAirport");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Booking", b =>
                 {
+                    b.HasOne("Litoral.Domain.Entities.Aircraft", "Aircraft")
+                        .WithMany()
+                        .HasForeignKey("AircraftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
                         .WithMany()
                         .HasForeignKey("PilotId")
@@ -490,6 +606,8 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("RouteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Aircraft");
 
                     b.Navigation("Pilot");
 
@@ -522,6 +640,17 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Rank");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.PointTransaction", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany("PointTransactions")
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pilot");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Route", b =>
@@ -600,6 +729,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>
+                {
+                    b.Navigation("PointTransactions");
                 });
 #pragma warning restore 612, 618
         }
