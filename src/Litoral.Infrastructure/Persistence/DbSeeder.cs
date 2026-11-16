@@ -57,17 +57,29 @@ public static class DbSeeder
         }
     }
 
-    private static async Task SeedAircraftTypesAsync(LitoralDbContext db)
+        private static async Task SeedAircraftTypesAsync(LitoralDbContext db)
     {
-        if (await db.AircraftTypes.AnyAsync()) return;
+        (string Icao, string Name, bool Cargo, int Range, string Prefix)[] types =
+        [
+            ("B738", "Boeing 737-800", false, 2900, "LA"),
+            ("B738", "Boeing 737-800BCF", true, 2000, "LB"),
+            ("B737", "Boeing 737-700", false, 3000, "LC"),
+            ("B739", "Boeing 737-900ER", false, 2900, "LD"),
+            ("B38M", "Boeing 737 MAX 8", false, 3500, "LE"),
+            ("B736", "Boeing 737-600", false, 3000, "LF")
+        ];
 
-        db.AircraftTypes.AddRange(
-            new AircraftType("B736", "Boeing 737-600", false, 3000),
-            new AircraftType("B737", "Boeing 737-700", false, 3000),
-            new AircraftType("B738", "Boeing 737-800", false, 2900),
-            new AircraftType("B739", "Boeing 737-900ER", false, 2900),
-            new AircraftType("B38M", "Boeing 737 MAX 8", false, 3500),
-            new AircraftType("B738", "Boeing 737-800BCF", true, 2000));
+        var existing = await db.AircraftTypes.ToListAsync();
+
+        foreach (var t in types)
+        {
+            var type = existing.FirstOrDefault(x => x.IcaoCode == t.Icao && x.IsCargo == t.Cargo);
+
+            if (type is null && existing.Count == 0)
+                db.AircraftTypes.Add(new AircraftType(t.Icao, t.Name, t.Cargo, t.Range, t.Prefix));
+            else if (type is { RegistrationPrefix: null } && existing.All(x => x.RegistrationPrefix != t.Prefix))
+                type.AssignRegistrationPrefix(t.Prefix);
+        }
     }
 
     private static async Task SeedAirportsAndHubsAsync(LitoralDbContext db)

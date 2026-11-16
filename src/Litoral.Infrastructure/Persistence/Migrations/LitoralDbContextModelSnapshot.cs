@@ -33,8 +33,31 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CurrentAirportId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("Cycles")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("LastFlightAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastMaintenanceAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MaintenanceReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime?>("MaintenanceStartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("MaintenanceUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MinutesSinceMaintenance")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhotoCredit")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
 
                     b.Property<string>("PhotoUrl")
                         .HasMaxLength(500)
@@ -49,6 +72,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TotalMinutes")
+                        .HasColumnType("int");
 
                     b.Property<string>("Variant")
                         .HasMaxLength(40)
@@ -79,6 +105,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsCargo")
                         .HasColumnType("bit");
 
+                    b.Property<int>("MaintenanceIntervalHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(500);
+
                     b.Property<int>("MaxRangeNm")
                         .HasColumnType("int");
 
@@ -87,7 +118,15 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
 
+                    b.Property<string>("RegistrationPrefix")
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("RegistrationPrefix")
+                        .IsUnique()
+                        .HasFilter("[RegistrationPrefix] IS NOT NULL");
 
                     b.HasIndex("IcaoCode", "IsCargo")
                         .IsUnique();

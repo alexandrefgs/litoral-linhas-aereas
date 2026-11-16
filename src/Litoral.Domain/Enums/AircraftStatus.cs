@@ -5,5 +5,6 @@ public enum AircraftStatus
     Available,
     Reserved,
     InFlight,
-    Maintenance
+    Maintenance,
+    Inactive
 }

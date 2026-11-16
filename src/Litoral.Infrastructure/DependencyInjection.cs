@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Litoral.Infrastructure.Storage;
 
 namespace Litoral.Infrastructure;
 
@@ -77,6 +78,9 @@ public static class DependencyInjection
         services.AddScoped<IAirportLookupService, AirportLookupService>();
         services.AddHttpClient<AirportCatalogImporter>(client => client.Timeout = TimeSpan.FromMinutes(2));
         services.AddScoped<IRouteAdminService, RouteAdminService>();
+        services.AddScoped<IFleetAdminService, FleetAdminService>();
+        services.AddSingleton<IPhotoStorage, LocalPhotoStorage>();
+        services.AddHostedService<MaintenanceReleaseService>();
 
         return services;
     }
