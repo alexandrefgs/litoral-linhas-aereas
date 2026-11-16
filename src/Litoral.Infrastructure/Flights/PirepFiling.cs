@@ -63,6 +63,7 @@ public sealed class PirepFiling(LitoralDbContext db)
                 DateTime.UtcNow.Add(ScheduledMaintenanceDuration));
         booking.Pilot.AddFlightTime(pirep.BlockMinutes);
         booking.Pilot.MoveTo(landedAt.Icao);
+        booking.Pilot.RecordFlight();
 
         var roster = await db.MonthlyRosters
             .Include(r => r.Legs)

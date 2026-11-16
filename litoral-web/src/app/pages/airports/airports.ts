@@ -38,7 +38,7 @@ const FILTERS: { key: AirportFilter; label: string }[] = [
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 class="text-2xl font-bold text-ink">Airports</h1>
-          <p class="text-ink-muted">Click an airport to jumpseat there. It's free to our bases and costs 50 points elsewhere.</p>
+          <p class="text-ink-muted">Click an airport to jumpseat there. It's free to our bases and costs 3 points per nm elsewhere. One jumpseat per flight.</p>
         </div>
         @if (directory(); as d) {
           <div class="flex gap-6 text-sm">
@@ -170,7 +170,7 @@ const FILTERS: { key: AirportFilter; label: string }[] = [
                     </button>
                   } @else {
                     <span class="flex items-center gap-1 text-sm font-semibold" [class]="a.jumpseatCost ? 'text-sol-500' : 'text-onda-500'">
-                      <i class="ti ti-coin" aria-hidden="true"></i> {{ a.jumpseatCost ? a.jumpseatCost + ' pts' : 'Free' }}
+                      <i class="ti ti-coin" aria-hidden="true"></i> {{ a.jumpseatCost ? a.jumpseatCost.toLocaleString('en-US') + ' pts' : 'Free' }}
                     </span>
                   }
                 </div>
@@ -314,7 +314,7 @@ const FILTERS: { key: AirportFilter; label: string }[] = [
             </div>
             <div class="border-t border-line px-6 py-4 text-center">
               @if (dlg.airport.jumpseatCost) {
-                <p class="text-2xl font-bold text-sol-500">{{ dlg.airport.jumpseatCost }} points</p>
+                <p class="text-2xl font-bold text-sol-500">{{ dlg.airport.jumpseatCost.toLocaleString('en-US') }} points</p>
                 <p class="text-xs text-ink-muted">will be deducted from your balance ({{ directory()?.points?.toLocaleString('en-US') }} now)</p>
               } @else {
                 <p class="text-2xl font-bold text-onda-500">Free</p>

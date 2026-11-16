@@ -10,7 +10,7 @@ namespace Litoral.Infrastructure.Airports;
 
 public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport support) : IAirportDirectoryService
 {
-    public const int JumpseatCost = 50;
+    public const int JumpseatPointsPerNm = 3;
     private const int PilotsPreview = 4;
 
     public async Task<AirportDirectoryDto> ListAsync(string userId, CancellationToken ct)
@@ -20,6 +20,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
         var level = pilot.Rank.Level;
 
         var ranks = await db.Ranks.AsNoTracking().OrderBy(r => r.Level).ToListAsync(ct);
+        var here = await db.Airports.AsNoTracking().FirstAsync(a => a.Icao == pilot.CurrentLocationIcao, ct);
 
         var airports = await db.Airports.AsNoTracking()
             .Where(a => a.MinimumRankLevel <= level)
@@ -50,7 +51,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
             .ThenBy(a => a.Icao)
             .Select(a =>
             {
-                var here = pilots.GetValueOrDefault(a.Icao) ?? [];
+                var pilotsHere = pilots.GetValueOrDefault(a.Icao) ?? [];
                 return new AirportListItemDto(
                     a.Icao,
                     a.IataCode,
@@ -68,9 +69,9 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
                     ranks.FirstOrDefault(r => r.Level == a.MinimumRankLevel)?.Code ?? ranks[0].Code,
                     a.OnGround,
                     a.Departures,
-                    bases.Contains(a.Icao) ? 0 : JumpseatCost,
-                    here.Count,
-                    here.Take(PilotsPreview)
+                    bases.Contains(a.Icao) ? 0 : CostTo(here.Latitude, here.Longitude, a.Latitude, a.Longitude),
+                    pilotsHere.Count,
+                    pilotsHere.Take(PilotsPreview)
                         .Select(p => new AirportPilotDto(p.PilotNumber, p.DisplayId, p.PublicName, p.FirstName, p.LastName, p.PhotoUrl))
                         .ToList());
             })
@@ -145,8 +146,9 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
         var destination = await db.Airports.FirstOrDefaultAsync(a => a.Icao == code, ct)
             ?? throw new AppException(AppErrorKind.NotFound, "Airport not found.");
 
+        var origin = await db.Airports.AsNoTracking().FirstAsync(a => a.Icao == pilot.CurrentLocationIcao, ct);
         var bases = await support.GetBaseIcaosAsync(ct);
-        var cost = bases.Contains(destination.Icao) ? 0 : JumpseatCost;
+        var cost = bases.Contains(destination.Icao) ? 0 : CostTo(origin.Latitude, origin.Longitude, destination.Latitude, destination.Longitude);
         var from = pilot.CurrentLocationIcao;
 
         pilot.JumpseatTo(destination);
@@ -157,10 +159,14 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
         return new JumpseatResultDto(from, destination.Icao, cost, pilot.Points);
     }
 
+    private static int CostTo(double fromLatitude, double fromLongitude, double toLatitude, double toLongitude) =>
+        Airport.DistanceNm(fromLatitude, fromLongitude, toLatitude, toLongitude) * JumpseatPointsPerNm;
     private async Task<string?> BlockedReasonAsync(Pilot pilot, CancellationToken ct)
     {
         if (!pilot.IsActive)
             return "Your account is inactive. Contact the Head of HR.";
+        if (!pilot.CanJumpseat)
+            return Pilot.JumpseatUsedMessage;
 
         var open = await support.FindOpenBookingAsync(pilot.Id, ct);
         return open is null ? null : $"You have an open flight ({open.Callsign}). Cancel it or complete it first.";

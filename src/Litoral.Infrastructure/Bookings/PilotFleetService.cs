@@ -40,6 +40,7 @@ public sealed class PilotFleetService(LitoralDbContext db, BookingSupport suppor
             throw new AppException(AppErrorKind.Conflict, quote.BlockedReason);
 
         var origin = aircraft.CurrentAirport.Icao;
+        pilot.UseAircraftTransfer();
         aircraft.Relocate(destination);
 
         if (quote.Cost > 0)
@@ -78,6 +79,7 @@ public sealed class PilotFleetService(LitoralDbContext db, BookingSupport suppor
             aircraft.CurrentAirportId == destination.Id ? $"{aircraft.Registration} is already at {destination.Icao}."
             : aircraft.Status != AircraftStatus.Available ? $"{aircraft.Registration} is not available ({aircraft.Status})."
             : !destination.Supports(aircraft.AircraftType.Operation) ? $"{destination.Icao} doesn't have {(aircraft.AircraftType.IsCargo ? "cargo" : "passenger")} operations."
+            : !pilot.CanTransferAircraft ? Pilot.TransferUsedMessage
             : pilot.Points < cost ? $"You need {cost} points and you have {pilot.Points}."
             : null;
 

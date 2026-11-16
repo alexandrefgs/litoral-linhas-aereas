@@ -94,12 +94,14 @@ public sealed class Airport : Entity
     }
     public bool IsAccessibleTo(Rank rank) => rank.Level >= MinimumRankLevel;
 
-    public int DistanceNmTo(Airport other)
+    public int DistanceNmTo(Airport other) => DistanceNm(Latitude, Longitude, other.Latitude, other.Longitude);
+
+    public static int DistanceNm(double fromLatitude, double fromLongitude, double toLatitude, double toLongitude)
     {
-        var lat1 = ToRad(Latitude);
-        var lat2 = ToRad(other.Latitude);
+        var lat1 = ToRad(fromLatitude);
+        var lat2 = ToRad(toLatitude);
         var dLat = lat2 - lat1;
-        var dLon = ToRad(other.Longitude - Longitude);
+        var dLon = ToRad(toLongitude - fromLongitude);
 
         var a = Math.Pow(Math.Sin(dLat / 2), 2) +
                 Math.Cos(lat1) * Math.Cos(lat2) * Math.Pow(Math.Sin(dLon / 2), 2);

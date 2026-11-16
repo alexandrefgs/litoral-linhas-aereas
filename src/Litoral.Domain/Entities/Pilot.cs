@@ -8,6 +8,8 @@ public sealed class Pilot : Entity
     public const int FirstPilotNumber = 1000;
 
     public const int MinimumAge = 13;
+    public const string JumpseatUsedMessage = "You already used your jumpseat. Fly at least once to use it again.";
+    public const string TransferUsedMessage = "You already moved an aircraft. Fly at least once to move another one.";
 
     private readonly List<PointTransaction> _pointTransactions = [];
 
@@ -36,6 +38,8 @@ public sealed class Pilot : Entity
     public string? CoverUrl { get; private set; }
     public string? SimAircraftTypes { get; private set; }
     public NameFormat NameFormat { get; private set; } = NameFormat.FirstInitialAndLast;
+    public bool CanJumpseat { get; private set; } = true;
+    public bool CanTransferAircraft { get; private set; } = true;
 
     public IReadOnlyCollection<PointTransaction> PointTransactions => _pointTransactions;
 
@@ -160,14 +164,31 @@ public sealed class Pilot : Entity
 
     public void MoveTo(string icao) => CurrentLocationIcao = icao.ToUpperInvariant();
 
-    public void JumpseatTo(Airport destination)
+        public void JumpseatTo(Airport destination)
     {
         if (destination.Icao == CurrentLocationIcao)
             throw new DomainException($"You are already at {destination.Icao}.");
         if (!destination.IsAccessibleTo(Rank))
             throw new DomainException($"Your rank does not allow you to go to {destination.Icao}.");
+        if (!CanJumpseat)
+            throw new DomainException(JumpseatUsedMessage);
 
         MoveTo(destination.Icao);
+        CanJumpseat = false;
+    }
+
+    public void UseAircraftTransfer()
+    {
+        if (!CanTransferAircraft)
+            throw new DomainException(TransferUsedMessage);
+
+        CanTransferAircraft = false;
+    }
+
+    public void RecordFlight()
+    {
+        CanJumpseat = true;
+        CanTransferAircraft = true;
     }
 
     public void AddFlightTime(int minutes)

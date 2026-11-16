@@ -31,7 +31,8 @@ public sealed class PilotConfiguration : IEntityTypeConfiguration<Pilot>
             .HasConversion<string>()
             .HasMaxLength(30)
             .HasDefaultValue(NameFormat.FirstInitialAndLast);
-
+        builder.Property(p => p.CanJumpseat).HasDefaultValue(true);
+        builder.Property(p => p.CanTransferAircraft).HasDefaultValue(true);
         builder.HasIndex(p => p.VatsimId).IsUnique().HasFilter("[VatsimId] IS NOT NULL");
         builder.HasIndex(p => p.IvaoId).IsUnique().HasFilter("[IvaoId] IS NOT NULL");
 
