@@ -25,6 +25,8 @@
 - [Identidade da companhia](#identidade-da-companhia)
 - [Operação](#operação)
 - [Carreira do piloto](#carreira-do-piloto)
+- [Reserva de voos](#reserva-de-voos)
+- [Pontos](#pontos)
 - [Estrutura de staff](#estrutura-de-staff)
 - [Stack](#stack)
 - [Arquitetura](#arquitetura)
@@ -41,10 +43,12 @@ A **Litoral Linhas Aéreas** é uma companhia aérea virtual (VA) para pilotos d
 
 O sistema reúne em um só lugar:
 
-- Cadastro de pilotos e carreira (FO → CMD)
-- Reserva de voos (booking) integrada ao **SimBrief**
+- Cadastro de pilotos, base e carreira (FO → CMD)
+- Frota com **localização real**: cada avião fica onde pousou pela última vez
+- Reserva de voos aleatórios, personalizados, **escala mensal** e escalas especiais
+- Briefing integrado ao **SimBrief**
 - Acompanhamento do voo via **ACARS** e envio automático de **PIREP**
-- Pontuação por desempenho, ranking e promoção automática
+- Pontuação por desempenho, extrato de pontos e promoção automática
 - Painel administrativo com permissões por posição de staff
 
 Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**, voando nas networks **IVAO** e **VATSIM**.
@@ -59,7 +63,7 @@ Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**
 | **ICAO** | `LTL` |
 | **Callsign (rádio)** | `LITORAL`, por exemplo *"Litoral three four one two"* |
 | **Idiomas do site** | Português (padrão), English, Español, detectado pelo navegador |
-| **Temas** | Claro (padrão) e escuro |
+| **Temas** | Claro (padrão), escuro ou automático pelo sistema |
 
 ### Paleta "Costa atlântica"
 
@@ -91,6 +95,20 @@ Fuselagem **branca**, cauda **azul** com a **onda turquesa** e detalhe **amarelo
 | SBFZ | Fortaleza | ✅ | ✅ |
 | SBKP | Campinas (Viracopos) | | ✅ |
 
+Os hubs de passageiros são as **bases** que o piloto pode escolher no cadastro.
+
+### Acesso aos aeroportos por patente
+
+Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadastro:
+
+| Patente mínima | Quem pode operar |
+|---|---|
+| **FO** | Todos os pilotos |
+| **CMD** | Somente comandantes |
+
+- **Hubs são sempre FO.**
+- Reservas, rotas e jumpseat mostram **apenas os aeroportos que a patente do piloto permite**.
+
 ### Frota
 
 | ICAO | Aeronave | Operação | Alcance de referência |
@@ -102,7 +120,9 @@ Fuselagem **branca**, cauda **azul** com a **onda turquesa** e detalhe **amarelo
 | B38M | Boeing 737 MAX 8 | Passageiros | 3.500 NM |
 | B738 | Boeing 737-800BCF | Cargueiro | 2.000 NM |
 
-O sistema calcula a distância das rotas pelas coordenadas dos aeroportos e **não permite cadastrar uma rota maior que o alcance da aeronave**.
+- O sistema calcula a distância das rotas pelas coordenadas dos aeroportos e **não permite cadastrar uma rota maior que o alcance da aeronave**.
+- Cada matrícula (`PP-`, `PR-`, `PS-`, `PT-` ou `PU-`) tem **localização real**. O avião só pode ser reservado no aeroporto onde está, e ao fim do voo fica no destino.
+- Status de cada aeronave: **Disponível**, **Reservada**, **Em voo** ou **Manutenção**.
 
 ### Numeração dos voos
 
@@ -129,8 +149,58 @@ Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto
 | **CMD**: Captain | **500 h** de voo **e** **30.000 pontos** |
 
 - A promoção e o rebaixamento são **automáticos**.
-- Cada voo gera pontos conforme o **desempenho** (pouso, procedimentos, desvios).
 - Se um CMD ficar abaixo de **30.000 pontos**, ele volta a ser **FO**.
+
+### Base e localização
+
+- No cadastro o piloto escolhe a sua **base** entre os hubs de passageiros.
+- O piloto tem uma **localização atual**: começa na base e muda a cada voo concluído.
+- **Jumpseat:** o piloto pode se deslocar para outro aeroporto sem voar, desde que a patente permita.
+- **Rebaixamento:** se o piloto estiver em um aeroporto só de CMD quando voltar a ser FO, ele é **movido automaticamente para a base**.
+
+---
+
+## Reserva de voos
+
+O piloto sempre parte da **sua localização atual**, com uma aeronave que **esteja no aeroporto de partida**.
+
+| Tipo | Como funciona | Custo |
+|---|---|---|
+| **Aleatório** | Filtro por duração (até 1 h, 1–2 h, mais de 2 h ou qualquer). O sistema sorteia a rota e uma aeronave disponível no aeroporto. Se não houver aeronave, o piloto pode trazer uma para lá sem custo. | Grátis |
+| **Personalizado** | O piloto escolhe qualquer rota que saia do aeroporto onde está. | Grátis para uma base; **50 pontos** para os demais destinos |
+| **Escala mensal** | Sequência de voos gerada para o mês (veja abaixo). | Grátis, com bônus |
+| **Escala especial** | Voos criados pelo staff. O primeiro piloto que reservar fica com o voo. | Definido pelo staff |
+
+Depois da reserva, o callsign do voo aparece no menu no lugar de "Reservar voo", com a opção de cancelar.
+
+### Escala mensal
+
+- Gerada na **primeira vez** que o piloto abre a página no mês.
+- Tamanho: **dias restantes do mês** (incluindo hoje) **× 1, 2 ou 3 voos por dia**, à escolha do piloto.
+- A escala **sempre começa e termina na base** do piloto.
+- É dividida em **sequências de 5 a 7 voos**. Cada sequência termina na base, como um "tiro" da vida real, e a próxima começa de lá.
+  - Exemplo: `SBFL → SBGR → SBSV → SBGR → SBFZ → SBGR → SBFL` · `SBFL → SBPA → SBCT → SBRJ → SBSP → SBFL`
+- Mistura voos de **passageiros e cargueiros** (bloco `9xxx`).
+- Usa apenas rotas e aeroportos que a patente do piloto permite.
+- Bônus de **100 pontos por voo** da escala ao concluí-la.
+- Quem terminar a escala antes do fim do mês só recebe uma nova no mês seguinte.
+
+---
+
+## Pontos
+
+Todo movimento de pontos fica registrado no **extrato do piloto**:
+
+| Tipo | Exemplo |
+|---|---|
+| Pontuação do voo | Pontos ganhos ou perdidos conforme o desempenho |
+| Custo de reserva | Voo personalizado para fora das bases |
+| Bônus de escala mensal | 100 pontos por voo da escala concluída |
+| Escala especial | Bônus definido pelo staff |
+| Penalidade | Aplicada na análise do PIREP |
+| Ajuste manual | Correção feita pelo staff |
+
+A tabela de pontuação por desempenho (pouso, procedimentos, desvios) será definida na fase do ACARS.
 
 ---
 
@@ -152,9 +222,9 @@ Todo staff também é piloto. Cada posição tem **uma única função** no sist
 | Posição | Função | Vagas |
 |---|---|:---:|
 | Head of HR | Gestão de pilotos: inativar, reativar e excluir | 1 |
-| Director of Operations | Tours e eventos | 1 |
+| Director of Operations | Tours, eventos e escalas especiais | 1 |
 | Fleet Manager | Tipos de aeronave, matrículas e liveries | 1 |
-| Route Manager | Rotas, aeroportos e hubs | 1 |
+| Route Manager | Rotas, aeroportos (com patente mínima) e hubs | 1 |
 
 ### Safety Team
 
@@ -174,10 +244,12 @@ Todo staff também é piloto. Cada posição tem **uma única função** no sist
 - Clean Architecture
 
 **Front-end**
-- Angular 22 (standalone components e signals)
+- Angular 22 (standalone, signals e zoneless)
 - Tailwind CSS 4
+- Leaflet + mapas CARTO
+- Tabler Icons
 - Internacionalização própria (PT / EN / ES)
-- Tema claro e escuro
+- Tema claro, escuro e automático
 
 **Integrações**
 - SimBrief (geração e leitura de OFP)
@@ -202,10 +274,10 @@ flowchart LR
 
 | Camada | Responsabilidade |
 |---|---|
-| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, staff |
-| **Application** | Casos de uso: cadastro, booking, PIREP, promoção |
-| **Infrastructure** | Banco de dados, Identity, migrations e seed |
-| **Api** | Endpoints HTTP, autenticação e documentação |
+| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, pontos e staff |
+| **Application** | Contratos e casos de uso: cadastro, booking, PIREP, promoção |
+| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed e serviços |
+| **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
 ---
 
@@ -215,14 +287,15 @@ flowchart LR
 litoral-linhas-aereas/
 ├── src/
 │   ├── Litoral.Domain/          # Entidades, enums, staff e regras
-│   ├── Litoral.Application/     # Casos de uso
-│   ├── Litoral.Infrastructure/  # DbContext, configurações, migrations, seed
+│   ├── Litoral.Application/     # Contratos e casos de uso
+│   ├── Litoral.Infrastructure/  # DbContext, configurações, migrations, seed, auth
 │   └── Litoral.Api/             # Controllers, Program.cs, Swagger
 ├── litoral-web/                 # Front-end Angular
-│   ├── public/                  # favicon e traduções (i18n)
+│   ├── public/                  # favicon, traduções (i18n) e insígnias das patentes
 │   └── src/app/
-│       ├── core/                # serviços de idioma e tema
-│       └── shared/              # componentes reutilizáveis
+│       ├── core/                # auth, api, idioma, tema, dados de referência, config
+│       ├── shared/              # header, mapa, pipes e diretivas
+│       └── pages/               # home pública, login, cadastro, dashboard, perfil
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
 ```
@@ -265,17 +338,20 @@ npm --prefix litoral-web install
 ```
 Ajuste o `Server` conforme a sua instalação: `localhost`, `localhost\\SQLEXPRESS` ou `(localdb)\\MSSQLLocalDB`.
 
-**4. Confie no certificado HTTPS de desenvolvimento** (uma vez só)
+**4. Configure a chave do mapa** em `litoral-web/src/app/core/config/app-config.ts`.
+Os mapas usam tiles da [CARTO](https://carto.com/), que exigem uma chave gratuita. A chave do repositório funciona apenas em `localhost`; para outro domínio, crie a sua.
+
+**5. Confie no certificado HTTPS de desenvolvimento** (uma vez só)
 ```bash
 dotnet dev-certs https --trust
 ```
 
-**5. Rode a API e o front juntos**
+**6. Rode a API e o front juntos**
 ```bash
 npm run dev
 ```
 
-Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, frota, aeroportos, hubs e posições de staff.
+Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, frota, aeroportos, hubs e posições de staff. O **primeiro usuário cadastrado** vira CEO & Founder.
 
 | Serviço | Endereço |
 |---|---|
@@ -311,52 +387,70 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Swagger
 - [x] Front-end Angular 22 + Tailwind CSS 4
 - [x] Idiomas PT / EN / ES com detecção automática
-- [x] Tema claro e escuro
+- [x] Tema claro, escuro e automático
 - [x] Identidade visual: paleta, favicon e conceito de livery
 - [x] API e front rodando juntos com `npm run dev`
 
-### 🔜 Fase 1: Autenticação e pilotos
-- [x] Cadastro com nome, e-mail e senha
+### ✅ Fase 1: Autenticação, pilotos e site público
+- [x] Cadastro com nome, e-mail, senha e escolha da base
 - [x] Número de piloto automático a partir de 1000
 - [x] Primeiro usuário cadastrado vira CEO & Founder
 - [x] Login com JWT e botão Authorize no Swagger
-- [ ] Telas de login e cadastro no front
-- [ ] Perfil do piloto: dados, SimBrief Username, horas, pontos e patente
-- [ ] Dashboard do piloto
+- [x] Telas de login e cadastro
+- [x] Perfil do piloto com SimBrief Username
+- [x] Dashboard do piloto: mapa, patente, horas, pontos e progresso para CMD
+- [x] Site público: início, sobre, operação, números e últimos voos
+- [x] Seletor de idioma com bandeiras e menu com NOTAMs e notícias
 
-### Fase 2: Staff e painel administrativo
+### 🔜 Fase 2: Regras de operação, staff e cadastros
+- [x] Frota com matrícula, variante, foto e localização real
+- [x] Extrato de pontos (ledger)
+- [x] Patente mínima por aeroporto (FO ou CMD)
+- [x] Base do piloto e retorno automático à base no rebaixamento
+- [x] Jumpseat respeitando a patente
 - [ ] Autorização por posição de staff (policies)
 - [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
+- [ ] **Route Manager:** aeroportos (FO/CMD), hubs e rotas
+- [ ] **Fleet Manager:** matrículas, localização, fotos e manutenção
 - [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
-- [ ] **Route Manager:** CRUD de aeroportos, hubs e rotas
-- [ ] **Fleet Manager:** tipos de aeronave, matrículas e fotos das liveries
-- [ ] **General Director:** painel de estatísticas e logs
 - [ ] Menu administrativo exibido conforme as posições do usuário
 
-### Fase 3: Operações de voo
-- [ ] Busca de rotas (origem, destino, aeronave, bloco)
-- [ ] Booking de voo
-- [ ] Sugestão de callsign alternativo `LTL9xxx`
-- [ ] Integração SimBrief: abrir o dispatch já preenchido
-- [ ] Integração SimBrief: importar o OFP (rota, combustível, pesos)
-- [ ] Tela de briefing
-- [ ] Cancelamento de booking
+### Fase 2B: Páginas do piloto
+- [ ] Aeroportos com jumpseat, filtrados pela patente
+- [ ] Frota, com localização e status de cada matrícula
+- [ ] Rotas
+- [ ] Extrato de pontos e tabela de regras
+
+### Fase 3: Reserva de voos
+- [ ] Voo aleatório com filtro de duração
+- [ ] Voo personalizado (custo de 50 pontos fora das bases)
+- [ ] Escala mensal (passageiros e cargueiros) com sequências de 5 a 7 voos começando e terminando na base
+- [ ] Escolha da aeronave e translado de aeronave sem custo
+- [ ] Confirmação da reserva e callsign no menu
+- [ ] Briefing: SimBrief, METAR e prefile
+- [ ] Cancelamento e expiração da reserva
+
+### Fase 3B: Escalas especiais
+- [ ] **Director of Operations:** criação de escalas especiais
+- [ ] Reserva pelo primeiro piloto interessado
 
 ### Fase 4: ACARS e PIREP
 - [ ] Definir o ACARS: smartCARS 3 (API compatível) ou cliente próprio (FSUIPC/XPUIPC)
 - [ ] Endpoints de telemetria
 - [ ] Detecção de decolagem, pouso e chegada ao gate
 - [ ] PIREP automático ao final do voo
-- [ ] Regras de pontuação por desempenho (pouso, desvios, penalidades)
+- [ ] Tabela de pontuação por desempenho (pouso, procedimentos, desvios)
 - [ ] **Safety Manager:** fila de PIREPs pendentes com logs de telemetria
 - [ ] Aprovação e rejeição de PIREP
-- [ ] Soma de horas e pontos, com atualização automática da patente
+- [ ] Soma de horas e pontos, localização da aeronave e do piloto, e atualização da patente
 - [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
 
-### Fase 5: Comunidade
+### Fase 5: Estatísticas e comunidade
+- [ ] Estatísticas do piloto e da VA
+- [ ] **General Director:** painel de estatísticas e logs
 - [ ] Ranking de pilotos
+- [ ] Páginas públicas de staff, carreira e regulamento
 - [ ] **Director of Operations:** tours e eventos
-- [ ] Página pública com estatísticas da VA
 - [ ] Mapa de voos ao vivo
 - [ ] Galeria de liveries por matrícula
 - [ ] Notificações por e-mail (promoção, PIREP, inatividade)
@@ -365,7 +459,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Testes unitários do Domain
 - [ ] Testes de integração da API
 - [ ] CI com GitHub Actions (build e testes)
-- [ ] Configuração de ambiente de produção (segredos e connection strings)
+- [ ] Configuração de ambiente de produção (segredos, connection strings e chave CARTO)
 - [ ] Deploy da API, do front e do banco
 - [ ] Domínio próprio e HTTPS
 
