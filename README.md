@@ -26,7 +26,9 @@
 - [Operação](#operação)
 - [Carreira do piloto](#carreira-do-piloto)
 - [Reserva de voos](#reserva-de-voos)
+- [ACARS e PIREP](#acars-e-pirep)
 - [Pontos](#pontos)
+- [Mapa ao vivo](#mapa-ao-vivo)
 - [Estrutura de staff](#estrutura-de-staff)
 - [Stack](#stack)
 - [Arquitetura](#arquitetura)
@@ -48,8 +50,9 @@ O sistema reúne em um só lugar:
 - Reserva de voos aleatórios, personalizados, **escala mensal** e escalas especiais
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - Briefing integrado ao **SimBrief**
-- Acompanhamento do voo via **ACARS (smartCARS 3)** e envio automático de **PIREP**
-- Pontuação por desempenho, extrato de pontos e promoção automática
+- Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
+- Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety e promoção automática
+- **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
 - Painel administrativo com permissões por posição de staff
 
 Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**, voando nas networks **IVAO** e **VATSIM**.
@@ -147,8 +150,8 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 
 - Cada tipo tem um **intervalo de manutenção** em horas de voo (padrão **500 h**, editável).
 - O Fleet Manager pode mandar uma aeronave para a manutenção com um motivo, escolhendo o retorno **manual** ou **em uma data**. Na data, ela volta sozinha ao serviço.
-- Ao vencer o intervalo, a aeronave entra em manutenção **automaticamente** ao concluir o voo.
-- Se ela não estiver no **hub de manutenção** (a definir), é criada uma **escala especial de traslado** para um CMD levar a aeronave até lá.
+- Ao vencer o intervalo, a aeronave entra em manutenção **automaticamente** ao concluir o voo, com retorno em **2 dias**.
+- **Planejado:** se ela não estiver no **hub de manutenção** (a definir), será criada uma **escala especial de traslado** para um CMD levar a aeronave até lá.
 
 ### Numeração dos voos
 
@@ -205,7 +208,7 @@ O piloto sempre parte da **sua localização atual**, com uma aeronave que **est
 | **Aleatório** | Filtro por duração (até 1 h, 1–2 h, mais de 2 h ou qualquer). O sistema sorteia a rota e uma aeronave disponível no aeroporto. Se não houver aeronave, o piloto pode trazer uma para lá sem custo. | Grátis |
 | **Personalizado** | O piloto escolhe qualquer rota que saia do aeroporto onde está. | Grátis para uma base; **50 pontos** para os demais destinos |
 | **Escala mensal** | Sequência de voos gerada para o mês (veja abaixo). | Grátis, com bônus |
-| **Escala especial** | Voos criados pelo staff, como traslados para manutenção. O primeiro piloto que reservar fica com o voo. | **+200 pontos** ao concluir |
+| **Escala especial** | Voos criados pelo staff, como traslados e fretamentos. O primeiro piloto que reservar fica com o voo. | **+300** (nacional) / **+500** (internacional) ao concluir |
 
 **Escolha da aeronave:** no voo personalizado e na escala mensal, ao clicar no destino abre a tela de seleção. Ela tem a opção **Random selection** e os cards das aeronaves disponíveis no aeroporto, agrupados por tipo, com foto, matrícula, variante e último voo. No voo aleatório, a aeronave é escolhida automaticamente.
 
@@ -220,8 +223,8 @@ Todo voo tem um **segundo piloto da VA** escalado automaticamente na reserva:
 - Quem reserva é **FO** → o sistema escala um **CMD**. Quem reserva é **CMD** → o sistema escala um **FO**.
 - O piloto escalado não precisa fazer nada. Ele só aparece no briefing, simulando a tripulação.
 - Só pode ser escalado quem está ativo, **não tem reserva própria em aberto** e não está escalado em outro voo. Entre os livres, vai **quem foi escalado há mais tempo**.
-- Se ninguém estiver livre, o voo sai **sem segundo piloto**.
-- Quando o voo é concluído, o piloto escalado ganha **10 pontos** (sem horas de voo).
+- Se ninguém estiver livre, o voo sai com o **"Severino"**, um tripulante fictício que não recebe pontos.
+- Quando o PIREP é **aprovado**, o piloto escalado ganha **10 pontos** (regra editável, sem horas de voo).
 - Se o voo for cancelado ou expirar, o piloto escalado é liberado e não ganha nada. A expiração **não gera punição** para quem fez a reserva.
 
 ### Escala mensal
@@ -238,27 +241,103 @@ Todo voo tem um **segundo piloto da VA** escalado automaticamente na reserva:
 - Se o piloto não estiver no aeroporto de partida de um voo da escala, o card mostra a tag **Indisponível**. Ao reservar, ele faz um **jumpseat automático e sem custo** até a partida.
 - Com um voo aleatório ou personalizado em aberto, a escala avisa que já existe um voo em aberto.
 - Usa apenas rotas e aeroportos que a patente do piloto permite.
-- Bônus de **100 pontos por voo** da escala ao concluí-la.
+- Bônus de **100 pontos por voo** da escala, pago quando **todos os PIREPs da escala forem aprovados**.
 - Quem terminar a escala antes do fim do mês só recebe uma nova no mês seguinte.
+
+---
+
+## ACARS e PIREP
+
+A API tem uma camada de ACARS **neutra**: o smartCARS 3 (ou qualquer outro cliente) só precisa traduzir os dados dele para estes endpoints.
+
+| Etapa | Endpoint | O que acontece |
+|---|---|---|
+| Início do voo | `POST /api/acars/flight` | Cria a sessão de voo e passa a reserva e a aeronave para "em voo" |
+| Durante o voo | `POST /api/acars/flight/positions` | Grava a trilha (até 500 posições por lote) e a última posição para o mapa ao vivo |
+| Fim do voo | `POST /api/acars/flight/complete` | Recebe o resumo e os eventos, aplica as regras de pontuação e cria o PIREP como **Pending** |
+
+**Ao enviar o PIREP** (antes da revisão):
+- O piloto e a aeronave vão para o **aeroporto de pouso** (ou o alternado, se divergiu).
+- As **horas contam** para o piloto e a aeronave soma horas e ciclos.
+- A perna da escala mensal é concluída, liberando a próxima.
+- Se a aeronave passou do intervalo de manutenção, ela entra em manutenção automaticamente.
+
+**PIREP manual:** se o ACARS falhar, o piloto envia o PIREP pelo Briefing, com comentário obrigatório. Ele **sempre passa pela revisão**.
+
+**Simulador de voo (dev):** em ambiente de desenvolvimento, o Briefing tem o botão *Simulate flight* com três cenários (limpo, com penalidades e reprovado) para testar todo o fluxo sem o simulador.
+
+### Revisão do Safety
+
+Todo PIREP é revisado por um **Safety Manager** em **Admin › PIREPs**:
+
+- Fila com abas **Pending**, **Approved**, **Rejected** e **All**, mostrando pontos e **% de conformidade**.
+- Tela de revisão com dados do voo, mapa da trilha, eventos e itens de pontuação.
+- O Safety pode **ignorar** um item automático (falso positivo) e **adicionar itens de revisão** (UNICOM, remarks, alternado sem justificativa, SOP...).
+- **Conformidade:** 100% menos 1% a cada 10 pontos de penalidade; qualquer item de reprovação dá 0%. No futuro, PIREPs com 98% ou mais poderão ser aprovados automaticamente.
+
+| Decisão | Efeito |
+|---|---|
+| **Aprovar** | Credita os pontos do voo, paga a tripulação e o bônus da escala mensal (se for o caso) e atualiza a patente. Bloqueado enquanto houver item de reprovação ativo. |
+| **Rejeitar** | Comentário obrigatório. O voo **não dá pontos** e aplica a penalidade progressiva do mês. Horas e posição da aeronave continuam valendo. |
+
+**Penalidade por PIREP rejeitado** (por mês, editável em Admin › Scoring):
+
+| Rejeição no mês | Penalidade |
+|---|---|
+| 1ª | −1.000 pontos |
+| 2ª | −1.500 pontos |
+| 3ª | −2.000 pontos |
+| 4ª | −10.000 pontos e **conta desativada** |
+
+Contas desativadas não conseguem reservar voos até serem reativadas pelo Head of HR. O saldo pode ficar **negativo**: o piloto continua na patente mais baixa e só é rebaixado quando fica abaixo do mínimo da patente atual.
 
 ---
 
 ## Pontos
 
+### Regras de pontuação
+
+As regras ficam no banco e são editadas pelo **Safety Manager** em **Admin › Scoring**: é possível alterar valores, criar, desativar e excluir regras. Os pilotos veem as regras ativas na página **Points**.
+
+Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. O ponto de partida foi a tabela da FlyGOL, adaptada à Litoral:
+
+| Categoria | Exemplos |
+|---|---|
+| Tempo de voo | +15 (até 1 h) a +100 (acima de 6 h), pelo block time |
+| Touchdown rate | +60 (101–150 fpm) a −50 (401–500 fpm); acima de 500 fpm reprova |
+| Flaps e configuração | Limites de velocidade por posição de flap (reprova); flaps certos para decolagem e pouso (+5) |
+| Decolagem | Tailstrike por tipo (reprova); VR acima de 192 kt (reprova) |
+| Simulador | Slew −100, stall −150, pause −50, simulation rate −600, refuel −300 |
+| Procedimentos | Ordem de partida dos motores, taxi-in, motores cortados no envio do log, taxi acima de 30 kt |
+| Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg, menos de 80% online... |
+| Voos especiais e eventos | Traslados e fretamentos (+300/+500), eventos IVAO/VATSIM (+500) e eventos da Litoral (+300/+500) |
+
+### Extrato
+
 Todo movimento de pontos fica registrado no **extrato do piloto**:
 
 | Tipo | Exemplo |
 |---|---|
-| Pontuação do voo | Pontos ganhos ou perdidos conforme o desempenho |
+| Pontuação do voo | Pontos do PIREP aprovado |
 | Custo de reserva | Voo personalizado para fora das bases |
 | Jumpseat | Deslocamento para aeroportos que não são base |
-| Tripulação | 10 pontos por voo concluído em que o piloto foi escalado |
+| Tripulação | 10 pontos por voo aprovado em que o piloto foi escalado |
 | Bônus de escala mensal | 100 pontos por voo da escala concluída |
-| Escala especial | **+200 pontos** por escala concluída |
-| Penalidade | Aplicada na análise do PIREP, ou **−500 pontos** se uma escala especial reservada vencer sem ser feita |
+| Escala especial | Bônus por escala especial concluída |
+| Penalidade | PIREP rejeitado, ou **−500 pontos** se uma escala especial reservada vencer sem ser feita |
 | Ajuste manual | Correção feita pelo staff |
 
-A tabela de pontuação por desempenho (pouso, procedimentos, desvios) será definida na fase do ACARS.
+---
+
+## Mapa ao vivo
+
+O dashboard mostra os voos da Litoral em andamento (sessões de ACARS com posição nos últimos 10 minutos), atualizado a cada 30 segundos.
+
+- Cada avião aparece com uma etiqueta: **callsign** e **partida ✈ destino**.
+- Ao clicar, abre o painel do voo (piloto, foto da aeronave, progresso, fase, GS, altitude, distância restante, tempo para chegada e rede), com os pins **DEP** e **ARR**, a **rota planejada** tracejada e a **trilha voada** em laranja. As linhas sempre seguem o caminho mais curto, sem cruzar o planeta pelo lado errado.
+- Abaixo do mapa, a tabela com todos os voos: piloto, voo e aeronave, rota com progresso, dados de voo e rede.
+- O callsign abre o voo no **VATSIM Radar** ou no **Webeye** (IVAO).
+- Em desenvolvimento, o botão **Demo traffic** coloca voos fictícios no mapa para teste.
 
 ---
 
@@ -290,7 +369,7 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 
 | Posição | Função | Vagas |
 |---|---|:---:|
-| Safety Manager | Análise e aprovação de PIREPs | Várias |
+| Safety Manager | Análise e aprovação de PIREPs e regras de pontuação | Várias |
 
 ---
 
@@ -312,9 +391,11 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 
 **Integrações**
 - SimBrief (geração e leitura de OFP)
+- aviationweather.gov (METAR)
 - **smartCARS 3**: a API do Litoral implementa a [especificação REST](https://github.com/invernyx/smartcars-3-phpvms5-api/blob/development/openapi.json) usada pelo app, em .NET, sem PHP
 - **OurAirports**: catálogo de aeroportos para a busca por ICAO
 - **Wikimedia Commons**: fotos de aeroportos (planejado)
+- **VATSIM Radar** e **IVAO Webeye**: links para acompanhar o voo na rede
 
 ---
 
@@ -335,8 +416,8 @@ flowchart LR
 
 | Camada | Responsabilidade |
 |---|---|
-| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, pontos e staff |
-| **Application** | Contratos e casos de uso: cadastro, booking, PIREP, promoção |
+| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, pontos, motor de pontuação e staff |
+| **Application** | Contratos e casos de uso: cadastro, booking, ACARS, PIREP, revisão, pontuação |
 | **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed e serviços |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
@@ -347,16 +428,16 @@ flowchart LR
 ```
 litoral-linhas-aereas/
 ├── src/
-│   ├── Litoral.Domain/          # Entidades, enums, staff e regras
+│   ├── Litoral.Domain/          # Entidades, enums, staff, regras e motor de pontuação
 │   ├── Litoral.Application/     # Contratos e casos de uso
 │   ├── Litoral.Infrastructure/  # DbContext, configurações, migrations, seed, auth
 │   └── Litoral.Api/             # Controllers, Program.cs, Swagger e wwwroot/uploads (fotos)
 ├── litoral-web/                 # Front-end Angular
-│   ├── public/                  # favicon e insígnias das patentes
+│   ├── public/                  # favicon, insígnias das patentes e logos das networks
 │   └── src/app/
 │       ├── core/                # auth, api, admin, staff, tema, dados de referência, config
-│       ├── shared/              # header, mapa, pipes, diretivas e utilitários (coordenadas, voos, matrículas)
-│       └── pages/               # home pública, login, cadastro, dashboard, perfil e admin
+│       ├── shared/              # header, mapas (aeroporto, trilha, ao vivo), seletor de data, pipes e utilitários
+│       └── pages/               # home, login, cadastro, dashboard, perfil, reserva, briefing, frota, PIREPs, pontos e admin
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
 ```
@@ -412,7 +493,7 @@ dotnet dev-certs https --trust
 npm run dev
 ```
 
-Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs e posições de staff. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder.
+Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs, posições de staff e regras de pontuação. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder.
 
 | Serviço | Endereço |
 |---|---|
@@ -479,58 +560,65 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] **Fleet Manager:** tipos de aeronave com prefixo de matrícula e intervalo de manutenção
 - [x] **Fleet Manager:** aeronaves com matrícula sugerida por bloco, regras da ANAC, foto com crédito e localização
 - [x] **Fleet Manager:** manutenção manual ou com data de retorno automática, ativar e desativar
-- [ ] Manutenção automática por horas ao concluir o voo
-- [ ] Hub de manutenção e escala especial de traslado (CMD, +200 pontos, 48 h, −500 se vencer)
+- [x] Manutenção automática por horas ao concluir o voo
+- [ ] Hub de manutenção e escala especial de traslado (CMD, bônus de escala especial, 48 h, −500 se vencer)
 - [ ] Tag MEL/CDL nas aeronaves (a confirmar)
 - [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
 - [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
 
-### Fase 2B: Páginas do piloto (estilo FlyGOL)
+### Fase 2B: Páginas do piloto
 - [ ] Aeroportos com jumpseat filtrado pela patente (grátis para bases, 50 pontos para os demais)
-- [ ] Frota, com localização e status de cada matrícula
+- [x] Frota, com localização e status de cada matrícula
 - [ ] Rotas
-- [ ] Extrato de pontos e tabela de regras
+- [x] Tabela de regras de pontuação (página Points)
+- [ ] Extrato de pontos
 - [ ] Estatísticas do piloto
 - [ ] Perfil do piloto
 - [ ] Documentos da tripulação (PDFs para download)
 - [ ] Regulamento e Política de Privacidade (inglês e português)
 
-### Fase 3: Reserva de voos
-- [ ] Voo aleatório com filtro de duração
-- [ ] Voo personalizado (custo de 50 pontos fora das bases)
-- [ ] Escala mensal (passageiros e cargueiros) com sequências de 5 a 7 voos começando e terminando na base, com jumpseat automático até a partida
-- [ ] Tela de escolha da aeronave (Random selection ou card por matrícula), no voo personalizado e na escala mensal
-- [ ] Translado de aeronave sem custo
-- [ ] Escala automática do segundo piloto (FO ↔ CMD)
-- [ ] Confirmação da reserva e callsign no menu
-- [ ] Briefing: SimBrief, METAR e prefile
-- [ ] Cancelamento e expiração da reserva em 24 h
+### ✅ Fase 3: Reserva de voos
+- [x] Voo aleatório com filtro de duração
+- [x] Voo personalizado (custo de 50 pontos fora das bases)
+- [x] Escala mensal (passageiros e cargueiros) com sequências de 5 a 7 voos começando e terminando na base, com jumpseat automático até a partida
+- [x] Tela de escolha da aeronave (Random selection ou card por matrícula), no voo personalizado e na escala mensal
+- [x] Translado de aeronave sem custo
+- [x] Escala automática do segundo piloto (FO ↔ CMD)
+- [x] Confirmação da reserva e callsign no menu
+- [x] Briefing: SimBrief, METAR e prefile
+- [x] Cancelamento e expiração da reserva em 24 h
+- [ ] Briefing estilo FlyGOL: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
 
 ### Fase 3B: Escalas especiais
 - [ ] **Director of Operations:** criação de escalas especiais
 - [ ] Reserva pelo primeiro piloto interessado
-- [ ] +200 pontos ao concluir, prazo de 48 h e −500 pontos se vencer
+- [ ] Bônus ao concluir (+300 nacional / +500 internacional), prazo de 48 h e −500 pontos se vencer
 
-### Fase 4: ACARS e PIREP
-- [ ] API compatível com o **smartCARS 3** (`api/smartcars`): login, dados, reservas, início, posição, conclusão e PIREPs
+### 🔜 Fase 4: ACARS e PIREP
+- [x] Camada de ACARS neutra: início do voo, posições, eventos e conclusão
+- [x] Trilha do voo e última posição gravadas por sessão
+- [x] Motor de pontuação com regras editáveis (Admin › Scoring) e % de conformidade
+- [x] PIREP automático ao final do voo e PIREP manual (sempre revisado)
+- [x] Simulador de voo para desenvolvimento (três cenários)
+- [x] Páginas de PIREPs do piloto com mapa, eventos e pontuação
+- [x] **Safety Manager:** fila de revisão, itens de revisão manuais e falsos positivos
+- [x] Aprovação e rejeição de PIREP com penalidade progressiva no mês e desativação de conta
+- [x] Horas, localização da aeronave e do piloto, patente, tripulação e bônus da escala mensal
+- [ ] API compatível com o **smartCARS 3** (`api/smartcars`) usando a camada de ACARS
 - [ ] Cadastro da comunidade no smartCARS Central
-- [ ] Endpoints de telemetria
-- [ ] Detecção de decolagem, pouso e chegada ao gate
-- [ ] PIREP automático ao final do voo
-- [ ] Tabela de pontuação por desempenho (pouso, procedimentos, desvios)
-- [ ] **Safety Manager:** fila de PIREPs pendentes com logs de telemetria
-- [ ] Aprovação e rejeição de PIREP
-- [ ] Soma de horas e pontos, localização da aeronave e do piloto, e atualização da patente
-- [ ] Pontos de tripulação para o segundo piloto escalado
+- [ ] Callsign real usado na network gravado na sessão
+- [ ] Aprovação automática de PIREPs com conformidade ≥ 98%
+- [ ] Notificação ao piloto quando o PIREP for revisado
 - [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
 
 ### Fase 5: Estatísticas e comunidade
 - [ ] Estatísticas do piloto e da VA
 - [ ] **General Director:** painel de estatísticas e logs
-- [ ] Ranking de pilotos
+- [ ] Ranking de pilotos e pilotos do mês (+800/+600/+400)
+- [ ] Jobs de conta: inatividade (−50 por dia após 40 dias) e perda de conta
 - [ ] Páginas públicas de staff, carreira e regulamento
 - [ ] **Director of Operations:** tours e eventos
-- [ ] Mapa de voos ao vivo no dashboard (posições do smartCARS e tráfego LTL na IVAO/VATSIM)
+- [x] Mapa de voos ao vivo no dashboard, com rota planejada, trilha voada e links para VATSIM Radar / Webeye
 - [ ] Galeria de liveries por matrícula
 - [ ] Notificações por e-mail (promoção, PIREP, inatividade)
 
