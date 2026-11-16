@@ -9,6 +9,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Litoral.Application.Pilots;
+using Litoral.Application.Reference;
+using Litoral.Infrastructure.Pilots;
+using Litoral.Infrastructure.Reference;
 
 namespace Litoral.Infrastructure;
 
@@ -59,6 +63,8 @@ public static class DependencyInjection
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPilotService, PilotService>();
+        services.AddScoped<IReferenceService, ReferenceService>();
 
         return services;
     }

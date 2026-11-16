@@ -8,6 +8,7 @@ using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Litoral.Infrastructure.Pilots;
 
 namespace Litoral.Infrastructure.Auth;
 
@@ -84,7 +85,7 @@ public sealed class AuthService(
         var pilot = await LoadPilotAsync(userId, ct);
         var roles = await userManager.GetRolesAsync(user);
 
-        return ToSummary(user, pilot, roles.ToList());
+        return PilotSummaryMapper.ToSummary(user.Email!, pilot, roles.ToList());
     }
 
     private async Task<Pilot> LoadPilotAsync(string userId, CancellationToken ct) =>
@@ -96,19 +97,6 @@ public sealed class AuthService(
         var roles = (await userManager.GetRolesAsync(user)).ToList();
         var (token, expiresAt) = tokenGenerator.Generate(user, pilot, roles);
 
-        return new AuthResponse(token, expiresAt, ToSummary(user, pilot, roles));
+        return new AuthResponse(token, expiresAt, PilotSummaryMapper.ToSummary(user.Email!, pilot, roles));
     }
-
-    private static PilotSummary ToSummary(ApplicationUser user, Pilot pilot, IReadOnlyList<string> roles) => new(
-        pilot.PilotNumber,
-        pilot.DisplayId,
-        pilot.FirstName,
-        pilot.LastName,
-        user.Email!,
-        pilot.Rank.Code,
-        pilot.Rank.Name,
-        pilot.CurrentLocationIcao,
-        pilot.TotalFlightMinutes,
-        pilot.Points,
-        roles);
 }

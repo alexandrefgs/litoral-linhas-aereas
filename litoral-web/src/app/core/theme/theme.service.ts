@@ -1,29 +1,34 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
-export type Theme = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 const STORAGE_KEY = 'litoral.theme';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  readonly current = signal<Theme>(this.getSaved());
+  private readonly media = window.matchMedia('(prefers-color-scheme: dark)');
+  private readonly systemDark = signal(this.media.matches);
 
-  toggle(): void {
-    this.set(this.current() === 'light' ? 'dark' : 'light');
+  readonly mode = signal<ThemeMode>(this.getSaved());
+  readonly isDark = computed(() => this.mode() === 'dark' || (this.mode() === 'system' && this.systemDark()));
+
+  constructor() {
+    this.media.addEventListener('change', event => this.systemDark.set(event.matches));
+    effect(() => document.documentElement.classList.toggle('dark', this.isDark()));
   }
 
-  set(theme: Theme): void {
-    this.current.set(theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+  setMode(mode: ThemeMode): void {
+    this.mode.set(mode);
 
     try {
-      localStorage.setItem(STORAGE_KEY, theme);
+      localStorage.setItem(STORAGE_KEY, mode);
     } catch {}
   }
 
-  private getSaved(): Theme {
+  private getSaved(): ThemeMode {
     try {
-      return localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved === 'dark' || saved === 'system' ? saved : 'light';
     } catch {
       return 'light';
     }
