@@ -15,6 +15,7 @@ import {
 } from '../../../shared/utils/coordinates';
 
 type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
+type LookupState = 'idle' | 'loading' | 'found' | 'notFound';
 
 function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
   const { passenger, cargo } = group.value as { passenger?: boolean; cargo?: boolean };
@@ -157,9 +158,22 @@ function atLeastOneOperation(group: AbstractControl): ValidationErrors | null {
           <div class="grid gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
             <div>
               <label for="icao" class="field-label">ICAO</label>
-              <input id="icao" formControlName="icao" maxlength="4" class="field-input font-mono uppercase" />
+              <div class="relative">
+                <input id="icao" formControlName="icao" maxlength="4" class="field-input pr-9 font-mono uppercase" (input)="lookup()" />
+                @if (lookupState() === 'loading') {
+                  <i class="ti ti-loader-2 absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-ink-muted" aria-hidden="true"></i>
+                } @else if (lookupState() === 'found') {
+                  <i class="ti ti-circle-check absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true"></i>
+                }
+              </div>
               @if (showError('icao')) {
                 <p class="field-error">Enter 4 letters or numbers.</p>
+              } @else if (lookupState() === 'found') {
+                <p class="mt-1 text-xs text-ink-muted">Filled from the airport catalog. Review before saving.</p>
+              } @else if (lookupState() === 'notFound') {
+                <p class="mt-1 text-xs text-ink-muted">Not found in the catalog. Fill in the fields manually.</p>
+              } @else if (!editing()) {
+                <p class="mt-1 text-xs text-ink-muted">Type the ICAO to fill in the other fields.</p>
               }
             </div>
             <div>
@@ -284,6 +298,8 @@ export class AdminAirports implements OnInit {
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
   protected readonly confirmDelete = signal<string | null>(null);
+  protected readonly lookupState = signal<LookupState>('idle');
+  private lastLookup = '';
   protected readonly rowError = signal<{ icao: string; message: string } | null>(null);
 
   protected readonly baseRank = computed(() => this.ranks()[0]?.code ?? 'FO');
@@ -354,6 +370,8 @@ export class AdminAirports implements OnInit {
   protected openCreate(): void {
     this.editing.set(null);
     this.formError.set(null);
+    this.lookupState.set('idle');
+    this.lastLookup = '';
     this.form.reset({
       icao: '',
       name: '',
@@ -374,6 +392,7 @@ export class AdminAirports implements OnInit {
   protected openEdit(airport: AdminAirport): void {
     this.editing.set(airport);
     this.formError.set(null);
+    this.lookupState.set('idle');
     this.form.reset({
       icao: airport.icao,
       name: airport.name,
@@ -409,6 +428,36 @@ export class AdminAirports implements OnInit {
     latitude.setValue(lat.trim());
     longitude.setValue(lon.trim());
     longitude.markAsDirty();
+  }
+
+  protected async lookup(): Promise<void> {
+    const icao = this.form.controls.icao.value.trim().toUpperCase();
+
+    if (this.editing() || !/^[A-Z0-9]{4}$/.test(icao)) {
+      this.lookupState.set('idle');
+      this.lastLookup = '';
+      return;
+    }
+
+    if (icao === this.lastLookup) return;
+    this.lastLookup = icao;
+    this.lookupState.set('loading');
+
+    try {
+      const airport = await this.api.lookup(icao);
+      if (this.lastLookup !== icao) return;
+
+      this.form.patchValue({
+        name: airport.name,
+        city: airport.city,
+        country: airport.country,
+        latitude: formatLatitude(airport.latitude),
+        longitude: formatLongitude(airport.longitude)
+      });
+      this.lookupState.set('found');
+    } catch {
+      if (this.lastLookup === icao) this.lookupState.set('notFound');
+    }
   }
 
   protected async save(): Promise<void> {

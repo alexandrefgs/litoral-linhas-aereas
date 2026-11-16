@@ -74,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<IPilotService, PilotService>();
         services.AddScoped<IReferenceService, ReferenceService>();
         services.AddScoped<IAirportAdminService, AirportAdminService>();
+        services.AddScoped<IAirportLookupService, AirportLookupService>();
+        services.AddHttpClient<AirportCatalogImporter>(client => client.Timeout = TimeSpan.FromMinutes(2));
 
         return services;
     }

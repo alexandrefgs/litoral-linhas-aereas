@@ -27,6 +27,17 @@ export interface AirportPayload {
   isHub: boolean;
 }
 
+export interface AirportLookup {
+  icao: string;
+  name: string;
+  city: string;
+  country: string;
+  countryCode: string;
+  continent: string;
+  latitude: number;
+  longitude: number;
+}
+
 const BASE_URL = '/api/admin/airports';
 
 @Injectable({ providedIn: 'root' })
@@ -35,6 +46,10 @@ export class AdminAirportsService {
 
   list(): Promise<AdminAirport[]> {
     return firstValueFrom(this.http.get<AdminAirport[]>(BASE_URL));
+  }
+
+  lookup(icao: string): Promise<AirportLookup> {
+    return firstValueFrom(this.http.get<AirportLookup>(`${BASE_URL}/lookup/${encodeURIComponent(icao)}`));
   }
 
   create(icao: string, payload: AirportPayload): Promise<AdminAirport> {

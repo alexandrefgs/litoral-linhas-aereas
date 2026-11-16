@@ -8,11 +8,15 @@ namespace Litoral.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/airports")]
 [Authorize(Policy = StaffPolicies.ManageRoutes)]
-public class AdminAirportsController(IAirportAdminService airports) : ControllerBase
+public class AdminAirportsController(IAirportAdminService airports, IAirportLookupService lookup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminAirportDto>>> List(CancellationToken ct) =>
         Ok(await airports.ListAsync(ct));
+
+    [HttpGet("lookup/{icao}")]
+    public async Task<ActionResult<AirportLookupDto>> Lookup(string icao, CancellationToken ct) =>
+        Ok(await lookup.FindAsync(icao, ct));
 
     [HttpGet("{icao}")]
     public async Task<ActionResult<AdminAirportDto>> Get(string icao, CancellationToken ct) =>

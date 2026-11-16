@@ -3,6 +3,7 @@ using Litoral.Domain.Entities;
 using Litoral.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Litoral.Infrastructure.Reference;
 
 namespace Litoral.Infrastructure.Persistence;
 
@@ -18,6 +19,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Aircraft> Aircraft => Set<Aircraft>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+    public DbSet<AirportCatalogEntry> AirportCatalog => Set<AirportCatalogEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

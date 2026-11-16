@@ -4,6 +4,7 @@ using Litoral.Domain.Staff;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Litoral.Infrastructure.Reference;
 
 namespace Litoral.Infrastructure.Persistence;
 
@@ -23,6 +24,7 @@ public static class DbSeeder
         await SeedAirportsAndHubsAsync(db);
 
         await db.SaveChangesAsync();
+        await scope.ServiceProvider.GetRequiredService<AirportCatalogImporter>().ImportIfEmptyAsync();
     }
 
     private static async Task SeedStaffRolesAsync(RoleManager<IdentityRole> roleManager)
