@@ -77,7 +77,7 @@ import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
                       <span class="font-semibold text-ink">{{ nextRank()?.name ?? ('dashboard.maxLevel' | t) }}</span>
                     </p>
                   </div>
-                  <i class="ti ti-chevrons-up text-3xl text-highlight" aria-hidden="true"></i>
+                  <img [src]="'images/ranks/' + pilot.rankCode.toLowerCase() + '.png'" [alt]="pilot.rankName" class="h-10 w-auto object-contain" />
                 </div>
                 <div class="progress"><div class="progress-bar bg-highlight" [style.width.%]="rankProgress()"></div></div>
                 <div class="flex justify-between text-xs text-ink-muted">
