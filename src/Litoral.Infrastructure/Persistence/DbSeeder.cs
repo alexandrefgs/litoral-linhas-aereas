@@ -72,21 +72,17 @@ public static class DbSeeder
     {
         if (await db.Airports.AnyAsync()) return;
 
-        var sbgr = new Airport("SBGR", "Aeroporto Internacional de São Paulo/Guarulhos", "São Paulo", "Brasil", -23.4356, -46.4731);
-        var sbfl = new Airport("SBFL", "Aeroporto Internacional de Florianópolis - Hercílio Luz", "Florianópolis", "Brasil", -27.6703, -48.5525);
-        var sbbr = new Airport("SBBR", "Aeroporto Internacional de Brasília", "Brasília", "Brasil", -15.8711, -47.9186);
-        var sbeg = new Airport("SBEG", "Aeroporto Internacional Eduardo Gomes", "Manaus", "Brasil", -3.0386, -60.0497);
-        var sbfz = new Airport("SBFZ", "Aeroporto Internacional Pinto Martins", "Fortaleza", "Brasil", -3.7763, -38.5326);
-        var sbkp = new Airport("SBKP", "Aeroporto Internacional de Viracopos", "Campinas", "Brasil", -23.0074, -47.1345);
+        const OperationType passenger = OperationType.Passenger;
+        const OperationType mixed = OperationType.Passenger | OperationType.Cargo;
+
+        var sbgr = new Airport("SBGR", "Aeroporto Internacional de São Paulo/Guarulhos", "São Paulo", "Brasil", -23.4356, -46.4731, passenger);
+        var sbfl = new Airport("SBFL", "Aeroporto Internacional de Florianópolis - Hercílio Luz", "Florianópolis", "Brasil", -27.6703, -48.5525, passenger);
+        var sbbr = new Airport("SBBR", "Aeroporto Internacional de Brasília", "Brasília", "Brasil", -15.8711, -47.9186, passenger);
+        var sbeg = new Airport("SBEG", "Aeroporto Internacional Eduardo Gomes", "Manaus", "Brasil", -3.0386, -60.0497, mixed);
+        var sbfz = new Airport("SBFZ", "Aeroporto Internacional Pinto Martins", "Fortaleza", "Brasil", -3.7763, -38.5326, mixed);
+        var sbkp = new Airport("SBKP", "Aeroporto Internacional de Viracopos", "Campinas", "Brasil", -23.0074, -47.1345, OperationType.Cargo);
 
         db.Airports.AddRange(sbgr, sbfl, sbbr, sbeg, sbfz, sbkp);
-
-        db.Hubs.AddRange(
-            new Hub(sbgr, OperationType.Passenger),
-            new Hub(sbfl, OperationType.Passenger),
-            new Hub(sbbr, OperationType.Passenger),
-            new Hub(sbeg, OperationType.Passenger | OperationType.Cargo),
-            new Hub(sbfz, OperationType.Passenger | OperationType.Cargo),
-            new Hub(sbkp, OperationType.Cargo));
+        db.Hubs.AddRange(new Hub(sbgr), new Hub(sbfl), new Hub(sbbr), new Hub(sbeg), new Hub(sbfz), new Hub(sbkp));
     }
 }

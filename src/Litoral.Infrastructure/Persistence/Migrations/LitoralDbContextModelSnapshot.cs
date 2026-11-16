@@ -131,6 +131,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<int>("Operations")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Icao")
@@ -198,9 +201,6 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("AirportId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Operations")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

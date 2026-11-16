@@ -8,8 +8,9 @@ public sealed record AdminAirportDto(
     double Latitude,
     double Longitude,
     string MinimumRank,
-    bool PassengerHub,
-    bool CargoHub);
+    bool Passenger,
+    bool Cargo,
+    bool IsHub);
 
 public sealed record CreateAirportRequest(
     string Icao,
@@ -18,7 +19,10 @@ public sealed record CreateAirportRequest(
     string Country,
     double Latitude,
     double Longitude,
-    string MinimumRank);
+    string MinimumRank,
+    bool Passenger,
+    bool Cargo,
+    bool IsHub);
 
 public sealed record UpdateAirportRequest(
     string Name,
@@ -26,9 +30,10 @@ public sealed record UpdateAirportRequest(
     string Country,
     double Latitude,
     double Longitude,
-    string MinimumRank);
-
-public sealed record SetHubRequest(bool Passenger, bool Cargo);
+    string MinimumRank,
+    bool Passenger,
+    bool Cargo,
+    bool IsHub);
 
 public interface IAirportAdminService
 {
@@ -36,6 +41,5 @@ public interface IAirportAdminService
     Task<AdminAirportDto> GetAsync(string icao, CancellationToken ct);
     Task<AdminAirportDto> CreateAsync(CreateAirportRequest request, CancellationToken ct);
     Task<AdminAirportDto> UpdateAsync(string icao, UpdateAirportRequest request, CancellationToken ct);
-    Task<AdminAirportDto> SetHubAsync(string icao, SetHubRequest request, CancellationToken ct);
     Task DeleteAsync(string icao, CancellationToken ct);
 }

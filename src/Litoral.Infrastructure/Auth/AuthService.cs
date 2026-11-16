@@ -31,7 +31,7 @@ public sealed class AuthService(
             : request.HubIcao.Trim().ToUpperInvariant();
 
         var isPassengerHub = await db.Hubs.AnyAsync(
-            h => h.Airport.Icao == hubIcao && (h.Operations & OperationType.Passenger) == OperationType.Passenger, ct);
+            h => h.Airport.Icao == hubIcao && (h.Airport.Operations & OperationType.Passenger) == OperationType.Passenger, ct);
 
         if (!isPassengerHub)
             throw new AppException(AppErrorKind.Validation, $"{hubIcao} não é um hub de passageiros da Litoral.");

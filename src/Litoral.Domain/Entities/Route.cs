@@ -29,7 +29,12 @@ public sealed class Route : Entity
             throw new DomainException("Origem e destino não podem ser iguais.");
         if (aircraftType.IsCargo && block != FlightBlock.FerryAndCargo)
             throw new DomainException("Voos cargueiros devem usar o bloco 9XXX.");
-
+        var operation = aircraftType.IsCargo ? OperationType.Cargo : OperationType.Passenger;
+        var operationName = aircraftType.IsCargo ? "cargueiros" : "de passageiros";
+        if (!departure.Supports(operation))
+            throw new DomainException($"{departure.Icao} não opera voos {operationName}.");
+        if (!arrival.Supports(operation))
+            throw new DomainException($"{arrival.Icao} não opera voos {operationName}.");
         var distance = departure.DistanceNmTo(arrival);
         if (distance > aircraftType.MaxRangeNm)
             throw new DomainException(

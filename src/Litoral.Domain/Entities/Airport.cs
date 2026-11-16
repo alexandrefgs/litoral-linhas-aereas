@@ -1,4 +1,5 @@
 using Litoral.Domain.Common;
+using Litoral.Domain.Enums;
 
 namespace Litoral.Domain.Entities;
 
@@ -12,17 +13,27 @@ public sealed class Airport : Entity
     public string Country { get; private set; } = null!;
     public double Latitude { get; private set; }
     public double Longitude { get; private set; }
+    public OperationType Operations { get; private set; } = OperationType.Passenger;
     public int MinimumRankLevel { get; private set; } = 1;
 
     private Airport() { }
 
-    public Airport(string icao, string name, string city, string country, double latitude, double longitude, int minimumRankLevel = 1)
+    public Airport(
+        string icao,
+        string name,
+        string city,
+        string country,
+        double latitude,
+        double longitude,
+        OperationType operations,
+        int minimumRankLevel = 1)
     {
         if (string.IsNullOrWhiteSpace(icao) || icao.Trim().Length != 4 || !icao.Trim().All(char.IsLetterOrDigit))
             throw new DomainException("ICAO do aeroporto deve ter 4 caracteres (letras ou números).");
 
         Icao = icao.Trim().ToUpperInvariant();
         Update(name, city, country, latitude, longitude);
+        SetOperations(operations);
         SetMinimumRankLevel(minimumRankLevel);
     }
 
@@ -45,6 +56,16 @@ public sealed class Airport : Entity
         Latitude = latitude;
         Longitude = longitude;
     }
+
+    public void SetOperations(OperationType operations)
+    {
+        if (operations == 0)
+            throw new DomainException("O aeroporto precisa ter ao menos um tipo de operação.");
+
+        Operations = operations;
+    }
+
+    public bool Supports(OperationType operation) => (Operations & operation) == operation;
 
     public void SetMinimumRankLevel(int level)
     {

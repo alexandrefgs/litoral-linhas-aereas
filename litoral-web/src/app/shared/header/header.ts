@@ -130,7 +130,7 @@ interface NavItem {
       @if (auth.isAuthenticated()) {
         <nav class="border-t border-line">
           <div class="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-6 py-2">
-            @for (item of navItems; track item.path) {
+            @for (item of navItems(); track item.path) {
               <a [routerLink]="item.path" routerLinkActive="!bg-primary !text-on-primary"
                 class="flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 font-medium text-ink hover:bg-surface-alt">
                 <i class="ti {{ item.icon }} text-xl" aria-hidden="true"></i>
@@ -148,7 +148,7 @@ export class Header {
   protected readonly theme = inject(ThemeService);
   protected readonly openMenu = signal<Menu | null>(null);
 
-  protected readonly navItems: NavItem[] = [
+    private readonly pilotNavItems: NavItem[] = [
     { path: '/dashboard', icon: 'ti-home', labelKey: 'nav.dashboard' },
     { path: '/book', icon: 'ti-world-search', labelKey: 'nav.book' },
     { path: '/routes', icon: 'ti-route', labelKey: 'nav.routes' },
@@ -157,6 +157,12 @@ export class Header {
     { path: '/points', icon: 'ti-star', labelKey: 'nav.points' },
     { path: '/statistics', icon: 'ti-chart-bar', labelKey: 'nav.statistics' }
   ];
+
+  protected readonly navItems = computed(() =>
+    this.auth.isStaff()
+      ? [...this.pilotNavItems, { path: '/admin', icon: 'ti-shield-lock', labelKey: 'nav.admin' }]
+      : this.pilotNavItems
+  );
 
   protected readonly publicLinks = [
     { fragment: 'inicio', labelKey: 'public.home' },

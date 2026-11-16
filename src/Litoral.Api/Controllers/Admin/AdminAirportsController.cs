@@ -29,10 +29,6 @@ public class AdminAirportsController(IAirportAdminService airports) : Controller
     public async Task<ActionResult<AdminAirportDto>> Update(string icao, UpdateAirportRequest request, CancellationToken ct) =>
         Ok(await airports.UpdateAsync(icao, request, ct));
 
-    [HttpPut("{icao}/hub")]
-    public async Task<ActionResult<AdminAirportDto>> SetHub(string icao, SetHubRequest request, CancellationToken ct) =>
-        Ok(await airports.SetHubAsync(icao, request, ct));
-
     [HttpDelete("{icao}")]
     public async Task<IActionResult> Delete(string icao, CancellationToken ct)
     {

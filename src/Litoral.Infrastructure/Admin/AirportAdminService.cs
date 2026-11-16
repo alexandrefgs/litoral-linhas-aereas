@@ -12,11 +12,11 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
     public async Task<IReadOnlyList<AdminAirportDto>> ListAsync(CancellationToken ct)
     {
         var rankCodes = await LoadRankCodesAsync(ct);
-        var hubs = await db.Hubs.AsNoTracking().ToDictionaryAsync(h => h.AirportId, h => h.Operations, ct);
+        var hubAirportIds = (await db.Hubs.AsNoTracking().Select(h => h.AirportId).ToListAsync(ct)).ToHashSet();
         var airports = await db.Airports.AsNoTracking().OrderBy(a => a.Icao).ToListAsync(ct);
 
         return airports
-            .Select(a => ToDto(a, hubs.GetValueOrDefault(a.Id), rankCodes))
+            .Select(a => ToDto(a, hubAirportIds.Contains(a.Id), rankCodes))
             .ToList();
     }
 
@@ -34,23 +34,53 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
             throw new AppException(AppErrorKind.Conflict, $"O aeroporto {icao} já está cadastrado.");
 
         var level = await ResolveRankLevelAsync(request.MinimumRank, ct);
-        var airport = new Airport(icao, request.Name, request.City, request.Country, request.Latitude, request.Longitude, level);
+        var airport = new Airport(
+            icao,
+            request.Name,
+            request.City,
+            request.Country,
+            request.Latitude,
+            request.Longitude,
+            ToOperations(request.Passenger, request.Cargo),
+            level);
 
         db.Airports.Add(airport);
-        await db.SaveChangesAsync(ct);
 
+        if (request.IsHub)
+            db.Hubs.Add(new Hub(airport));
+
+        await db.SaveChangesAsync(ct);
         return await ToDtoAsync(airport, ct);
     }
 
     public async Task<AdminAirportDto> UpdateAsync(string icao, UpdateAirportRequest request, CancellationToken ct)
     {
         var airport = await FindAsync(icao, ct);
+        var hub = await db.Hubs.FirstOrDefaultAsync(h => h.AirportId == airport.Id, ct);
         var level = await ResolveRankLevelAsync(request.MinimumRank, ct);
+        var operations = ToOperations(request.Passenger, request.Cargo);
 
-        if (level > 1 && await db.Hubs.AnyAsync(h => h.AirportId == airport.Id, ct))
+        if (request.IsHub && level > 1)
             throw new AppException(AppErrorKind.Validation, "Hubs precisam ser acessíveis a todos os pilotos (patente mínima FO).");
 
+        var wasBase = hub is not null && airport.Supports(OperationType.Passenger);
+        var staysBase = request.IsHub && request.Passenger;
+        if (wasBase && !staysBase)
+        {
+            var basedPilots = await db.Pilots.CountAsync(p => p.BaseIcao == airport.Icao, ct);
+            if (basedPilots > 0)
+                throw new AppException(AppErrorKind.Conflict,
+                    $"{basedPilots} piloto(s) têm {airport.Icao} como base. O aeroporto precisa continuar como hub com operação de passageiros.");
+        }
+
+        await EnsureNoRoutesUsingAsync(airport, OperationType.Passenger, request.Passenger, ct);
+        await EnsureNoRoutesUsingAsync(airport, OperationType.Cargo, request.Cargo, ct);
+
         airport.Update(request.Name, request.City, request.Country, request.Latitude, request.Longitude);
+        airport.SetOperations(operations);
+
+        if (hub is not null && !request.IsHub)
+            db.Hubs.Remove(hub);
 
         if (level > airport.MinimumRankLevel)
         {
@@ -64,42 +94,9 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         }
 
         airport.SetMinimumRankLevel(level);
-        await db.SaveChangesAsync(ct);
 
-        return await ToDtoAsync(airport, ct);
-    }
-
-    public async Task<AdminAirportDto> SetHubAsync(string icao, SetHubRequest request, CancellationToken ct)
-    {
-        var airport = await FindAsync(icao, ct);
-        var hub = await db.Hubs.FirstOrDefaultAsync(h => h.AirportId == airport.Id, ct);
-
-        OperationType operations = 0;
-        if (request.Passenger) operations |= OperationType.Passenger;
-        if (request.Cargo) operations |= OperationType.Cargo;
-
-        var losesPassenger = hub is not null && hub.Supports(OperationType.Passenger) && !request.Passenger;
-        if (losesPassenger)
-        {
-            var basedPilots = await db.Pilots.CountAsync(p => p.BaseIcao == airport.Icao, ct);
-            if (basedPilots > 0)
-                throw new AppException(AppErrorKind.Conflict,
-                    $"{basedPilots} piloto(s) têm {airport.Icao} como base. Não é possível remover a operação de passageiros.");
-        }
-
-        if (operations == 0)
-        {
-            if (hub is not null)
-                db.Hubs.Remove(hub);
-        }
-        else if (hub is null)
-        {
-            db.Hubs.Add(new Hub(airport, operations));
-        }
-        else
-        {
-            hub.SetOperations(operations);
-        }
+        if (hub is null && request.IsHub)
+            db.Hubs.Add(new Hub(airport));
 
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(airport, ct);
@@ -120,6 +117,19 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
 
         db.Airports.Remove(airport);
         await db.SaveChangesAsync(ct);
+    }
+
+    private async Task EnsureNoRoutesUsingAsync(Airport airport, OperationType operation, bool keeps, CancellationToken ct)
+    {
+        if (keeps || !airport.Supports(operation)) return;
+
+        var isCargo = operation == OperationType.Cargo;
+        var inUse = await db.Routes.AnyAsync(
+            r => (r.DepartureAirportId == airport.Id || r.ArrivalAirportId == airport.Id) && r.AircraftType.IsCargo == isCargo, ct);
+
+        if (inUse)
+            throw new AppException(AppErrorKind.Conflict,
+                $"Existem rotas {(isCargo ? "cargueiras" : "de passageiros")} usando {airport.Icao}. Remova-as antes de tirar essa operação.");
     }
 
     private async Task<Airport> FindAsync(string icao, CancellationToken ct)
@@ -144,15 +154,12 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
     private async Task<AdminAirportDto> ToDtoAsync(Airport airport, CancellationToken ct)
     {
         var rankCodes = await LoadRankCodesAsync(ct);
-        var operations = await db.Hubs
-            .Where(h => h.AirportId == airport.Id)
-            .Select(h => (OperationType?)h.Operations)
-            .FirstOrDefaultAsync(ct);
+        var isHub = await db.Hubs.AnyAsync(h => h.AirportId == airport.Id, ct);
 
-        return ToDto(airport, operations ?? default, rankCodes);
+        return ToDto(airport, isHub, rankCodes);
     }
 
-    private static AdminAirportDto ToDto(Airport airport, OperationType operations, Dictionary<int, string> rankCodes) => new(
+    private static AdminAirportDto ToDto(Airport airport, bool isHub, Dictionary<int, string> rankCodes) => new(
         airport.Icao,
         airport.Name,
         airport.City,
@@ -160,8 +167,21 @@ public sealed class AirportAdminService(LitoralDbContext db) : IAirportAdminServ
         airport.Latitude,
         airport.Longitude,
         rankCodes.GetValueOrDefault(airport.MinimumRankLevel, airport.MinimumRankLevel.ToString()),
-        operations.HasFlag(OperationType.Passenger),
-        operations.HasFlag(OperationType.Cargo));
+        airport.Supports(OperationType.Passenger),
+        airport.Supports(OperationType.Cargo),
+        isHub);
+
+    private static OperationType ToOperations(bool passenger, bool cargo)
+    {
+        OperationType operations = 0;
+        if (passenger) operations |= OperationType.Passenger;
+        if (cargo) operations |= OperationType.Cargo;
+
+        if (operations == 0)
+            throw new AppException(AppErrorKind.Validation, "Selecione ao menos uma operação (passageiros ou cargueiro).");
+
+        return operations;
+    }
 
     private static string Normalize(string icao) => (icao ?? string.Empty).Trim().ToUpperInvariant();
 }

@@ -1,5 +1,5 @@
 import { Route, Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard, staffGuard } from './core/auth/auth.guards';
 
 function comingSoon(path: string, titleKey: string, icon: string): Route {
   return {
@@ -22,5 +22,18 @@ export const routes: Routes = [
   comingSoon('fleet', 'nav.fleet', 'ti-plane'),
   comingSoon('points', 'nav.points', 'ti-star'),
   comingSoon('statistics', 'nav.statistics', 'ti-chart-bar'),
+  {
+    path: 'admin',
+    canActivate: [staffGuard()],
+    loadComponent: () => import('./pages/admin/admin-layout').then(m => m.AdminLayout),
+    children: [
+      { path: '', loadComponent: () => import('./pages/admin/admin-home').then(m => m.AdminHome) },
+      {
+        path: 'airports',
+        canActivate: [staffGuard('routes')],
+        loadComponent: () => import('./pages/admin/airports/admin-airports').then(m => m.AdminAirports)
+      }
+    ]
+  },
   { path: '**', redirectTo: '' }
 ];

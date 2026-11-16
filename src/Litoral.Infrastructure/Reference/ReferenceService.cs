@@ -15,8 +15,8 @@ public sealed class ReferenceService(LitoralDbContext db) : IReferenceService
                 h.Airport.Icao,
                 h.Airport.Name,
                 h.Airport.City,
-                (h.Operations & OperationType.Passenger) == OperationType.Passenger,
-                (h.Operations & OperationType.Cargo) == OperationType.Cargo))
+                (h.Airport.Operations & OperationType.Passenger) == OperationType.Passenger,
+                (h.Airport.Operations & OperationType.Cargo) == OperationType.Cargo))
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<RankDto>> GetRanksAsync(CancellationToken ct) =>
