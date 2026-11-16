@@ -85,18 +85,22 @@ Fuselagem **branca**, cauda **azul** com a **onda turquesa** e detalhe **amarelo
 
 ## Operação
 
-### Hubs
+### Aeroportos, operação e hubs
 
-| ICAO | Cidade | Passageiros | Cargueiro |
-|---|---|:---:|:---:|
-| SBGR | São Paulo (Guarulhos) | ✅ | |
-| SBFL | Florianópolis | ✅ | |
-| SBBR | Brasília | ✅ | |
-| SBEG | Manaus | ✅ | ✅ |
-| SBFZ | Fortaleza | ✅ | ✅ |
-| SBKP | Campinas (Viracopos) | | ✅ |
+Cada aeroporto tem a **operação da Litoral** naquele local: **passageiros**, **cargueiro** ou ambos. Alguns aeroportos são marcados como **hub**.
 
-Os hubs de passageiros são as **bases** que o piloto pode escolher no cadastro.
+| ICAO | Cidade | Operação | Base |
+|---|---|---|:---:|
+| SBGR | São Paulo (Guarulhos) | Passageiros | ✅ |
+| SBFL | Florianópolis | Passageiros | ✅ |
+| SBBR | Brasília | Passageiros | ✅ |
+| SBEG | Manaus | Passageiros e cargueiro | ✅ |
+| SBFZ | Fortaleza | Passageiros e cargueiro | ✅ |
+| SBKP | Campinas (Viracopos) | Cargueiro | |
+
+- Todos os aeroportos acima são **hubs**. Os hubs com operação de passageiros são as **bases** que o piloto pode escolher no cadastro.
+- Rotas de passageiros exigem operação de passageiros nos dois aeroportos, e rotas cargueiras exigem operação de cargueiro nos dois.
+- As coordenadas são cadastradas no formato do **AISWEB/ROTAER**, com ou sem espaços: `12 54 31S` / `038 19 21W` ou `125431S` / `0381921W`.
 
 ### Acesso aos aeroportos por patente
 
@@ -108,6 +112,7 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 | **CMD** | Somente comandantes |
 
 - **Hubs são sempre FO.**
+- Se um aeroporto passar a ser CMD, os FOs que estiverem nele são **movidos para a base**.
 - Reservas, rotas e jumpseat mostram **apenas os aeroportos que a patente do piloto permite**.
 
 ### Frota
@@ -229,6 +234,8 @@ A tabela de pontuação por desempenho (pouso, procedimentos, desvios) será def
 
 Todo staff também é piloto. Cada posição tem **uma única função** no sistema. Uma pessoa pode acumular mais de uma posição.
 
+As permissões são aplicadas por **policies** na API. O **CEO & Founder** acessa todas as áreas, e o menu **Admin** do site mostra a cada pessoa só as áreas das suas posições.
+
 ### Executive Team
 
 | Posição | Função | Vagas |
@@ -245,7 +252,7 @@ Todo staff também é piloto. Cada posição tem **uma única função** no sist
 | Head of HR | Gestão de pilotos: inativar, reativar e excluir | 1 |
 | Director of Operations | Tours, eventos e escalas especiais | 1 |
 | Fleet Manager | Tipos de aeronave, matrículas e liveries | 1 |
-| Route Manager | Rotas, aeroportos (com patente mínima) e hubs | 1 |
+| Route Manager | Rotas, aeroportos (operação, patente mínima e hub) | 1 |
 
 ### Safety Team
 
@@ -314,9 +321,9 @@ litoral-linhas-aereas/
 ├── litoral-web/                 # Front-end Angular
 │   ├── public/                  # favicon, traduções (i18n) e insígnias das patentes
 │   └── src/app/
-│       ├── core/                # auth, api, idioma, tema, dados de referência, config
-│       ├── shared/              # header, mapa, pipes e diretivas
-│       └── pages/               # home pública, login, cadastro, dashboard, perfil
+│       ├── core/                # auth, api, admin, staff, idioma, tema, dados de referência, config
+│       ├── shared/              # header, mapa, pipes, diretivas e utilitários (coordenadas)
+│       └── pages/               # home pública, login, cadastro, dashboard, perfil e admin
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
 ```
@@ -429,12 +436,13 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Patente mínima por aeroporto (FO ou CMD)
 - [x] Base do piloto e retorno automático à base no rebaixamento
 - [x] Jumpseat respeitando a patente
-- [ ] Autorização por posição de staff (policies)
+- [x] Autorização por posição de staff (policies)
+- [x] Área administrativa com menu conforme as posições do usuário
+- [x] **Route Manager:** aeroportos (operação, FO/CMD, hub e coordenadas AISWEB)
+- [ ] **Route Manager:** rotas
 - [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
-- [ ] **Route Manager:** aeroportos (FO/CMD), hubs e rotas
 - [ ] **Fleet Manager:** matrículas, localização, fotos e manutenção
 - [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
-- [ ] Menu administrativo exibido conforme as posições do usuário
 
 ### Fase 2B: Páginas do piloto
 - [ ] Aeroportos com jumpseat filtrado pela patente (grátis para bases, 50 pontos para os demais)
