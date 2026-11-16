@@ -299,7 +299,7 @@ Contas desativadas não conseguem reservar voos até serem reativadas pelo Head 
 
 As regras ficam no banco e são editadas pelo **Safety Manager** em **Admin › Scoring**: é possível alterar valores, criar, desativar e excluir regras. Os pilotos veem as regras ativas na página **Points**.
 
-Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. O ponto de partida foi a tabela da FlyGOL, adaptada à Litoral:
+Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. Regras iniciais:
 
 | Categoria | Exemplos |
 |---|---|
@@ -587,7 +587,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Confirmação da reserva e callsign no menu
 - [x] Briefing: SimBrief, METAR e prefile
 - [x] Cancelamento e expiração da reserva em 24 h
-- [ ] Briefing estilo FlyGOL: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
+- [ ] Novo layout do Briefing: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
 
 ### Fase 3B: Escalas especiais
 - [ ] **Director of Operations:** criação de escalas especiais
