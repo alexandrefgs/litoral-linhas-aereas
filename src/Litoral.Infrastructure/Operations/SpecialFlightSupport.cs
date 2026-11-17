@@ -24,29 +24,46 @@ public sealed class SpecialFlightSupport(LitoralDbContext db)
     
     public async Task<List<Route>> CreateRoutesAsync(List<Airport> stops, AircraftType type, IEnumerable<int> releasedNumbers, CancellationToken ct)
     {
+        var numbers = await FreeNumbersAsync(stops.Count - 1, releasedNumbers, ct);
+        var routes = new List<Route>();
+
+        for (var i = 0; i < stops.Count - 1; i++)
+            routes.Add(Route.CreateSpecial(numbers[i], stops[i], stops[i + 1], type));
+
+        db.Routes.AddRange(routes);
+        return routes;
+    }
+
+    public async Task<Route> CreateCheckRouteAsync(Airport airport, AircraftType type, CancellationToken ct)
+    {
+        var numbers = await FreeNumbersAsync(1, [], ct);
+        var route = Route.CreateCheckFlight(numbers[0], airport, type);
+        db.Routes.Add(route);
+        return route;
+    }
+
+    private async Task<List<int>> FreeNumbersAsync(int count, IEnumerable<int> releasedNumbers, CancellationToken ct)
+    {
         var released = releasedNumbers.ToHashSet();
         var used = (await db.Routes
             .Where(r => r.FlightNumber >= FirstNumber && r.FlightNumber <= LastNumber)
             .Select(r => r.FlightNumber)
             .ToListAsync(ct))
-            .Where(n => !released.Contains(n))
             .ToHashSet();
 
-        var routes = new List<Route>();
+        var numbers = new List<int>();
         var number = LastNumber;
 
-        for (var i = 0; i < stops.Count - 1; i++)
+        while (numbers.Count < count)
         {
             while (number >= FirstNumber && (used.Contains(number) || released.Contains(number))) number--;
             if (number < FirstNumber)
                 throw new AppException(AppErrorKind.Conflict, "There are no free flight numbers in the 9XXX block.");
 
-            routes.Add(Route.CreateSpecial(number, stops[i], stops[i + 1], type));
-            used.Add(number);
+            numbers.Add(number--);
         }
 
-        db.Routes.AddRange(routes);
-        return routes;
+        return numbers;
     }
 
     public async Task<Dictionary<int, Rank>> RanksByLevelAsync(CancellationToken ct) =>

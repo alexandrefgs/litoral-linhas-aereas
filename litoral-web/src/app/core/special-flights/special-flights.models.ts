@@ -1,4 +1,4 @@
-export type SpecialFlightType = 'Charter' | 'Ferry' | 'Redelivery' | 'MaintenanceFerry';
+export type SpecialFlightType = 'Charter' | 'Ferry' | 'Redelivery' | 'MaintenanceFerry' | 'CheckFlight';
 export type SpecialFlightState = 'ComingSoon' | 'Available' | 'Taken' | 'Completed' | 'Expired' | 'Cancelled';
 
 export interface SpecialFlightLeg {
@@ -52,7 +52,8 @@ export const SPECIAL_FLIGHT_TYPE_LABEL: Record<SpecialFlightType, string> = {
   Charter: 'Charter',
   Ferry: 'Ferry',
   Redelivery: 'Redelivery',
-  MaintenanceFerry: 'Maintenance ferry'
+  MaintenanceFerry: 'Maintenance ferry',
+  CheckFlight: 'Check flight'
 };
 
 export const SPECIAL_FLIGHT_STATE: Record<SpecialFlightState, { label: string; class: string }> = {

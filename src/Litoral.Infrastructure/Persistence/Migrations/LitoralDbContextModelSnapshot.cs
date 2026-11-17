@@ -33,6 +33,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CurrentAirportId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CurrentCheck")
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
+
                     b.Property<int>("Cycles")
                         .HasColumnType("int");
 
@@ -51,6 +55,12 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime?>("MaintenanceUntil")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("MinutesSinceCCheck")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinutesSinceDCheck")
+                        .HasColumnType("int");
 
                     b.Property<int>("MinutesSinceMaintenance")
                         .HasColumnType("int");
@@ -96,6 +106,16 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CCheckIntervalHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(5000);
+
+                    b.Property<int>("DCheckIntervalHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(20000);
 
                     b.Property<string>("DeliveryAirportIcao")
                         .HasMaxLength(4)

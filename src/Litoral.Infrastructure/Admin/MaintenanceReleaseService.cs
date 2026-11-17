@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Admin;
 
@@ -33,16 +34,21 @@ public sealed class MaintenanceReleaseService(IServiceScopeFactory scopes, ILogg
     {
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LitoralDbContext>();
+        var maintenance = scope.ServiceProvider.GetRequiredService<MaintenanceFerryPlanner>();
         var now = DateTime.UtcNow;
 
         var due = await db.Aircraft
+            .Include(a => a.AircraftType)
             .Where(a => a.Status == AircraftStatus.Maintenance && a.MaintenanceUntil != null && a.MaintenanceUntil <= now)
             .ToListAsync(ct);
 
         if (due.Count == 0) return;
 
         foreach (var aircraft in due)
-            aircraft.ReturnFromMaintenance();
+        {
+            var completed = aircraft.ReturnFromMaintenance();
+            await maintenance.AfterMaintenanceAsync(aircraft, completed, ct);
+        }
 
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Released {Count} aircraft from maintenance.", due.Count);

@@ -8,6 +8,8 @@ namespace Litoral.Domain.Entities;
 public sealed class AircraftType : Entity
 {
     public const int DefaultMaintenanceIntervalHours = 500;
+    public const int DefaultCCheckIntervalHours = 5000;
+    public const int DefaultDCheckIntervalHours = 20000;
     public const string RegistrationNationality = "PS-";
 
     private static readonly Regex PrefixPattern = new("^[A-Z]{2}$");
@@ -17,6 +19,8 @@ public sealed class AircraftType : Entity
     public bool IsCargo { get; private set; }
     public int MaxRangeNm { get; private set; }
     public int MaintenanceIntervalHours { get; private set; } = DefaultMaintenanceIntervalHours;
+    public int CCheckIntervalHours { get; private set; } = DefaultCCheckIntervalHours;
+    public int DCheckIntervalHours { get; private set; } = DefaultDCheckIntervalHours;
     public string? RegistrationPrefix { get; private set; }
     public string? DeliveryAirportIcao { get; private set; }
 
@@ -26,12 +30,35 @@ public sealed class AircraftType : Entity
 
     private AircraftType() { }
 
-    public AircraftType(string icaoCode, string name, bool isCargo, int maxRangeNm, string registrationPrefix, int maintenanceIntervalHours = DefaultMaintenanceIntervalHours)
+    public AircraftType(
+        string icaoCode,
+        string name,
+        bool isCargo,
+        int maxRangeNm,
+        string registrationPrefix,
+        int maintenanceIntervalHours = DefaultMaintenanceIntervalHours,
+        int cCheckIntervalHours = DefaultCCheckIntervalHours,
+        int dCheckIntervalHours = DefaultDCheckIntervalHours)
     {
-        Update(icaoCode, name, isCargo, maxRangeNm, registrationPrefix, maintenanceIntervalHours);
+        Update(icaoCode, name, isCargo, maxRangeNm, registrationPrefix, maintenanceIntervalHours, cCheckIntervalHours, dCheckIntervalHours);
     }
 
-    public void Update(string icaoCode, string name, bool isCargo, int maxRangeNm, string registrationPrefix, int maintenanceIntervalHours)
+    public int IntervalHoursOf(MaintenanceCheck check) => check switch
+    {
+        MaintenanceCheck.A => MaintenanceIntervalHours,
+        MaintenanceCheck.C => CCheckIntervalHours,
+        _ => DCheckIntervalHours
+    };
+
+    public void Update(
+        string icaoCode,
+        string name,
+        bool isCargo,
+        int maxRangeNm,
+        string registrationPrefix,
+        int maintenanceIntervalHours,
+        int cCheckIntervalHours,
+        int dCheckIntervalHours)
     {
         var code = (icaoCode ?? string.Empty).Trim().ToUpperInvariant();
 
@@ -42,7 +69,11 @@ public sealed class AircraftType : Entity
         if (maxRangeNm <= 0)
             throw new DomainException("Range must be greater than zero.");
         if (maintenanceIntervalHours <= 0)
-            throw new DomainException("Maintenance interval must be greater than zero.");
+            throw new DomainException("A-check interval must be greater than zero.");
+        if (cCheckIntervalHours <= maintenanceIntervalHours)
+            throw new DomainException("C-check interval must be greater than the A-check interval.");
+        if (dCheckIntervalHours <= cCheckIntervalHours)
+            throw new DomainException("D-check interval must be greater than the C-check interval.");
 
         AssignRegistrationPrefix(registrationPrefix);
         IcaoCode = code;
@@ -50,6 +81,8 @@ public sealed class AircraftType : Entity
         IsCargo = isCargo;
         MaxRangeNm = maxRangeNm;
         MaintenanceIntervalHours = maintenanceIntervalHours;
+        CCheckIntervalHours = cCheckIntervalHours;
+        DCheckIntervalHours = dCheckIntervalHours;
     }
 
     public void SetDeliveryAirport(string? icao)

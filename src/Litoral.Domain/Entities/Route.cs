@@ -97,7 +97,30 @@ public sealed class Route : Entity
         return route;
     }
 
+        public static Route CreateCheckFlight(int flightNumber, Airport airport, AircraftType aircraftType)
+    {
+        if (FlightBlockRules.FromNumber(flightNumber) != FlightBlock.FerryAndCargo)
+            throw new DomainException("Special flights must use the 9XXX block.");
+
+        var route = new Route
+        {
+            FlightNumber = flightNumber,
+            DepartureAirport = airport,
+            DepartureAirportId = airport.Id,
+            ArrivalAirport = airport,
+            ArrivalAirportId = airport.Id,
+            IsCargo = aircraftType.IsCargo,
+            DistanceNm = 0,
+            IsSpecial = true
+        };
+        route.SetEstimatedMinutes(CheckFlightMinutes);
+        route._aircraftTypes.Add(aircraftType);
+        return route;
+    }
+
     public bool AllowsAircraftType(Guid aircraftTypeId) => _aircraftTypes.Any(t => t.Id == aircraftTypeId);
+
+    public const int CheckFlightMinutes = 60;
 
     public static int EstimateBlockMinutes(int distanceNm) =>
         (int)Math.Round(distanceNm / 430.0 * 60 + 25);

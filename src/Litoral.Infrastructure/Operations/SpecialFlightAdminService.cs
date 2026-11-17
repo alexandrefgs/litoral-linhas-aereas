@@ -169,6 +169,8 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
     {
         if (!Enum.TryParse<SpecialFlightType>(request.Type, out var type))
             throw new AppException(AppErrorKind.Validation, "Invalid special flight type.");
+        if (type == SpecialFlightType.CheckFlight)
+            throw new AppException(AppErrorKind.Validation, "Check flights are created automatically after C and D checks.");
 
         var stops = (request.Stops ?? []).Select(s => (s ?? "").Trim().ToUpperInvariant()).ToList();
         if (stops.Count is < 2 or > SpecialFlight.MaxLegs + 1 || stops.Any(s => s.Length != 4))
@@ -191,8 +193,11 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
         if (type == SpecialFlightType.Redelivery && aircraft.AircraftType.DeliveryAirportIcao is { } delivery && stops[0] != delivery)
             throw new AppException(AppErrorKind.Validation, $"A {aircraft.AircraftType.IcaoCode} redelivery must depart from {delivery}.");
 
-        if (type == SpecialFlightType.MaintenanceFerry && stops[^1] != Airline.MaintenanceHubIcao)
-            throw new AppException(AppErrorKind.Validation, $"A maintenance ferry must end at {Airline.MaintenanceHubIcao}.");
+        var lastStop = stops[^1];
+        if (type == SpecialFlightType.MaintenanceFerry
+            && lastStop != Airline.MaintenanceHubIcao
+            && !await db.Hubs.AnyAsync(h => h.Airport.Icao == lastStop, ct))
+            throw new AppException(AppErrorKind.Validation, $"A maintenance ferry must end at a base or at {Airline.MaintenanceHubIcao}.");
 
         var airports = await db.Airports.Where(a => stops.Contains(a.Icao)).ToListAsync(ct);
         var missing = stops.Except(airports.Select(a => a.Icao)).ToList();

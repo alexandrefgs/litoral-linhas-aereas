@@ -142,8 +142,7 @@ const STATUS_CLASSES: Record<AircraftStatus, string> = {
                           [style.width.%]="maintenanceProgress(item)"></div>
                       </div>
                       <p class="mt-1 text-xs" [class]="item.maintenanceDue ? 'font-semibold text-danger' : 'text-ink-muted'">
-                        {{ item.maintenanceDue ? 'Due now' : format(remainingMinutes(item)) + ' left' }}
-                        · {{ item.maintenanceIntervalHours }}h
+                        {{ item.nextCheck }}-check · {{ item.maintenanceDue ? 'Due now' : format(remainingMinutes(item)) + ' left' }}
                       </p>
                     </div>
                   </td>
@@ -289,11 +288,11 @@ export class FleetAircraft implements OnInit {
   }
 
   protected maintenanceProgress(item: AdminAircraft): number {
-    return Math.min(100, (item.minutesSinceMaintenance / (item.maintenanceIntervalHours * 60)) * 100);
+    return Math.min(100, (item.nextCheckUsedMinutes / (item.nextCheckIntervalHours * 60)) * 100);
   }
 
   protected remainingMinutes(item: AdminAircraft): number {
-    return Math.max(0, item.maintenanceIntervalHours * 60 - item.minutesSinceMaintenance);
+    return Math.max(0, item.nextCheckIntervalHours * 60 - item.nextCheckUsedMinutes);
   }
 
   protected openCreate(): void {

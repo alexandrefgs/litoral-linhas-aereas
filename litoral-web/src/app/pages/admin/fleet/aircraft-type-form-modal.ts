@@ -4,7 +4,7 @@ import { AdminAircraftType, AdminFleetService, AircraftTypePayload } from '../..
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { prohibitedReason } from '../../../shared/utils/registration';
 
-const DEFAULT_INTERVAL_HOURS = 500;
+const DEFAULT_INTERVALS = { a: 500, c: 5000, d: 20000 };
 
 @Component({
   selector: 'app-aircraft-type-form-modal',
@@ -36,9 +36,9 @@ const DEFAULT_INTERVAL_HOURS = 500;
               <p class="field-error">Enter a value greater than zero.</p>
             }
           </div>
-          <div>
+          <div class="sm:col-span-2">
             <label for="typePrefix" class="field-label">Registration prefix</label>
-            <div class="relative">
+            <div class="relative sm:w-1/2">
               <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-mono text-ink-muted">PS-</span>
               <input id="typePrefix" formControlName="registrationPrefix" maxlength="2" placeholder="LA"
                 class="field-input pl-10 font-mono uppercase" (input)="onPrefixInput()" />
@@ -53,13 +53,28 @@ const DEFAULT_INTERVAL_HOURS = 500;
               <p class="mt-1 text-xs text-ink-muted">Aircraft will be PS-{{ form.controls.registrationPrefix.value || '__' }}A, B, C...</p>
             }
           </div>
-          <div>
-            <label for="typeInterval" class="field-label">Maintenance interval (hours)</label>
-            <input id="typeInterval" type="number" formControlName="maintenanceIntervalHours" class="field-input" />
-            @if (showError('maintenanceIntervalHours')) {
-              <p class="field-error">Enter a value greater than zero.</p>
+          <div class="sm:col-span-2">
+            <span class="field-label">Maintenance intervals (flight hours)</span>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label for="typeACheck" class="mb-1 block text-xs text-ink-muted">A-check · 12h at a base</label>
+                <input id="typeACheck" type="number" formControlName="maintenanceIntervalHours" class="field-input" />
+              </div>
+              <div>
+                <label for="typeCCheck" class="mb-1 block text-xs text-ink-muted">C-check · 14 days at SBCF</label>
+                <input id="typeCCheck" type="number" formControlName="cCheckIntervalHours" class="field-input" />
+              </div>
+              <div>
+                <label for="typeDCheck" class="mb-1 block text-xs text-ink-muted">D-check · 30 days at SBCF</label>
+                <input id="typeDCheck" type="number" formControlName="dCheckIntervalHours" class="field-input" />
+              </div>
+            </div>
+            @if (intervalsProblem(); as problem) {
+              <p class="field-error">{{ problem }}</p>
             } @else {
-              <button type="button" class="mt-1 text-xs font-medium text-primary hover:underline" (click)="resetInterval()">Use default ({{ defaultInterval }}h)</button>
+              <button type="button" class="mt-1 text-xs font-medium text-primary hover:underline" (click)="resetIntervals()">
+                Use defaults ({{ defaults.a }}h · {{ defaults.c }}h · {{ defaults.d }}h)
+              </button>
             }
           </div>
           <div class="sm:col-span-2">
@@ -120,7 +135,7 @@ export class AircraftTypeFormModal implements OnInit {
   readonly saved = output<AdminAircraftType>();
   readonly closed = output<void>();
 
-  protected readonly defaultInterval = DEFAULT_INTERVAL_HOURS;
+  protected readonly defaults = DEFAULT_INTERVALS;
   protected readonly saving = signal(false);
   protected readonly formError = signal<string | null>(null);
 
@@ -135,7 +150,9 @@ export class AircraftTypeFormModal implements OnInit {
     isCargo: [false],
     maxRangeNm: [null as number | null, [Validators.required, Validators.min(1)]],
     registrationPrefix: ['', [Validators.required, Validators.pattern(/^[A-Z]{2}$/)]],
-    maintenanceIntervalHours: [DEFAULT_INTERVAL_HOURS as number | null, [Validators.required, Validators.min(1)]],
+    maintenanceIntervalHours: [DEFAULT_INTERVALS.a as number | null, [Validators.required, Validators.min(1)]],
+    cCheckIntervalHours: [DEFAULT_INTERVALS.c as number | null, [Validators.required, Validators.min(1)]],
+    dCheckIntervalHours: [DEFAULT_INTERVALS.d as number | null, [Validators.required, Validators.min(1)]],
     deliveryAirportIcao: ['', Validators.pattern(/^[A-Za-z0-9]{4}$/)]
   });
 
@@ -143,6 +160,15 @@ export class AircraftTypeFormModal implements OnInit {
     const prefix = this.form.controls.registrationPrefix.value;
     const reason = prefix.length === 2 ? prohibitedReason(prefix) : null;
     return reason ? `Prohibited by ANAC: ${reason}.` : null;
+  }
+
+  protected intervalsProblem(): string | null {
+    const { maintenanceIntervalHours: a, cCheckIntervalHours: c, dCheckIntervalHours: d } = this.form.getRawValue();
+    const touched = this.form.controls.maintenanceIntervalHours.touched || this.form.controls.cCheckIntervalHours.touched || this.form.controls.dCheckIntervalHours.touched;
+    if (!a || !c || !d || a < 1 || c < 1 || d < 1) return touched ? 'Enter all three intervals.' : null;
+    if (c <= a) return 'The C-check interval must be greater than the A-check.';
+    if (d <= c) return 'The D-check interval must be greater than the C-check.';
+    return null;
   }
 
   ngOnInit(): void {
@@ -156,6 +182,8 @@ export class AircraftTypeFormModal implements OnInit {
       maxRangeNm: type.maxRangeNm,
       registrationPrefix: type.registrationPrefix ?? '',
       maintenanceIntervalHours: type.maintenanceIntervalHours,
+      cCheckIntervalHours: type.cCheckIntervalHours,
+      dCheckIntervalHours: type.dCheckIntervalHours,
       deliveryAirportIcao: type.deliveryAirportIcao ?? ''
     });
 
@@ -178,12 +206,16 @@ export class AircraftTypeFormModal implements OnInit {
     if (normalized !== control.value) control.setValue(normalized);
   }
 
-  protected resetInterval(): void {
-    this.form.controls.maintenanceIntervalHours.setValue(DEFAULT_INTERVAL_HOURS);
+  protected resetIntervals(): void {
+    this.form.patchValue({
+      maintenanceIntervalHours: DEFAULT_INTERVALS.a,
+      cCheckIntervalHours: DEFAULT_INTERVALS.c,
+      dCheckIntervalHours: DEFAULT_INTERVALS.d
+    });
   }
 
   protected async save(): Promise<void> {
-    if (this.form.invalid || this.prefixProblem()) {
+    if (this.form.invalid || this.prefixProblem() || this.intervalsProblem()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -196,6 +228,8 @@ export class AircraftTypeFormModal implements OnInit {
       maxRangeNm: value.maxRangeNm!,
       registrationPrefix: value.registrationPrefix,
       maintenanceIntervalHours: value.maintenanceIntervalHours!,
+      cCheckIntervalHours: value.cCheckIntervalHours!,
+      dCheckIntervalHours: value.dCheckIntervalHours!,
       deliveryAirportIcao: value.deliveryAirportIcao.trim().toUpperCase() || null
     };
 

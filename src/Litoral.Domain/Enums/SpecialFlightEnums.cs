@@ -5,7 +5,8 @@ public enum SpecialFlightType
     Charter,
     Ferry,
     Redelivery,
-    MaintenanceFerry
+    MaintenanceFerry,
+    CheckFlight
 }
 
 public enum SpecialFlightStatus

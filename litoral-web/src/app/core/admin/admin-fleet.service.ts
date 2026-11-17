@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export type AircraftStatus = 'Available' | 'Reserved' | 'InFlight' | 'Maintenance' | 'Inactive';
+export type MaintenanceCheck = 'A' | 'C' | 'D';
 
 export interface AdminAircraftType {
   id: string;
@@ -11,6 +12,8 @@ export interface AdminAircraftType {
   isCargo: boolean;
   maxRangeNm: number;
   maintenanceIntervalHours: number;
+  cCheckIntervalHours: number;
+  dCheckIntervalHours: number;
   registrationPrefix: string | null;
   deliveryAirportIcao: string | null;
   aircraftCount: number;
@@ -23,6 +26,8 @@ export interface AircraftTypePayload {
   isCargo: boolean;
   maxRangeNm: number;
   maintenanceIntervalHours: number;
+  cCheckIntervalHours: number;
+  dCheckIntervalHours: number;
   registrationPrefix: string;
   deliveryAirportIcao: string | null;
 }
@@ -48,9 +53,11 @@ export interface AdminAircraft {
   status: AircraftStatus;
   totalMinutes: number;
   cycles: number;
-  minutesSinceMaintenance: number;
-  maintenanceIntervalHours: number;
+  nextCheck: MaintenanceCheck;
+  nextCheckUsedMinutes: number;
+  nextCheckIntervalHours: number;
   maintenanceDue: boolean;
+  currentCheck: MaintenanceCheck | null;
   maintenanceReason: string | null;
   maintenanceStartedAt: string | null;
   maintenanceUntil: string | null;

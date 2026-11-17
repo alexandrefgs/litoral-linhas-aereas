@@ -21,6 +21,9 @@ public sealed class Aircraft : Entity
     public int TotalMinutes { get; private set; }
     public int Cycles { get; private set; }
     public int MinutesSinceMaintenance { get; private set; }
+    public int MinutesSinceCCheck { get; private set; }
+    public int MinutesSinceDCheck { get; private set; }
+    public MaintenanceCheck? CurrentCheck { get; private set; }
     public string? MaintenanceReason { get; private set; }
     public DateTime? MaintenanceStartedAt { get; private set; }
     public DateTime? MaintenanceUntil { get; private set; }
@@ -29,7 +32,13 @@ public sealed class Aircraft : Entity
 
     public bool IsAvailable => Status == AircraftStatus.Available;
     public bool IsInUse => Status is AircraftStatus.Reserved or AircraftStatus.InFlight;
-    public bool IsMaintenanceDue => MinutesSinceMaintenance >= AircraftType.MaintenanceIntervalHours * 60;
+        public MaintenanceCheck? DueCheck =>
+        MinutesSinceDCheck >= AircraftType.DCheckIntervalHours * 60 ? MaintenanceCheck.D
+        : MinutesSinceCCheck >= AircraftType.CCheckIntervalHours * 60 ? MaintenanceCheck.C
+        : MinutesSinceMaintenance >= AircraftType.MaintenanceIntervalHours * 60 ? MaintenanceCheck.A
+        : null;
+
+    public bool IsMaintenanceDue => DueCheck is not null;
 
     private Aircraft() { }
 
@@ -96,6 +105,8 @@ public sealed class Aircraft : Entity
         MoveTo(destination);
         TotalMinutes += flightMinutes;
         MinutesSinceMaintenance += flightMinutes;
+        MinutesSinceCCheck += flightMinutes;
+        MinutesSinceDCheck += flightMinutes;
         Cycles++;
         Status = AircraftStatus.Available;
         LastFlightAt = DateTime.UtcNow;
@@ -127,17 +138,49 @@ public sealed class Aircraft : Entity
         MaintenanceUntil = until;
     }
 
-    public void ReturnFromMaintenance()
+    public void StartCheck(MaintenanceCheck check, string airportIcao)
+    {
+        SendToMaintenance($"{check}-check at {airportIcao}", DateTime.UtcNow.Add(MaintenancePolicy.DurationOf(check)));
+        CurrentCheck = check;
+    }
+
+    public (MaintenanceCheck Check, int UsedMinutes, int IntervalHours) NextCheckStatus()
+    {
+        var checks = new[] { MaintenanceCheck.D, MaintenanceCheck.C, MaintenanceCheck.A }
+            .Select(c => (Check: c, UsedMinutes: MinutesSince(c), IntervalHours: AircraftType.IntervalHoursOf(c)))
+            .ToList();
+
+        return DueCheck is { } due
+            ? checks.First(c => c.Check == due)
+            : checks.MinBy(c => c.IntervalHours * 60 - c.UsedMinutes);
+    }
+
+    public int MinutesSince(MaintenanceCheck check) => check switch
+    {
+        MaintenanceCheck.A => MinutesSinceMaintenance,
+        MaintenanceCheck.C => MinutesSinceCCheck,
+        _ => MinutesSinceDCheck
+    };
+
+    public MaintenanceCheck? ReturnFromMaintenance()
     {
         if (Status != AircraftStatus.Maintenance)
             throw new DomainException($"Aircraft {Registration} is not in maintenance.");
 
+        var completed = CurrentCheck;
+
+        if (CurrentCheck == MaintenanceCheck.D) MinutesSinceDCheck = 0;
+        if (CurrentCheck is MaintenanceCheck.C or MaintenanceCheck.D) MinutesSinceCCheck = 0;
+
         Status = AircraftStatus.Available;
         MinutesSinceMaintenance = 0;
+        CurrentCheck = null;
         LastMaintenanceAt = DateTime.UtcNow;
         MaintenanceReason = null;
         MaintenanceStartedAt = null;
         MaintenanceUntil = null;
+
+        return completed;
     }
 
     public void Deactivate()

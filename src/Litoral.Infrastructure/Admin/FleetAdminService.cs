@@ -6,10 +6,11 @@ using Litoral.Domain.Enums;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Litoral.Domain.Fleet;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Admin;
 
-public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos) : IFleetAdminService
+public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos, MaintenanceFerryPlanner maintenance) : IFleetAdminService
 {
     private const string PhotoFolder = "aircraft";
 
@@ -27,7 +28,8 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
         await EnsureTypeIsUniqueAsync(request.IcaoCode, request.IsCargo, null, ct);
         await EnsurePrefixIsFreeAsync(request.RegistrationPrefix, null, ct);
 
-        var type = new AircraftType(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours);
+        
+        var type = new AircraftType(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours, request.CCheckIntervalHours, request.DCheckIntervalHours);
         type.SetDeliveryAirport(request.DeliveryAirportIcao);
         db.AircraftTypes.Add(type);
         await db.SaveChangesAsync(ct);
@@ -56,7 +58,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
         if (longest is not null && request.MaxRangeNm < longest.DistanceNm)
             throw new AppException(AppErrorKind.Conflict, $"Route {Airline.Icao}{longest.FlightNumber} is {longest.DistanceNm} NM long. The range cannot be lower than that.");
 
-        type.Update(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours);
+        type.Update(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours, request.CCheckIntervalHours, request.DCheckIntervalHours);
         type.SetDeliveryAirport(request.DeliveryAirportIcao);
         await db.SaveChangesAsync(ct);
 
@@ -188,7 +190,8 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
     public async Task<AdminAircraftDto> ReleaseFromMaintenanceAsync(Guid id, CancellationToken ct)
     {
         var aircraft = await FindAircraftAsync(id, ct);
-        aircraft.ReturnFromMaintenance();
+        var completed = aircraft.ReturnFromMaintenance();
+        await maintenance.AfterMaintenanceAsync(aircraft, completed, ct);
         await db.SaveChangesAsync(ct);
         return ToDto(aircraft);
     }
@@ -293,10 +296,13 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
     }
 
     private static AdminAircraftTypeDto ToDto(AircraftType type, int aircraftCount, int routeCount) =>
-        new(type.Id, type.IcaoCode, type.Name, type.IsCargo, type.MaxRangeNm, type.MaintenanceIntervalHours, type.RegistrationPrefix, type.DeliveryAirportIcao, aircraftCount, routeCount);
+        new(type.Id, type.IcaoCode, type.Name, type.IsCargo, type.MaxRangeNm, type.MaintenanceIntervalHours, type.CCheckIntervalHours, type.DCheckIntervalHours, type.RegistrationPrefix, type.DeliveryAirportIcao, aircraftCount, routeCount);
 
-    private static AdminAircraftDto ToDto(Aircraft aircraft) =>
-        new(
+    private static AdminAircraftDto ToDto(Aircraft aircraft)
+    {
+        var next = aircraft.NextCheckStatus();
+
+        return new(
             aircraft.Id,
             aircraft.Registration,
             aircraft.AircraftTypeId,
@@ -311,12 +317,15 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
             aircraft.Status.ToString(),
             aircraft.TotalMinutes,
             aircraft.Cycles,
-            aircraft.MinutesSinceMaintenance,
-            aircraft.AircraftType.MaintenanceIntervalHours,
+            next.Check.ToString(),
+            next.UsedMinutes,
+            next.IntervalHours,
             aircraft.IsMaintenanceDue,
+            aircraft.CurrentCheck?.ToString(),
             aircraft.MaintenanceReason,
             aircraft.MaintenanceStartedAt,
             aircraft.MaintenanceUntil,
             aircraft.LastMaintenanceAt,
             aircraft.LastFlightAt);
+    }
 }

@@ -51,7 +51,7 @@ import { AircraftTypeFormModal } from './aircraft-type-form-modal';
                     }
                   </td>
                   <td class="px-4 py-3 text-ink">{{ type.maxRangeNm }} NM</td>
-                  <td class="px-4 py-3 text-ink">every {{ type.maintenanceIntervalHours }}h</td>
+                                    <td class="px-4 py-3 font-mono text-xs text-ink">A {{ type.maintenanceIntervalHours }}h · C {{ type.cCheckIntervalHours }}h · D {{ type.dCheckIntervalHours }}h</td>
                   <td class="px-4 py-3 text-ink-muted">{{ type.aircraftCount }} aircraft · {{ type.routeCount }} routes</td>
                   <td class="px-4 py-3">
                     @if (confirmDelete() === type.id) {
