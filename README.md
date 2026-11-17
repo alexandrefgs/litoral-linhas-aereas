@@ -31,6 +31,7 @@
 - [Special Flights](#special-flights)
 - [ACARS e PIREP](#acars-e-pirep)
 - [Pontos](#pontos)
+- [Estatísticas e ranking](#estatísticas-e-ranking)
 - [Mapa ao vivo](#mapa-ao-vivo)
 - [Estrutura de staff](#estrutura-de-staff)
 - [Stack](#stack)
@@ -55,9 +56,10 @@ O sistema reúne em um só lugar:
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - **Briefing** com METAR/TAF, OFP e loadsheet do **SimBrief** na própria página
 - Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
-- Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety e promoção automática
+- Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety, promoção automática e **extrato de pontos** do piloto
+- **Estatísticas** da VA e do piloto, ranking geral e **pilotos do mês** com bônus automático
 - **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
-- Painel administrativo com permissões por posição de staff, gestão de pilotos e staff, e **logs de auditoria** de tudo o que é alterado
+- Painel administrativo com permissões por posição de staff, gestão de pilotos e staff, **relatórios** por período e **logs de auditoria** de tudo o que é alterado, com cores por gravidade
 
 Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**, voando nas networks **IVAO** e **VATSIM**.
 
@@ -407,7 +409,11 @@ Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o res
 
 ### Extrato
 
-Todo movimento de pontos fica registrado no **extrato do piloto**:
+Todo movimento de pontos fica registrado no **extrato do piloto**, na aba **My statement** da página **Points** (a aba **How scoring works** mostra as regras):
+
+- Cards com **saldo**, saldo do mês (ganho e gasto), **total ganho** e **total gasto**.
+- Filtros **Flights**, **Bonuses**, **Spending**, **Penalties** e **Adjustments**.
+- Lista paginada com data em UTC, descrição, pontos e o **saldo depois de cada lançamento** (sem filtro).
 
 | Tipo | Exemplo |
 |---|---|
@@ -417,9 +423,41 @@ Todo movimento de pontos fica registrado no **extrato do piloto**:
 | Traslado de aeronave | Trazer uma aeronave para o aeroporto do piloto pela página Fleet |
 | Tripulação | 10 pontos por voo aprovado em que o piloto foi escalado |
 | Bônus de escala mensal | 100 pontos por voo da escala concluída |
+| Piloto do mês | +800 / +600 / +400 para o pódio de horas e o de voos do mês anterior |
 | Special Flight | Bônus por perna de Special Flight aprovada |
 | Penalidade | PIREP rejeitado, ou **−500 pontos** se uma Special Flight for cancelada ou vencer sem ser feita |
 | Ajuste manual | Correção feita pelo staff |
+
+---
+
+## Estatísticas e ranking
+
+A página **Statistics** reúne os números da Litoral e do piloto. Contam apenas **PIREPs aprovados**.
+
+- **Totais da VA:** pilotos ativos, voos, horas, distância, pouso médio, aeronaves e aeroportos.
+- **Suas estatísticas:** voos, horas, pontos, pouso médio e a **posição** no ranking de horas, voos e pontos.
+- **Mês atual:** voos, horas e pilotos ativos da VA, os números do piloto e a posição dele nos pódios.
+- **Gráfico dos últimos 12 meses**, em voos ou horas.
+- **Ranking geral** (top 10) por horas, voos ou pontos, com a posição do piloto mesmo fora do top 10.
+- **Top rotas, top aeroportos, uso da frota e networks.**
+
+### Pilotos do mês
+
+Dois pódios mensais, **Most hours** e **Most flights**, com os 10 primeiros de cada um e o card com os vencedores do mês anterior.
+
+- Contam os PIREPs **aprovados** de **pilotos ativos** enviados no mês. Desempate: no de horas, quem tem mais voos; no de voos, quem tem mais horas.
+- **Bônus por pódio:** 1º **+800**, 2º **+600** e 3º **+400**. Quem fica em 1º nos dois ganha os dois bônus.
+- **Pagamento automático:** um job verifica a cada hora e paga o mês anterior assim que não sobrar nenhum PIREP pendente daquele mês, ou no máximo no **dia 3 às 00:00 UTC**, dando tempo ao Safety para revisar o fim do mês.
+- O bônus entra no extrato como *Pilot of the month*, a patente é atualizada e o pagamento fica registrado nos logs (categoria **Awards**). Cada mês é pago uma única vez.
+
+### Relatórios (General Director)
+
+Em **Admin › Reports**, com períodos **This month**, **Last month**, **Last 90 days**, **This year** ou **Custom** (em UTC, até 2 anos):
+
+- **Flights:** voos, horas, distância, pilotos que voaram e pouso médio.
+- **PIREP reviews:** pendentes agora, o pendente mais antigo, aprovados, rejeitados, % de rejeição, conformidade média, tempo médio de revisão e PIREPs manuais.
+- **Pilots:** total, ativos, inativos, novos cadastros, sem voar há 30+ dias e que nunca voaram.
+- Gráfico do período (por dia até 62 dias, por mês acima disso), top pilotos por horas, networks, tipos de reserva e top rotas.
 
 ---
 
@@ -441,6 +479,8 @@ Todo staff também é piloto. Cada posição tem **uma única função** no sist
 
 As permissões são aplicadas por **policies** na API. O **CEO & Founder** acessa todas as áreas, e o menu **Admin** do site mostra a cada pessoa só as áreas das suas posições.
 
+Toda ação que exige confirmação no site (aprovar ou rejeitar PIREP, desativar piloto, excluir itens, cancelar voo...) abre um **popup de confirmação** padrão.
+
 ### Executive Team
 
 | Posição | Função | Vagas |
@@ -448,7 +488,7 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 | CEO & Founder | Acesso total | 1 |
 | Chairman | Gestão do staff (atribuir e remover posições) | 1 |
 | Vice Chairman | Substitui o Chairman, com a mesma permissão | 1 |
-| General Director | Painel geral: estatísticas, relatórios e logs | 1 |
+| General Director | Relatórios (Reports) e logs | 1 |
 
 ### Operations Team
 
@@ -487,7 +527,9 @@ Em **Admin › Logs**, fica registrado para sempre tudo o que é alterado em con
 
 - As alterações feitas pelo Admin, pelo Settings do piloto e pelo cadastro são registradas automaticamente, com **valor antigo → novo**. Itens criados ou excluídos guardam todos os campos.
 - Troca de senha, posições do staff e exclusão de conta também são registradas. Nome, e-mail e números ficam salvos no log, então ele continua legível depois que a conta é excluída.
-- Filtros por categoria (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations) e busca por ação, piloto, item ou detalhe.
+- Cada log tem uma **cor pela gravidade**: 🔴 **Critical** (exclusões, contas excluídas ou desativadas, PIREP rejeitado e mudanças de staff), 🟡 **Important** (alterações, reativação e troca de senha) e 🟢 **Routine** (criações, aprovações e bônus).
+- Filtro **Critical only**, categorias (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations, Awards) e busca por ação, piloto, item ou detalhe.
+- O pagamento dos pilotos do mês aparece como feito pelo **System**.
 - Ainda não entram as ações dos pilotos (reservas, jumpseat, voos) nem os logins.
 
 ---
@@ -537,8 +579,8 @@ flowchart LR
 | Camada | Responsabilidade |
 |---|---|
 | **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, checks de manutenção, Special Flights, pontos e staff |
-| **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão e pontuação |
-| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção) |
+| **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão, pontuação e estatísticas |
+| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção e pagamento dos pilotos do mês) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
 ---
@@ -556,8 +598,8 @@ litoral-linhas-aereas/
 │   ├── public/                  # favicon, insígnias das patentes e logos das networks
 │   └── src/app/
 │       ├── core/                # auth, api, admin, staff, tema, dados de referência, config
-│       ├── shared/              # header, mapas (aeroporto, trilha, ao vivo), seletor de data, pipes e utilitários
-│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, voo, frota, pontos e admin
+│       ├── shared/              # header, mapas, gráficos, popup de confirmação, seletor de data, pipes e utilitários
+│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, voo, frota, pontos, estatísticas e admin
 ├── uploads/                     # fotos enviadas (pilotos, aeronaves, aeroportos, special flights), fora do Git
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
@@ -701,9 +743,9 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Exclusão permanente de conta (pelo staff ou pelo próprio piloto) com dupla confirmação
 - [x] Reaproveitamento do número de piloto de contas excluídas
 - [x] **General Director:** logs de auditoria de contas, staff e ações do staff, com antes → depois e IP
-- [ ] Cores por gravidade nos logs e filtro "Só críticos"
+- [x] Cores por gravidade nos logs e filtro Critical only
 - [ ] Logs de ações dos pilotos (reservas, jumpseat, voos) e logins com IP
-- [ ] Confirmações do site todo no estilo popup (componente `ConfirmDialog`)
+- [x] Confirmações do site todo no estilo popup (componente `ConfirmDialog`)
 
 ### Fase 2B: Páginas do piloto
 - [x] Aeroportos em cards, com aeronaves no solo, partidas e jumpseat (grátis para bases, 3 pontos por NM para os demais)
@@ -711,8 +753,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Frota, com localização e status de cada matrícula
 - [x] Special Flights no lugar da antiga página de rotas
 - [x] Tabela de regras de pontuação (página Points)
-- [ ] Extrato de pontos
-- [ ] Estatísticas do piloto
+- [x] Extrato de pontos (My statement) com filtros e saldo por lançamento
+- [x] Estatísticas do piloto
 - [x] Perfil do piloto: capa, foto, overview, gráfico de atividade, top 10 rotas, mapa de voos e lista de voos
 - [x] Settings: dados pessoais, VATSIM/IVAO/Discord, SimBrief, aeronaves do simulador, senha e formato do nome
 - [ ] Awards e documentos da tripulação (PDFs para download)
@@ -757,10 +799,10 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Notificação ao piloto quando o PIREP for revisado
 - [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
 
-### Fase 5: Estatísticas e comunidade
-- [ ] Estatísticas do piloto e da VA
-- [ ] **General Director:** painel de estatísticas (Reports)
-- [ ] Ranking de pilotos e pilotos do mês (+800/+600/+400)
+### 🔜 Fase 5: Estatísticas e comunidade
+- [x] Estatísticas do piloto e da VA
+- [x] **General Director:** relatórios por período (Reports)
+- [x] Ranking de pilotos e pilotos do mês (+800/+600/+400) com pagamento automático
 - [ ] Jobs de conta: inatividade (−50 por dia após 40 dias) e perda de conta
 - [ ] Páginas públicas de staff, carreira e regulamento
 - [ ] **Director of Operations:** tours e eventos
@@ -769,6 +811,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Notificações por e-mail (promoção, PIREP, inatividade)
 
 ### Fase 6: Produção
+- [ ] Monitor da API para o CEO (requisições, erros, jobs e saúde dos serviços)
 - [ ] Testes unitários do Domain
 - [ ] Testes de integração da API
 - [ ] CI com GitHub Actions (build e testes)
