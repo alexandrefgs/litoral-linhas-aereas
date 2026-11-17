@@ -86,7 +86,7 @@ const FILTERS: { key: AirportFilter; label: string }[] = [
           @for (a of filtered(); track a.icao) {
             @let current = a.icao === d.currentIcao;
             <article class="group flex flex-col overflow-hidden rounded-xl border bg-surface transition"
-              [class]="current ? 'border-accent ring-2 ring-accent/30' : 'cursor-pointer border-line hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-lg'"
+              [class]="current ? 'border-line opacity-60' : 'cursor-pointer border-line hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-lg'"
               (click)="openJumpseat(a)">
               <div class="relative h-36 bg-cover bg-center" [style.background-image]="cover(a)">
                 @if (!a.photoUrl) {

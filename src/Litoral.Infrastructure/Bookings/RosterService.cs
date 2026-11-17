@@ -140,7 +140,8 @@ public sealed class RosterService(LitoralDbContext db, BookingSupport support) :
             l.CompletedAt is not null ? "Completed"
                 : l.Id != next?.Id ? "Locked"
                 : l.Booking is { IsOpen: true } ? "Booked"
-                : "Next")).ToList();
+                : "Next",
+            l.Route.ArrivalAirport.PhotoUrl)).ToList();
 
         return new RosterDto(
             roster.Id,

@@ -1,6 +1,6 @@
 namespace Litoral.Application.Bookings;
 
-public sealed record BookingAirportDto(string Icao, string Name, string City, string Country, double Latitude, double Longitude);
+public sealed record BookingAirportDto(string Icao, string Name, string City, string Country, double Latitude, double Longitude, string? PhotoUrl, string? PhotoCredit);
 
 public sealed record BookingAircraftDto(
     Guid Id,

@@ -112,8 +112,8 @@ public sealed class BookingSupport(LitoralDbContext db)
     public AircraftOptionsDto ToOptions(Route route, IEnumerable<Aircraft> aircraft) =>
         new(route.Id, route.Callsign, (int)Booking.DefaultValidity.TotalHours, aircraft.Select(ToDto).ToList());
 
-    public static BookingAirportDto ToDto(Airport airport) =>
-        new(airport.Icao, airport.Name, airport.City, airport.Country, airport.Latitude, airport.Longitude);
+        public static BookingAirportDto ToDto(Airport airport) =>
+        new(airport.Icao, airport.Name, airport.City, airport.Country, airport.Latitude, airport.Longitude, airport.PhotoUrl, airport.PhotoCredit);
 
     public static BookingAircraftDto ToDto(Aircraft aircraft) =>
         new(

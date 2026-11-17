@@ -49,27 +49,34 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @for (leg of sequence.legs; track leg.id) {
                   <button type="button" (click)="open(leg)" [disabled]="leg.state !== 'Next' || data.hasOtherOpenBooking"
-                    class="relative flex flex-col gap-2 rounded-xl border p-4 text-left transition"
+                    class="relative flex flex-col overflow-hidden rounded-xl border text-left transition"
                     [class]="legClass(leg)">
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="font-mono text-sm font-bold text-primary">{{ leg.callsign }}</span>
-                      @switch (leg.state) {
-                        @case ('Completed') { <i class="ti ti-circle-check-filled text-lg text-accent" aria-hidden="true"></i> }
-                        @case ('Booked') { <span class="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary">Booked</span> }
-                        @case ('Next') {
-                          @if (leg.departureIcao !== data.locationIcao) {
-                            <span class="rounded-full bg-highlight px-2 py-0.5 text-[11px] font-semibold text-on-highlight" title="You'll get a free jumpseat to the departure">Unavailable</span>
-                          } @else {
-                            <span class="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-ink">Next</span>
-                          }
-                        }
-                        @default { <i class="ti ti-lock text-ink-muted" aria-hidden="true"></i> }
+                    <div class="relative h-20 w-full bg-cover bg-center" [style.background-image]="cover(leg)">
+                      @if (!leg.arrivalPhotoUrl) {
+                        <i class="ti ti-building-airport absolute inset-0 m-auto h-fit w-fit text-3xl text-white/40" aria-hidden="true"></i>
                       }
                     </div>
-                    <p class="font-mono text-xl font-bold text-ink">{{ leg.departureIcao }} <i class="ti ti-arrow-right text-base text-ink-muted" aria-hidden="true"></i> {{ leg.arrivalIcao }}</p>
-                    <p class="text-xs text-ink-muted">{{ leg.arrivalCity }} · {{ format(leg.estimatedMinutes) }}
-                      @if (leg.isCargo) { · <span class="font-semibold">Cargo</span> }
-                    </p>
+                    <div class="flex flex-col gap-2 p-4">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="font-mono text-sm font-bold text-primary">{{ leg.callsign }}</span>
+                        @switch (leg.state) {
+                          @case ('Completed') { <i class="ti ti-circle-check-filled text-lg text-accent" aria-hidden="true"></i> }
+                          @case ('Booked') { <span class="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary">Booked</span> }
+                          @case ('Next') {
+                            @if (leg.departureIcao !== data.locationIcao) {
+                              <span class="rounded-full bg-highlight px-2 py-0.5 text-[11px] font-semibold text-on-highlight" title="You'll get a free jumpseat to the departure">Unavailable</span>
+                            } @else {
+                              <span class="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-ink">Next</span>
+                            }
+                          }
+                          @default { <i class="ti ti-lock text-ink-muted" aria-hidden="true"></i> }
+                        }
+                      </div>
+                      <p class="font-mono text-xl font-bold text-ink">{{ leg.departureIcao }} <i class="ti ti-arrow-right text-base text-ink-muted" aria-hidden="true"></i> {{ leg.arrivalIcao }}</p>
+                      <p class="text-xs text-ink-muted">{{ leg.arrivalCity }} · {{ format(leg.estimatedMinutes) }}
+                        @if (leg.isCargo) { · <span class="font-semibold">Cargo</span> }
+                      </p>
+                    </div>
                   </button>
                 }
               </div>
@@ -208,5 +215,9 @@ export class MonthlyRoster implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+  protected cover(leg: RosterLeg): string {
+    const gradient = 'linear-gradient(135deg, #0F3768 0%, #1D6FD8 60%, #2EC4B6 100%)';
+    return leg.arrivalPhotoUrl ? `url('${leg.arrivalPhotoUrl}'), ${gradient}` : gradient;
   }
 }

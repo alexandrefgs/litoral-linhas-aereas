@@ -37,35 +37,45 @@ import { AircraftPickerModal } from './aircraft-picker-modal';
       } @else {
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of filtered(); track item.routeId) {
-            <button type="button" (click)="open(item)"
-              class="panel flex flex-col gap-3 p-5 text-left transition hover:border-primary hover:shadow-lg"
+                        <button type="button" (click)="open(item)"
+              class="panel flex flex-col overflow-hidden text-left transition hover:border-primary hover:shadow-lg"
               [class.opacity-60]="!item.availableAircraft">
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <p class="font-mono text-3xl font-extrabold text-ink">{{ item.arrival.icao }}</p>
-                  <p class="text-sm text-ink-muted">{{ item.arrival.city }}, {{ item.arrival.country }}</p>
+              <div class="relative h-32 w-full bg-cover bg-center" [style.background-image]="cover(item)">
+                @if (!item.arrival.photoUrl) {
+                  <i class="ti ti-building-airport absolute inset-0 m-auto h-fit w-fit text-4xl text-white/40" aria-hidden="true"></i>
+                }
+                @if (item.arrival.photoCredit) {
+                  <span class="absolute bottom-1 left-2 max-w-[70%] truncate text-[10px] text-white/80 [text-shadow:0_1px_2px_rgba(0,0,0,.8)]">© {{ item.arrival.photoCredit }}</span>
+                }
+              </div>
+              <div class="flex flex-1 flex-col gap-3 p-5">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="font-mono text-3xl font-extrabold text-ink">{{ item.arrival.icao }}</p>
+                    <p class="text-sm text-ink-muted">{{ item.arrival.city }}, {{ item.arrival.country }}</p>
+                  </div>
+                  <span class="rounded-full px-2.5 py-1 text-xs font-bold"
+                    [class]="item.cost ? 'bg-highlight text-on-highlight' : 'bg-accent/20 text-ink'">
+                    {{ item.cost ? item.cost + ' pts' : 'Free' }}
+                  </span>
                 </div>
-                <span class="rounded-full px-2.5 py-1 text-xs font-bold"
-                  [class]="item.cost ? 'bg-highlight text-on-highlight' : 'bg-accent/20 text-ink'">
-                  {{ item.cost ? item.cost + ' pts' : 'Free' }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2 text-sm">
-                <span class="font-mono font-semibold text-primary">{{ item.callsign }}</span>
-                @if (item.isCargo) {
-                  <span class="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-ink">Cargo</span>
-                }
-              </div>
-              <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-sm text-ink-muted">
-                <span>{{ item.distanceNm }} NM · {{ format(item.estimatedMinutes) }}</span>
-                <span [class.text-danger]="!item.availableAircraft">
-                  <i class="ti ti-plane mr-1" aria-hidden="true"></i>{{ item.availableAircraft || 'No' }} aircraft
-                </span>
-              </div>
-              <div class="flex flex-wrap gap-1">
-                @for (type of item.aircraftTypes; track type) {
-                  <span class="rounded-md bg-surface-alt px-2 py-0.5 font-mono text-xs font-semibold text-ink">{{ type }}</span>
-                }
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="font-mono font-semibold text-primary">{{ item.callsign }}</span>
+                  @if (item.isCargo) {
+                    <span class="rounded-full bg-accent/20 px-2 py-0.5 text-[11px] font-semibold text-ink">Cargo</span>
+                  }
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-sm text-ink-muted">
+                  <span>{{ item.distanceNm }} NM · {{ format(item.estimatedMinutes) }}</span>
+                  <span [class.text-danger]="!item.availableAircraft">
+                    <i class="ti ti-plane mr-1" aria-hidden="true"></i>{{ item.availableAircraft || 'No' }} aircraft
+                  </span>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  @for (type of item.aircraftTypes; track type) {
+                    <span class="rounded-md bg-surface-alt px-2 py-0.5 font-mono text-xs font-semibold text-ink">{{ type }}</span>
+                  }
+                </div>
               </div>
             </button>
           }
@@ -146,5 +156,9 @@ export class CustomFlight implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+  protected cover(item: Destination): string {
+    const gradient = 'linear-gradient(135deg, #0F3768 0%, #1D6FD8 60%, #2EC4B6 100%)';
+    return item.arrival.photoUrl ? `url('${item.arrival.photoUrl}'), ${gradient}` : gradient;
   }
 }

@@ -13,7 +13,8 @@ public sealed record RosterLegDto(
     bool IsCargo,
     int DistanceNm,
     int EstimatedMinutes,
-    string State);
+    string State,
+    string? ArrivalPhotoUrl);
 
 public sealed record RosterDto(
     Guid Id,

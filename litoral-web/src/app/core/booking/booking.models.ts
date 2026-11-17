@@ -5,6 +5,8 @@ export interface BookingAirport {
   country: string;
   latitude: number;
   longitude: number;
+  photoUrl: string | null;
+  photoCredit: string | null;
 }
 
 export interface BookingAircraft {
@@ -96,6 +98,7 @@ export interface RosterLeg {
   distanceNm: number;
   estimatedMinutes: number;
   state: RosterLegState;
+  arrivalPhotoUrl: string | null;
 }
 
 export interface Roster {

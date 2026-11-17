@@ -48,7 +48,6 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
 
         var items = airports
             .OrderByDescending(a => a.Icao == pilot.CurrentLocationIcao)
-            .ThenByDescending(a => bases.Contains(a.Icao))
             .ThenBy(a => a.Icao)
             .Select(a =>
             {

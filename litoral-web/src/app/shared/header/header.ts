@@ -113,8 +113,8 @@ interface NavItem {
                       </div>
                     </div>
                     <div class="p-2">
-                      <a routerLink="/profile" [queryParams]="{ tab: 'settings' }" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
-                        <i class="ti ti-settings text-xl" aria-hidden="true"></i>Settings
+                      <a routerLink="/profile" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-user text-xl" aria-hidden="true"></i>Profile
                       </a>
                     </div>
                     <div class="border-t border-line p-3">
