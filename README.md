@@ -25,7 +25,9 @@
 - [Identidade da companhia](#identidade-da-companhia)
 - [Operação](#operação)
 - [Carreira do piloto](#carreira-do-piloto)
+- [Perfil do piloto](#perfil-do-piloto)
 - [Reserva de voos](#reserva-de-voos)
+- [Special Flights](#special-flights)
 - [ACARS e PIREP](#acars-e-pirep)
 - [Pontos](#pontos)
 - [Mapa ao vivo](#mapa-ao-vivo)
@@ -45,9 +47,10 @@ A **Litoral Linhas Aéreas** é uma companhia aérea virtual (VA) para pilotos d
 
 O sistema reúne em um só lugar:
 
-- Cadastro de pilotos, base e carreira (FO → CMD)
-- Frota com **localização real**: cada avião fica onde pousou pela última vez, com horas, ciclos e manutenção
-- Reserva de voos aleatórios, personalizados, **escala mensal** e escalas especiais
+- Cadastro de pilotos, base, carreira (FO → CMD) e **perfil público** com estatísticas e mapa de voos
+- Frota com **localização real**: cada avião fica onde pousou pela última vez, com horas, ciclos e **manutenção A, C e D-check**
+- Página de **aeroportos** com aeronaves no solo, partidas e **jumpseat** cobrado pela distância
+- Reserva de voos aleatórios, personalizados, **escala mensal** e **Special Flights** (fretamentos, traslados, redeliveries, traslados de manutenção e voos de teste)
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - Briefing integrado ao **SimBrief**
 - Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
@@ -105,7 +108,8 @@ Cada aeroporto tem a **operação da Litoral** naquele local: **passageiros**, *
 - Rotas de passageiros exigem operação de passageiros nos dois aeroportos, e rotas cargueiras exigem operação de cargueiro nos dois.
 - As coordenadas são cadastradas no formato do **AISWEB/ROTAER**, com ou sem espaços: `12 54 31S` / `038 19 21W` ou `125431S` / `0381921W`.
 - **Busca por ICAO:** ao digitar o ICAO no cadastro, nome, cidade, país e coordenadas são preenchidos a partir do catálogo do [OurAirports](https://ourairports.com/data/) (cerca de 19 mil aeroportos), importado automaticamente na primeira execução.
-- Fotos de aeroportos virão do **Wikimedia Commons**, com crédito e licença exibidos.
+- Cada aeroporto tem **código IATA** (preenchido pelo catálogo) e **foto** enviada pelo Route Manager, com campo de crédito. As fotos devem vir do **Wikimedia Commons** ou ter autorização do autor.
+- **SBCF (Belo Horizonte, Confins)** é o **centro de manutenção** da Litoral: é lá que são feitos os C e D-checks.
 
 ### Acesso aos aeroportos por patente
 
@@ -131,10 +135,10 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 | B38M | Boeing 737 MAX 8 | Passageiros | 3.500 NM | `PS-LE_` |
 | B736 | Boeing 737-600 | Passageiros | 3.000 NM | `PS-LF_` |
 
-- Os tipos de aeronave são cadastrados pelo Fleet Manager: ICAO, nome, operação, alcance, **prefixo de matrícula** e **intervalo de manutenção**.
+- Os tipos de aeronave são cadastrados pelo Fleet Manager: ICAO, nome, operação, alcance, **prefixo de matrícula**, **intervalos de A, C e D-check** e **aeroporto de entrega** (de onde saem as redeliveries; Boeing: `KBFI`).
 - O sistema calcula a distância das rotas pelas coordenadas dos aeroportos e **não permite cadastrar uma rota maior que o alcance da aeronave**.
 - Cada aeronave tem **localização real**. Ela só pode ser reservada no aeroporto onde está, e ao fim do voo fica no destino.
-- Cada aeronave acumula **horas, ciclos** e **horas desde a última manutenção**.
+- Cada aeronave acumula **horas, ciclos** e as **horas desde o último A, C e D-check**.
 - Status de cada aeronave: **Disponível**, **Reservada**, **Em voo**, **Manutenção** ou **Inativa**.
 - Fotos das aeronaves são enviadas manualmente, com campo de **crédito do fotógrafo**. Use apenas fotos próprias ou autorizadas.
 
@@ -148,10 +152,23 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 
 #### Manutenção
 
-- Cada tipo tem um **intervalo de manutenção** em horas de voo (padrão **500 h**, editável).
-- O Fleet Manager pode mandar uma aeronave para a manutenção com um motivo, escolhendo o retorno **manual** ou **em uma data**. Na data, ela volta sozinha ao serviço.
-- Ao vencer o intervalo, a aeronave entra em manutenção **automaticamente** ao concluir o voo, com retorno em **2 dias**.
-- **Planejado:** se ela não estiver no **hub de manutenção** (a definir), será criada uma **escala especial de traslado** para um CMD levar a aeronave até lá.
+A manutenção segue os checks escalonados da aviação real. Os intervalos são **por tipo de aeronave**, em horas de voo, e podem ser editados pelo Fleet Manager.
+
+| Check | Intervalo padrão | Tempo parado | Onde é feito |
+|---|---|---|---|
+| **A-check** | 500 h | 12 horas | Em qualquer **base** ou em SBCF |
+| **C-check** | 5.000 h | 14 dias | Somente em **SBCF** |
+| **D-check** (heavy check) | 20.000 h | 30 dias | Somente em **SBCF** |
+
+- Quando dois checks vencem juntos, vale o mais pesado (D, depois C, depois A). O C-check também zera o A, e o D-check zera o C e o A.
+- **Traslado automático:** ao vencer um check, se a aeronave estiver num lugar que faz aquele check, ela entra direto em manutenção. Se não estiver, o sistema cria uma Special Flight de **traslado de manutenção** com prazo de 3 dias:
+  - A-check: para a **base mais próxima** dentro do alcance, aberta a qualquer patente.
+  - C e D-check: para **SBCF**, somente para comandantes.
+- Se ninguém fizer o traslado até o fim do prazo, ou se ele for cancelado, a aeronave é **levada até o destino** como se uma tripulação da própria companhia tivesse feito o voo, e entra em manutenção lá.
+- **Voo de teste:** ao sair de um **C ou D-check**, a aeronave só volta à linha depois de um *functional check flight*: uma Special Flight com partida e pouso em SBCF, somente para comandantes, com prazo de 3 dias. Se ninguém fizer, o voo conta como feito pela tripulação da companhia.
+- Uma verificação roda **a cada minuto**, então também são tratadas as aeronaves que vencem por mudança de intervalo ou que ficaram paradas.
+- Se a aeronave vencer no meio de uma Special Flight de duas pernas, a perna 2 continua liberada e o check é tratado no fim.
+- O Fleet Manager ainda pode mandar uma aeronave para a manutenção manualmente, com um motivo, escolhendo o retorno **manual** ou **em uma data**, e liberá-la antes do prazo.
 
 ### Numeração dos voos
 
@@ -162,11 +179,13 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 | `6000–6999` | América Central e do Norte |
 | `7000–7999` | Voos sazonais |
 | `8000–8999` | Europa e demais destinos |
-| `9000–9999` | Translado, cargueiro e callsign alternativo |
+| `9000–9999` | Translado, cargueiro, Special Flights e callsign alternativo |
 
 **Sugestão de número:** no cadastro de rotas, o sistema sugere o próximo número livre do bloco, ímpar na ida e o par seguinte na volta (ex.: `LTL1003` / `LTL1004`). O bloco é escolhido pelo país e continente dos aeroportos, e rotas cargueiras sempre usam o `9xxx`.
 
 ### Rotas
+
+As rotas são cadastradas pelo Route Manager em **Admin › Routes**. Os pilotos veem as rotas de cada aeroporto na página **Airports**.
 
 - Cada rota tem um ou mais **tipos de aeronave** permitidos, todos de passageiros ou todos cargueiros.
 - A distância precisa estar dentro do alcance de **todos** os tipos escolhidos.
@@ -180,7 +199,7 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 
 ## Carreira do piloto
 
-Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O login é feito por **e-mail e senha**.
+Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O login é feito por **e-mail e senha**. A idade mínima é de **13 anos**.
 
 | Patente | Requisitos |
 |---|---|
@@ -194,8 +213,25 @@ Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto
 
 - No cadastro o piloto escolhe a sua **base** entre os hubs de passageiros.
 - O piloto tem uma **localização atual**: começa na base e muda a cada voo concluído.
-- **Jumpseat:** pela página de aeroportos, o piloto pode se deslocar para outro aeroporto sem voar, desde que a patente permita. É **grátis para as bases** e custa **50 pontos** para os demais aeroportos.
+- **Jumpseat:** pela página **Airports**, o piloto pode se deslocar para outro aeroporto sem voar, desde que a patente permita. É **grátis para as bases** e custa **3 pontos por milha náutica** a partir de onde ele está (ex.: SBGR → SBSV = 2.352 pontos).
+- **Limite:** o piloto pode fazer **um jumpseat** e **um traslado de aeronave**. Depois disso, precisa **voar pelo menos uma vez** (qualquer PIREP) para liberar os dois de novo.
 - **Rebaixamento:** se o piloto estiver em um aeroporto só de CMD quando voltar a ser FO, ele é **movido automaticamente para a base**.
+
+---
+
+## Perfil do piloto
+
+Cada piloto tem um perfil público em `/profile/{número}`, no estilo da FlyGOL:
+
+- **Capa e foto:** capa padrão da companhia ou enviada pelo piloto, e foto de perfil.
+- **Nome exibido:** o piloto escolhe como o nome aparece no site: `A. Fagundes` (padrão), `Alexandre F.`, nome completo, só o primeiro nome ou só o sobrenome.
+- **Overview:** patente, horas, pontos, voos, gráfico de atividade por ano e mês, e as **10 rotas mais voadas**.
+- **Mapa de voos:** todas as rotas já voadas pelo piloto.
+- **Flights:** lista paginada de voos, com busca e ordenação. PIREPs rejeitados aparecem marcados, mantendo as horas e sem os pontos.
+- **Privacidade:** e-mail, data de nascimento e Discord aparecem **só para o próprio piloto e para o staff**. A idade aparece para todos.
+- **Awards** e **Downloads:** abas preparadas para medalhas e documentos da tripulação.
+
+Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa.
 
 ---
 
@@ -208,13 +244,13 @@ O piloto sempre parte da **sua localização atual**, com uma aeronave que **est
 | **Aleatório** | Filtro por duração (até 1 h, 1–2 h, mais de 2 h ou qualquer). O sistema sorteia a rota e uma aeronave disponível no aeroporto. Se não houver aeronave, o piloto pode trazer uma para lá sem custo. | Grátis |
 | **Personalizado** | O piloto escolhe qualquer rota que saia do aeroporto onde está. | Grátis para uma base; **50 pontos** para os demais destinos |
 | **Escala mensal** | Sequência de voos gerada para o mês (veja abaixo). | Grátis, com bônus |
-| **Escala especial** | Voos criados pelo staff, como traslados e fretamentos. O primeiro piloto que reservar fica com o voo. | **+300** (nacional) / **+500** (internacional) ao concluir |
+| **Special Flight** | Fretamentos, traslados, redeliveries, traslados de manutenção e voos de teste (veja abaixo). O primeiro piloto que pegar fica com o voo. | **+300** (nacional) / **+500** (internacional) por perna |
 
 **Escolha da aeronave:** no voo personalizado e na escala mensal, ao clicar no destino abre a tela de seleção. Ela tem a opção **Random selection** e os cards das aeronaves disponíveis no aeroporto, agrupados por tipo, com foto, matrícula, variante e último voo. No voo aleatório, a aeronave é escolhida automaticamente.
 
 Depois da reserva, o callsign do voo aparece no menu no lugar de "Reservar voo", com a opção de cancelar. O piloto só pode ter **um voo reservado por vez**.
 
-**Expiração:** toda reserva expira em **24 h** se o voo não for iniciado (escala especial: **48 h**). A aeronave volta a ficar disponível. Na escala mensal, o voo só é reservado quando o piloto clica no card, e a contagem começa a partir daí. Se expirar, o voo continua na escala como o próximo a ser feito.
+**Expiração:** toda reserva expira em **24 h** se o voo não for iniciado (Special Flight: no **fim da janela** definida pelo staff). A aeronave volta a ficar disponível. Na escala mensal, o voo só é reservado quando o piloto clica no card, e a contagem começa a partir daí. Se expirar, o voo continua na escala como o próximo a ser feito.
 
 ### Tripulação
 
@@ -244,6 +280,37 @@ Todo voo tem um **segundo piloto da VA** escalado automaticamente na reserva:
 - Bônus de **100 pontos por voo** da escala, pago quando **todos os PIREPs da escala forem aprovados**.
 - Quem terminar a escala antes do fim do mês só recebe uma nova no mês seguinte.
 
+### Aeroportos
+
+A página **Airports** mostra, em cards, os aeroportos que a patente do piloto permite, com foto, IATA, patente mínima (com a insígnia de FO ou CMD), pilotos no local e custo do jumpseat.
+
+- **Aircraft:** lista as aeronaves no solo naquele aeroporto.
+- **Flights:** lista as partidas daquele aeroporto, indicando se há aeronave disponível.
+- **Clique no card:** faz o jumpseat para aquele aeroporto.
+
+---
+
+## Special Flights
+
+Voos especiais criados pelo **Director of Operations** em **Admin › Operations**, ou pelo próprio sistema no caso da manutenção. Aparecem para os pilotos na página **Special Flights**, em cards com foto, tipo, dificuldade, rota, aeronave, janela e patente mínima.
+
+| Tipo | Uso |
+|---|---|
+| **Charter** | Fretamento |
+| **Ferry** | Traslado de aeronave |
+| **Redelivery** | Entrega de aeronave nova, saindo do aeroporto de entrega do fabricante (Boeing: `KBFI`) |
+| **Maintenance ferry** | Traslado para manutenção (criado pelo sistema ou pelo staff), terminando numa base ou em SBCF |
+| **Check flight** | Voo de teste após C ou D-check, com partida e pouso em SBCF (só criado pelo sistema) |
+
+- O staff define a aeronave, **1 ou 2 pernas**, a **patente mínima** (FO ou CMD), a **dificuldade** de 1 a 5 estrelas (apenas informativa) e a janela de **Start/End em UTC**.
+- Antes do Start, o card aparece bloqueado com a tag **Coming soon** e uma contagem regressiva.
+- Para pegar o voo, o piloto precisa estar **no aeroporto de partida**, ter a patente mínima e não ter outro voo aberto. A perna 1 é reservada na hora. Com duas pernas, depois do PIREP da perna 1 aparece **Book leg 2**, e só quem pegou o voo pode fazê-la.
+- Cada perna aprovada vale **+300** (nacional) ou **+500** (internacional).
+- **Expiração:** no End, o voo expira e quem pegou perde **500 pontos**. Se a perna atual já estiver **em voo**, ela pode ser concluída e ainda vale os pontos.
+- **Cancelamento:** quem cancelar perde **500 pontos**. Se nenhuma perna foi concluída, o voo volta a ficar disponível; se já foi, ele expira.
+- Enquanto uma Special Flight estiver aberta ou em andamento, a aeronave fica **reservada** para ela: não aparece no Book flight, na escala mensal nem nas partidas, e não pode ser trasladada.
+- Filtros **Open**, **Mine** e **History** (últimos 30 dias).
+
 ---
 
 ## ACARS e PIREP
@@ -259,8 +326,9 @@ A API tem uma camada de ACARS **neutra**: o smartCARS 3 (ou qualquer outro clien
 **Ao enviar o PIREP** (antes da revisão):
 - O piloto e a aeronave vão para o **aeroporto de pouso** (ou o alternado, se divergiu).
 - As **horas contam** para o piloto e a aeronave soma horas e ciclos.
-- A perna da escala mensal é concluída, liberando a próxima.
-- Se a aeronave passou do intervalo de manutenção, ela entra em manutenção automaticamente.
+- A perna da escala mensal ou da Special Flight é concluída, liberando a próxima.
+- O jumpseat e o traslado de aeronave do piloto são liberados de novo.
+- Se a aeronave venceu algum check, ela entra em manutenção ou ganha um traslado de manutenção (veja [Manutenção](#manutenção)).
 
 **PIREP manual:** se o ACARS falhar, o piloto envia o PIREP pelo Briefing, com comentário obrigatório. Ele **sempre passa pela revisão**.
 
@@ -277,7 +345,7 @@ Todo PIREP é revisado por um **Safety Manager** em **Admin › PIREPs**:
 
 | Decisão | Efeito |
 |---|---|
-| **Aprovar** | Credita os pontos do voo, paga a tripulação e o bônus da escala mensal (se for o caso) e atualiza a patente. Bloqueado enquanto houver item de reprovação ativo. |
+| **Aprovar** | Credita os pontos do voo, paga a tripulação, o bônus da escala mensal e o bônus da Special Flight (se for o caso) e atualiza a patente. Bloqueado enquanto houver item de reprovação ativo. |
 | **Rejeitar** | Comentário obrigatório. O voo **não dá pontos** e aplica a penalidade progressiva do mês. Horas e posição da aeronave continuam valendo. |
 
 **Penalidade por PIREP rejeitado** (por mês, editável em Admin › Scoring):
@@ -299,7 +367,7 @@ Contas desativadas não conseguem reservar voos até serem reativadas pelo Head 
 
 As regras ficam no banco e são editadas pelo **Safety Manager** em **Admin › Scoring**: é possível alterar valores, criar, desativar e excluir regras. Os pilotos veem as regras ativas na página **Points**.
 
-Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. Regras iniciais:
+Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. O ponto de partida foi a tabela da FlyGOL, adaptada à Litoral:
 
 | Categoria | Exemplos |
 |---|---|
@@ -320,11 +388,12 @@ Todo movimento de pontos fica registrado no **extrato do piloto**:
 |---|---|
 | Pontuação do voo | Pontos do PIREP aprovado |
 | Custo de reserva | Voo personalizado para fora das bases |
-| Jumpseat | Deslocamento para aeroportos que não são base |
+| Jumpseat | Deslocamento para aeroportos que não são base (3 pontos por NM) |
+| Traslado de aeronave | Trazer uma aeronave para o aeroporto do piloto pela página Fleet |
 | Tripulação | 10 pontos por voo aprovado em que o piloto foi escalado |
 | Bônus de escala mensal | 100 pontos por voo da escala concluída |
-| Escala especial | Bônus por escala especial concluída |
-| Penalidade | PIREP rejeitado, ou **−500 pontos** se uma escala especial reservada vencer sem ser feita |
+| Special Flight | Bônus por perna de Special Flight aprovada |
+| Penalidade | PIREP rejeitado, ou **−500 pontos** se uma Special Flight for cancelada ou vencer sem ser feita |
 | Ajuste manual | Correção feita pelo staff |
 
 ---
@@ -361,15 +430,15 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 | Posição | Função | Vagas |
 |---|---|:---:|
 | Head of HR | Gestão de pilotos: inativar, reativar e excluir | 1 |
-| Director of Operations | Tours, eventos e escalas especiais | 1 |
-| Fleet Manager | Tipos de aeronave, matrículas, fotos e manutenção | 1 |
-| Route Manager | Rotas, aeroportos (operação, patente mínima e hub) | 1 |
+| Director of Operations | Special Flights, tours e eventos | 1 |
+| Fleet Manager | Tipos de aeronave (intervalos de manutenção e aeroporto de entrega), matrículas, fotos e manutenção | 1 |
+| Route Manager | Rotas, aeroportos (operação, patente mínima, hub, IATA e foto) | 1 |
 
 ### Safety Team
 
 | Posição | Função | Vagas |
 |---|---|:---:|
-| Safety Manager | Análise e aprovação de PIREPs e regras de pontuação | Várias |
+| Safety Manager | Análise e aprovação de PIREPs | Várias |
 
 ---
 
@@ -394,7 +463,7 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 - aviationweather.gov (METAR)
 - **smartCARS 3**: a API do Litoral implementa a [especificação REST](https://github.com/invernyx/smartcars-3-phpvms5-api/blob/development/openapi.json) usada pelo app, em .NET, sem PHP
 - **OurAirports**: catálogo de aeroportos para a busca por ICAO
-- **Wikimedia Commons**: fotos de aeroportos (planejado)
+- **Wikimedia Commons**: origem recomendada das fotos de aeroportos, com crédito do autor
 - **VATSIM Radar** e **IVAO Webeye**: links para acompanhar o voo na rede
 
 ---
@@ -416,9 +485,9 @@ flowchart LR
 
 | Camada | Responsabilidade |
 |---|---|
-| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, pontos, motor de pontuação e staff |
-| **Application** | Contratos e casos de uso: cadastro, booking, ACARS, PIREP, revisão, pontuação |
-| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed e serviços |
+| **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, checks de manutenção, Special Flights, pontos e staff |
+| **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão e pontuação |
+| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos e jobs em segundo plano (expiração de reservas e Special Flights, manutenção) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
 ---
@@ -428,16 +497,17 @@ flowchart LR
 ```
 litoral-linhas-aereas/
 ├── src/
-│   ├── Litoral.Domain/          # Entidades, enums, staff, regras e motor de pontuação
+│   ├── Litoral.Domain/          # Entidades, enums, staff e regras
 │   ├── Litoral.Application/     # Contratos e casos de uso
 │   ├── Litoral.Infrastructure/  # DbContext, configurações, migrations, seed, auth
-│   └── Litoral.Api/             # Controllers, Program.cs, Swagger e wwwroot/uploads (fotos)
+│   └── Litoral.Api/             # Controllers, Program.cs e Swagger
 ├── litoral-web/                 # Front-end Angular
 │   ├── public/                  # favicon, insígnias das patentes e logos das networks
 │   └── src/app/
 │       ├── core/                # auth, api, admin, staff, tema, dados de referência, config
 │       ├── shared/              # header, mapas (aeroporto, trilha, ao vivo), seletor de data, pipes e utilitários
-│       └── pages/               # home, login, cadastro, dashboard, perfil, reserva, briefing, frota, PIREPs, pontos e admin
+│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, frota, PIREPs, pontos e admin
+├── uploads/                     # fotos enviadas (pilotos, aeronaves, aeroportos, special flights), fora do Git
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
 ```
@@ -493,7 +563,9 @@ dotnet dev-certs https --trust
 npm run dev
 ```
 
-Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs, posições de staff e regras de pontuação. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder.
+As fotos enviadas ficam na pasta `uploads/` na raiz do repositório (configurável em `Storage:UploadsPath`), fora do projeto da API, para o `dotnet watch` não reiniciar a cada upload. Ela é servida em `/uploads` e não vai para o Git.
+
+Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs e posições de staff. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder.
 
 | Serviço | Endereço |
 |---|---|
@@ -557,24 +629,29 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Busca de aeroporto por ICAO (catálogo OurAirports)
 - [x] **Route Manager:** rotas com vários tipos de aeronave, rota de volta e sugestão do número do voo
 - [x] Cadastro de aeroporto direto do formulário de rota quando o ICAO não existe
-- [x] **Fleet Manager:** tipos de aeronave com prefixo de matrícula e intervalo de manutenção
+- [x] **Fleet Manager:** tipos de aeronave com prefixo de matrícula, intervalos de A, C e D-check e aeroporto de entrega
 - [x] **Fleet Manager:** aeronaves com matrícula sugerida por bloco, regras da ANAC, foto com crédito e localização
 - [x] **Fleet Manager:** manutenção manual ou com data de retorno automática, ativar e desativar
 - [x] Manutenção automática por horas ao concluir o voo
-- [ ] Hub de manutenção e escala especial de traslado (CMD, bônus de escala especial, 48 h, −500 se vencer)
+- [x] Checks A (bases, 12 h), C (SBCF, 14 dias) e D (SBCF, 30 dias)
+- [x] Centro de manutenção em SBCF com traslado automático de manutenção
+- [x] Voo de teste (check flight) após C e D-check
+- [x] **Route Manager:** IATA e foto com crédito nos aeroportos
 - [ ] Tag MEL/CDL nas aeronaves (a confirmar)
 - [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
 - [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
 
-### Fase 2B: Páginas do piloto
-- [ ] Aeroportos com jumpseat filtrado pela patente (grátis para bases, 50 pontos para os demais)
+### Fase 2B: Páginas do piloto (estilo FlyGOL)
+- [x] Aeroportos em cards, com aeronaves no solo, partidas e jumpseat (grátis para bases, 3 pontos por NM para os demais)
+- [x] Limite de um jumpseat e um traslado de aeronave até o próximo voo
 - [x] Frota, com localização e status de cada matrícula
-- [ ] Rotas
+- [x] Special Flights no lugar da antiga página de rotas
 - [x] Tabela de regras de pontuação (página Points)
 - [ ] Extrato de pontos
 - [ ] Estatísticas do piloto
-- [ ] Perfil do piloto
-- [ ] Documentos da tripulação (PDFs para download)
+- [x] Perfil do piloto: capa, foto, overview, gráfico de atividade, top 10 rotas, mapa de voos e lista de voos
+- [x] Settings: dados pessoais, VATSIM/IVAO/Discord, SimBrief, aeronaves do simulador, senha e formato do nome
+- [ ] Awards e documentos da tripulação (PDFs para download)
 - [ ] Regulamento e Política de Privacidade (inglês e português)
 
 ### ✅ Fase 3: Reserva de voos
@@ -587,12 +664,13 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Confirmação da reserva e callsign no menu
 - [x] Briefing: SimBrief, METAR e prefile
 - [x] Cancelamento e expiração da reserva em 24 h
-- [ ] Novo layout do Briefing: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
+- [ ] Briefing estilo FlyGOL: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
 
-### Fase 3B: Escalas especiais
-- [ ] **Director of Operations:** criação de escalas especiais
-- [ ] Reserva pelo primeiro piloto interessado
-- [ ] Bônus ao concluir (+300 nacional / +500 internacional), prazo de 48 h e −500 pontos se vencer
+### ✅ Fase 3B: Special Flights
+- [x] **Director of Operations:** Charter, Ferry, Redelivery e Maintenance ferry com 1 ou 2 pernas, patente mínima, dificuldade, foto e janela em UTC
+- [x] Página do piloto com Coming soon, Take flight, Book leg 2 e filtros Open, Mine e History
+- [x] Bônus por perna (+300 nacional / +500 internacional), expiração no fim da janela e −500 pontos se vencer ou for cancelada
+- [x] Aeronave reservada enquanto a Special Flight estiver aberta
 
 ### 🔜 Fase 4: ACARS e PIREP
 - [x] Camada de ACARS neutra: início do voo, posições, eventos e conclusão
