@@ -70,6 +70,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/staff/admin-staff').then(m => m.AdminStaff)
       },
       {
+        path: 'logs',
+        canActivate: [staffGuard('reports')],
+        loadComponent: () => import('./pages/admin/logs/admin-logs').then(m => m.AdminLogs)
+      },
+      {
         path: 'operations',
         canActivate: [staffGuard('operations')],
         loadComponent: () => import('./pages/admin/operations/admin-operations').then(m => m.AdminOperations)

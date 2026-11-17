@@ -1,7 +1,9 @@
 using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
+using Litoral.Domain.Enums;
 using Litoral.Domain.Staff;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +14,8 @@ namespace Litoral.Infrastructure.Admin;
 public sealed class StaffAdminService(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
-    StaffRoles staffRoles) : IStaffAdminService
+    StaffRoles staffRoles,
+    IAuditLog auditLog) : IStaffAdminService
 {
     private static readonly string[] CeoOnlyPositions = [StaffPositions.Chairman, StaffPositions.ViceChairman];
 
@@ -58,13 +61,23 @@ public sealed class StaffAdminService(
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
+        var replaced = new List<string>();
         if (position.SingleHolder)
         {
             foreach (var holder in await userManager.GetUsersInRoleAsync(position.Code))
+            {
                 Check(await userManager.RemoveFromRoleAsync(holder, position.Code));
+                if (await db.Pilots.AsNoTracking().Include(p => p.Rank).FirstOrDefaultAsync(p => p.UserId == holder.Id, ct) is { } previous)
+                {
+                    replaced.Add(AuditContext.PilotLabel(previous));
+                    await auditLog.WriteAsync(StaffEntry("Staff position removed", previous, $"Position: {position.Name}\nReplaced by {AuditContext.PilotLabel(pilot)}"), ct);
+                }
+            }
         }
 
         Check(await userManager.AddToRoleAsync(user, position.Code));
+        await auditLog.WriteAsync(StaffEntry("Staff position assigned", pilot,
+            $"Position: {position.Name}" + (replaced.Count > 0 ? $"\nReplaced {string.Join(", ", replaced)}" : "")), ct);
         await transaction.CommitAsync(ct);
 
         return await GetAsync(actorUserId, ct);
@@ -80,6 +93,7 @@ public sealed class StaffAdminService(
             throw new AppException(AppErrorKind.Conflict, $"{pilot.DisplayId} is not {position.Name}.");
 
         Check(await userManager.RemoveFromRoleAsync(user, position.Code));
+        await auditLog.WriteAsync(StaffEntry("Staff position removed", pilot, $"Position: {position.Name}"), ct);
         return await GetAsync(actorUserId, ct);
     }
 
@@ -115,6 +129,9 @@ public sealed class StaffAdminService(
     private async Task<ApplicationUser> FindUserAsync(Pilot pilot) =>
         await userManager.FindByIdAsync(pilot.UserId)
         ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
+
+    private static AuditEntry StaffEntry(string action, Pilot pilot, string details) =>
+        new(AuditCategory.Staff, action, "Pilot", pilot.Id.ToString(), AuditContext.PilotLabel(pilot), details);
 
     private static StaffMemberDto Member(Pilot pilot) =>
         new(pilot.Id, pilot.PilotNumber, pilot.DisplayId, pilot.PublicName, pilot.PhotoUrl);

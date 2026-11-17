@@ -3,6 +3,7 @@ using Litoral.Application.Common;
 using Litoral.Application.Pilots;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -14,7 +15,8 @@ public sealed class PilotSettingsService(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
     IPhotoStorage storage,
-    PilotEraser eraser) : IPilotSettingsService
+    PilotEraser eraser,
+    IAuditLog auditLog) : IPilotSettingsService
 {
     private const string PhotoFolder = "pilots";
     private const string CoverFolder = "covers";
@@ -65,7 +67,12 @@ public sealed class PilotSettingsService(
             ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
 
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
-        if (result.Succeeded) return;
+        if (result.Succeeded)
+        {
+            var pilot = await FindPilotAsync(userId, ct);
+            await auditLog.WriteAsync(new AuditEntry(AuditCategory.Account, "Password changed", "Pilot", pilot.Id.ToString(), AuditContext.PilotLabel(pilot)), ct);
+            return;
+        }
 
         if (result.Errors.Any(e => e.Code == "PasswordMismatch"))
             throw new AppException(AppErrorKind.Validation, "The current password is incorrect.");
@@ -85,7 +92,7 @@ public sealed class PilotSettingsService(
         if (await eraser.BlockReasonAsync(pilot, true, ct) is string reason)
             throw new AppException(AppErrorKind.Conflict, reason);
 
-        await eraser.DeleteAsync(pilot, ct);
+        await eraser.DeleteAsync(pilot, true, ct);
     }
 
     public async Task<PilotSettingsDto> UploadPhotoAsync(string userId, PhotoUpload upload, CancellationToken ct)

@@ -9,6 +9,7 @@ using Litoral.Application.Reference;
 using Litoral.Application.Scoring;
 using Litoral.Domain.Staff;
 using Litoral.Infrastructure.Admin;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Auth;
 using Litoral.Infrastructure.Bookings;
 using Litoral.Infrastructure.External;
@@ -37,8 +38,15 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<LitoralDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("Litoral")));
+        services.AddHttpContextAccessor();
+        services.AddScoped<AuditContext>();
+        services.AddScoped<AuditInterceptor>();
+        services.AddScoped<IAuditLog, AuditLogWriter>();
+        services.AddScoped<IAuditLogQuery, AuditLogQuery>();
+
+        services.AddDbContext<LitoralDbContext>((provider, options) =>
+            options.UseSqlServer(configuration.GetConnectionString("Litoral"))
+                .AddInterceptors(provider.GetRequiredService<AuditInterceptor>()));
 
         services
             .AddIdentityCore<ApplicationUser>(options =>

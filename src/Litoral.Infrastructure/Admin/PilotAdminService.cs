@@ -55,7 +55,7 @@ public sealed class PilotAdminService(
         if (await eraser.BlockReasonAsync(pilot, false, ct) is string reason)
             throw new AppException(AppErrorKind.Conflict, reason);
 
-        await eraser.DeleteAsync(pilot, ct);
+        await eraser.DeleteAsync(pilot, false, ct);
     }
 
     private async Task<Pilot> FindAsync(Guid pilotId, CancellationToken ct) =>

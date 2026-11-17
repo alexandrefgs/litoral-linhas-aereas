@@ -4,6 +4,7 @@ using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Staff;
 using Litoral.Infrastructure.Admin;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -15,7 +16,8 @@ public sealed class PilotEraser(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
     StaffRoles staffRoles,
-    IPhotoStorage photos)
+    IPhotoStorage photos,
+    IAuditLog auditLog)
 {
     public async Task<string?> BlockReasonAsync(Pilot pilot, bool self, CancellationToken ct)
     {
@@ -51,7 +53,7 @@ public sealed class PilotEraser(
         return openFlights.Concat(specialFlights).ToHashSet();
     }
 
-    public async Task DeleteAsync(Pilot pilot, CancellationToken ct)
+    public async Task DeleteAsync(Pilot pilot, bool self, CancellationToken ct)
     {
         var user = await userManager.FindByIdAsync(pilot.UserId)
             ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
@@ -60,7 +62,17 @@ public sealed class PilotEraser(
         var photoUrl = pilot.PhotoUrl;
         var coverUrl = pilot.CoverUrl;
 
+        var flights = await db.Pireps.CountAsync(p => p.PilotId == pilotId, ct);
+
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+        await auditLog.WriteAsync(new AuditEntry(
+            self ? AuditCategory.Account : AuditCategory.Pilots,
+            "Account deleted",
+            "Pilot",
+            pilotId.ToString(),
+            AuditContext.PilotLabel(pilot),
+            $"Deleted by {(self ? "the pilot" : "the staff")}\nEmail: {user.Email}\nFlights: {flights}\nHours: {pilot.TotalFlightMinutes / 60}h{pilot.TotalFlightMinutes % 60:D2}\nPoints: {pilot.Points}\nJoined: {pilot.CreatedAt:yyyy-MM-dd}"), ct);
 
         await db.Bookings.Where(b => b.CrewPilotId == pilotId)
             .ExecuteUpdateAsync(s => s.SetProperty(b => b.CrewPilotId, (Guid?)null), ct);

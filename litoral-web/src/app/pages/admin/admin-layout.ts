@@ -19,7 +19,8 @@ const MENU: AdminMenuItem[] = [
   { area: 'operations', label: 'Operations', icon: 'ti-calendar-event', path: '/admin/operations' },
   { area: 'pireps', label: 'PIREPs', icon: 'ti-clipboard-check', path: '/admin/pireps' },
   { area: 'pireps', label: 'Scoring', icon: 'ti-scale', path: '/admin/scoring' },
-  { area: 'reports', label: 'Reports', icon: 'ti-chart-line' },
+  { area: 'reports', label: 'Logs', icon: 'ti-history', path: '/admin/logs' },
+  { area: 'reports', label: 'Reports', icon: 'ti-chart-line' }
 ];
 
 @Component({
