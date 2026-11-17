@@ -69,6 +69,6 @@ export class FlightActions {
 
   protected open(id: string): void {
     this.modalOpen.set(false);
-    this.router.navigate(['/pireps', id]);
+    this.router.navigate(['/flights', id]);
   }
 }

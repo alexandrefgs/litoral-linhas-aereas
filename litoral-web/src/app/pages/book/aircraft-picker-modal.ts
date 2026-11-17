@@ -53,8 +53,8 @@ import { AircraftOptions, BookingAircraft } from '../../core/booking/booking.mod
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   @for (item of group.aircraft; track item.id) {
-                    <label class="flex cursor-pointer flex-col overflow-hidden rounded-xl border transition"
-                      [class]="selected() === item.id ? 'border-primary ring-2 ring-primary/30' : 'border-line hover:border-primary/50'">
+                    <label class="card-hover flex cursor-pointer flex-col overflow-hidden rounded-xl border"
+                      [class]="selected() === item.id ? 'border-primary ring-2 ring-primary/30' : 'border-line'">
                       <span class="flex items-center justify-center gap-2 px-4 py-3">
                         <input type="radio" name="aircraft" class="accent-primary" [checked]="selected() === item.id" (change)="selected.set(item.id)" />
                         <span class="font-mono text-xl font-bold text-ink">{{ item.registration }}</span>

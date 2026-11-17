@@ -1,4 +1,5 @@
-import { Route, Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Route, Router, Routes } from '@angular/router';
 import { authGuard, guestGuard, staffGuard } from './core/auth/auth.guards';
 
 function comingSoon(path: string, title: string, icon: string): Route {
@@ -20,9 +21,10 @@ export const routes: Routes = [
   { path: 'book', canActivate: [authGuard], loadComponent: () => import('./pages/book/book').then(m => m.Book) },
   { path: 'briefing', canActivate: [authGuard], loadComponent: () => import('./pages/briefing/briefing').then(m => m.Briefing) },
   { path: 'fleet', canActivate: [authGuard], loadComponent: () => import('./pages/fleet/fleet').then(m => m.Fleet) },
-  { path: 'pireps', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pireps').then(m => m.Pireps) },
-  { path: 'pireps/:id', canActivate: [authGuard], loadComponent: () => import('./pages/pireps/pirep-detail').then(m => m.PirepDetail) },
-    { path: 'special-flights', canActivate: [authGuard], loadComponent: () => import('./pages/special-flights/special-flights').then(m => m.SpecialFlights) },
+  { path: 'flights/:id', canActivate: [authGuard], loadComponent: () => import('./pages/flight/flight-detail').then(m => m.FlightDetail) },
+  { path: 'pireps/:id', redirectTo: 'flights/:id' },
+  { path: 'pireps', redirectTo: () => inject(Router).parseUrl('/profile?tab=flights') },
+  { path: 'special-flights', canActivate: [authGuard], loadComponent: () => import('./pages/special-flights/special-flights').then(m => m.SpecialFlights) },
   { path: 'airports', canActivate: [authGuard], loadComponent: () => import('./pages/airports/airports').then(m => m.Airports) },
   { path: 'points', canActivate: [authGuard], loadComponent: () => import('./pages/points/points').then(m => m.Points) },
   comingSoon('statistics', 'Statistics', 'ti-chart-bar'),
@@ -47,7 +49,7 @@ export const routes: Routes = [
         canActivate: [staffGuard('fleet')],
         loadComponent: () => import('./pages/admin/fleet/admin-fleet').then(m => m.AdminFleet)
       },
-            {
+      {
         path: 'pireps',
         canActivate: [staffGuard('pireps')],
         loadComponent: () => import('./pages/admin/pireps/admin-pireps').then(m => m.AdminPireps)

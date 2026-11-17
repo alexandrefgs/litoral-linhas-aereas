@@ -49,7 +49,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 @for (leg of sequence.legs; track leg.id) {
                   <button type="button" (click)="open(leg)" [disabled]="leg.state !== 'Next' || data.hasOtherOpenBooking"
-                    class="relative flex flex-col overflow-hidden rounded-xl border text-left transition"
+                    class="card-hover relative flex flex-col overflow-hidden rounded-xl border text-left"
                     [class]="legClass(leg)">
                     <div class="relative h-20 w-full bg-cover bg-center" [style.background-image]="cover(leg)">
                       @if (!leg.arrivalPhotoUrl) {
@@ -159,7 +159,7 @@ export class MonthlyRoster implements OnInit {
     switch (leg.state) {
       case 'Completed': return 'border-line bg-surface-alt/60 opacity-70';
       case 'Booked': return 'border-primary bg-primary/5';
-      case 'Next': return 'border-primary hover:shadow-lg disabled:cursor-not-allowed disabled:hover:shadow-none';
+      case 'Next': return 'border-primary disabled:cursor-not-allowed';
       default: return 'border-line opacity-50 cursor-not-allowed';
     }
   }

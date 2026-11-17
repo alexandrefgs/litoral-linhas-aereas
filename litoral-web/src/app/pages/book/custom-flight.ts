@@ -38,7 +38,7 @@ import { AircraftPickerModal } from './aircraft-picker-modal';
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of filtered(); track item.routeId) {
                         <button type="button" (click)="open(item)"
-              class="panel flex flex-col overflow-hidden text-left transition hover:border-primary hover:shadow-lg"
+                class="panel card-hover flex flex-col overflow-hidden text-left"
               [class.opacity-60]="!item.availableAircraft">
               <div class="relative h-32 w-full bg-cover bg-center" [style.background-image]="cover(item)">
                 @if (!item.arrival.photoUrl) {

@@ -160,7 +160,6 @@ export class Header {
     { path: '/special-flights', icon: 'ti-calendar-star', label: 'Special Flights' },
     { path: '/airports', icon: 'ti-building-airport', label: 'Airports' },
     { path: '/fleet', icon: 'ti-plane', label: 'Fleet' },
-    { path: '/pireps', icon: 'ti-clipboard-list', label: 'PIREPs' },
     { path: '/points', icon: 'ti-star', label: 'Points' },
     { path: '/statistics', icon: 'ti-chart-bar', label: 'Statistics' }
   ];

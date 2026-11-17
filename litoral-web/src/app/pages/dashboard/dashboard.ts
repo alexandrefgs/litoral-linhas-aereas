@@ -5,13 +5,15 @@ import { Airport, RankInfo } from '../../core/reference/reference.models';
 import { ReferenceService } from '../../core/reference/reference.service';
 import { STAFF_POSITION_NAMES } from '../../core/staff/staff-positions';
 import { AirportMap } from '../../shared/airport-map/airport-map';
+import { LiveFlights } from '../../shared/live-flights/live-flights';
 import { FlightTimePipe } from '../../shared/pipes/flight-time.pipe';
 import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
-import { LiveFlights } from '../../shared/live-flights/live-flights';
+import { RecentFlights } from '../../shared/recent-flights/recent-flights';
+import { MyLastFlights } from './my-last-flights';
 
 @Component({
   selector: 'app-dashboard',
-    imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap, LiveFlights],
+  imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap, LiveFlights, RecentFlights, MyLastFlights],
   template: `
     @if (auth.pilot(); as pilot) {
       <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
@@ -25,7 +27,7 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
         }
 
         <div class="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <aside class="panel overflow-hidden">
+          <aside class="panel card-hover overflow-hidden">
             @if (airport(); as ap) {
               <app-airport-map class="h-56" [latitude]="ap.latitude" [longitude]="ap.longitude" [label]="ap.icao" />
             } @else {
@@ -68,7 +70,7 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
 
           <div class="flex min-w-0 flex-col gap-6">
             <div class="grid gap-4 md:grid-cols-3">
-              <div class="panel stat-card">
+              <div class="panel card-hover stat-card">
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.rankName }}</p>
@@ -85,7 +87,7 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
                 </div>
               </div>
 
-              <div class="panel stat-card">
+              <div class="panel card-hover stat-card">
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.totalFlightMinutes | flightTime }}</p>
@@ -99,7 +101,7 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
                 </div>
               </div>
 
-              <div class="panel stat-card">
+              <div class="panel card-hover stat-card">
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-2xl font-extrabold text-ink">{{ pilot.points | localeNumber }}</p>
@@ -114,38 +116,17 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
               </div>
             </div>
 
-            <div class="panel flex-1">
-              <div class="border-b border-line px-6 py-4">
-                <h2 class="text-lg font-bold text-ink">Your last flights</h2>
-                <p class="text-sm text-ink-muted">You haven't flown with Litoral yet.</p>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                  <thead class="text-xs uppercase text-ink-muted">
-                    <tr class="border-b border-line">
-                      <th class="px-6 py-3 font-semibold">ID</th>
-                      <th class="px-6 py-3 font-semibold">Flight</th>
-                      <th class="px-6 py-3 font-semibold">Origin</th>
-                      <th class="px-6 py-3 font-semibold">Destination</th>
-                      <th class="px-6 py-3 font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                </table>
-              </div>
-              <div class="flex flex-col items-center gap-3 px-6 py-10 text-center">
-                <i class="ti ti-plane-off text-4xl text-ink-muted" aria-hidden="true"></i>
-                <p class="text-ink-muted">Your approved flights show up here. How about the first one?</p>
-                <a routerLink="/book" class="btn-primary"><i class="ti ti-world-search mr-2" aria-hidden="true"></i>Book flight</a>
-              </div>
-            </div>
+            <app-my-last-flights class="flex-1" [pilotNumber]="pilot.pilotNumber" />
           </div>
         </div>
+
+        <app-recent-flights />
 
         <app-live-flights />
 
         <div class="grid gap-6 lg:grid-cols-3">
           @for (block of rankingBlocks; track block.title) {
-            <div class="panel">
+            <div class="panel card-hover">
               <div class="flex items-center gap-2 border-b border-line px-6 py-4">
                 <i class="ti {{ block.icon }} text-xl text-primary" aria-hidden="true"></i>
                 <h2 class="text-lg font-bold text-ink">{{ block.title }}</h2>

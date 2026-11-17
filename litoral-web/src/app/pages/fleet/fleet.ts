@@ -50,7 +50,7 @@ const STATUS: Record<FleetAircraft['status'], { label: string; css: string }> = 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           @for (item of filtered(); track item.id) {
             <button type="button" (click)="openTransfer(item)"
-              class="panel flex flex-col overflow-hidden text-left transition hover:border-primary hover:shadow-lg">
+              class="panel card-hover flex flex-col overflow-hidden text-left">
               <div class="relative flex aspect-[16/9] items-center justify-center bg-surface-alt">
                 @if (item.photoUrl) {
                   <img [src]="item.photoUrl" [alt]="item.registration" class="h-full w-full object-cover" loading="lazy" />

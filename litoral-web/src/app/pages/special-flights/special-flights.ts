@@ -57,7 +57,7 @@ const OPEN_STATES = ['Available', 'ComingSoon', 'Taken'];
           @for (item of filtered(); track item.flight.id) {
             @let f = item.flight;
             @let dimmed = f.state === 'ComingSoon' || f.state === 'Completed' || f.state === 'Expired' || (f.state === 'Taken' && !item.isMine);
-            <article class="flex flex-col overflow-hidden rounded-xl border bg-surface"
+            <article class="card-hover flex flex-col overflow-hidden rounded-xl border bg-surface"
               [class]="item.isMine && f.state === 'Taken' ? 'border-accent ring-2 ring-accent/30' : 'border-line'"
               [class.opacity-60]="dimmed">
               <div class="relative h-44 bg-cover bg-center" [style.background-image]="cover(f)">

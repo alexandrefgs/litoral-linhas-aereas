@@ -76,7 +76,7 @@ import { FlightsMap } from './flights-map';
                 <tr><td colspan="6" class="px-4 py-12 text-center text-ink-muted">{{ search() ? 'No flights match your search.' : 'No flights yet.' }}</td></tr>
               } @else {
                 @for (f of result()?.items ?? []; track f.id) {
-                  <tr class="border-b border-line last:border-0" [class]="isOwner() ? 'cursor-pointer hover:bg-surface-alt/50' : ''" (click)="open(f)">
+                  <tr class="cursor-pointer border-b border-line last:border-0 hover:bg-surface-alt/50" (click)="open(f)">
                     <td class="px-4 py-3 font-mono font-bold text-primary">{{ f.callsign }}</td>
                     <td class="px-4 py-3 font-mono text-ink">{{ f.departureIcao }} – {{ f.arrivalIcao }}</td>
                     <td class="px-4 py-3 text-ink">{{ f.aircraftTypeIcao }} <span class="text-ink-muted">({{ f.registration }})</span></td>
@@ -189,7 +189,7 @@ export class ProfileFlights implements OnInit {
   }
 
   protected open(flight: ProfileFlight): void {
-    if (this.isOwner()) this.router.navigate(['/pireps', flight.id]);
+    this.router.navigate(['/flights', flight.id]);
   }
 
   protected hhmm(minutes: number): string {
