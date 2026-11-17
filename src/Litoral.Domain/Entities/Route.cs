@@ -16,6 +16,7 @@ public sealed class Route : Entity
     public int DistanceNm { get; private set; }
     public int EstimatedMinutes { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool IsSpecial { get; private set; }
 
     public IReadOnlyCollection<AircraftType> AircraftTypes => _aircraftTypes;
     public FlightBlock Block => FlightBlockRules.FromNumber(FlightNumber);
@@ -67,6 +68,33 @@ public sealed class Route : Entity
 
         _aircraftTypes.Clear();
         _aircraftTypes.AddRange(types);
+    }
+
+    public static Route CreateSpecial(int flightNumber, Airport departure, Airport arrival, AircraftType aircraftType)
+    {
+        if (FlightBlockRules.FromNumber(flightNumber) != FlightBlock.FerryAndCargo)
+            throw new DomainException("Special flights must use the 9XXX block.");
+        if (departure.Id == arrival.Id)
+            throw new DomainException("Departure and arrival cannot be the same.");
+
+        var distance = departure.DistanceNmTo(arrival);
+        if (distance > aircraftType.MaxRangeNm)
+            throw new DomainException($"Distance of {distance} NM exceeds the range of {aircraftType.IcaoCode} ({aircraftType.MaxRangeNm} NM).");
+
+        var route = new Route
+        {
+            FlightNumber = flightNumber,
+            DepartureAirport = departure,
+            DepartureAirportId = departure.Id,
+            ArrivalAirport = arrival,
+            ArrivalAirportId = arrival.Id,
+            IsCargo = aircraftType.IsCargo,
+            DistanceNm = distance,
+            IsSpecial = true
+        };
+        route.SetEstimatedMinutes(EstimateBlockMinutes(distance));
+        route._aircraftTypes.Add(aircraftType);
+        return route;
     }
 
     public bool AllowsAircraftType(Guid aircraftTypeId) => _aircraftTypes.Any(t => t.Id == aircraftTypeId);

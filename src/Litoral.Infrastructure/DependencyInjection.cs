@@ -27,6 +27,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Litoral.Application.Airports;
 using Litoral.Infrastructure.Airports;
+using Litoral.Application.Operations;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure;
 
@@ -106,6 +108,9 @@ public static class DependencyInjection
         services.AddScoped<IPirepService, PirepService>();
         services.AddScoped<IPirepReviewService, PirepReviewService>();
         services.AddScoped<IFlightSimulator, FlightSimulator>();
+        services.AddScoped<SpecialFlightSupport>();
+        services.AddScoped<ISpecialFlightAdminService, SpecialFlightAdminService>();
+        services.AddScoped<ISpecialFlightService, SpecialFlightService>();
 
         return services;
     }

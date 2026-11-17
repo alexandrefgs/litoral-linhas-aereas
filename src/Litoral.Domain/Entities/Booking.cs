@@ -33,7 +33,7 @@ public sealed class Booking : Entity
 
     private Booking() { }
 
-    public Booking(Pilot pilot, Route route, Aircraft aircraft, BookingType type, int pointsCost = 0, string? callsign = null)
+        public Booking(Pilot pilot, Route route, Aircraft aircraft, BookingType type, int pointsCost = 0, string? callsign = null, DateTime? expiresAt = null)
     {
         if (!route.IsActive)
             throw new DomainException("This route is inactive.");
@@ -49,7 +49,8 @@ public sealed class Booking : Entity
             throw new DomainException($"Aircraft {aircraft.Registration} is not at {route.DepartureAirport.Icao}.");
         if (pointsCost < 0)
             throw new DomainException("Points cost cannot be negative.");
-
+        if (expiresAt is { } limit && limit <= DateTime.UtcNow)
+            throw new DomainException("The booking deadline must be in the future.");
         var finalCallsign = (callsign ?? route.Callsign).ToUpperInvariant();
         if (!CallsignPattern.IsMatch(finalCallsign))
             throw new DomainException($"Callsign must start with {Airline.Icao} followed by up to 4 characters.");
@@ -65,7 +66,7 @@ public sealed class Booking : Entity
         Type = type;
         PointsCost = pointsCost;
         Callsign = finalCallsign;
-        ExpiresAt = CreatedAt + (type == BookingType.Special ? SpecialValidity : DefaultValidity);
+        ExpiresAt = expiresAt ?? CreatedAt + (type == BookingType.Special ? SpecialValidity : DefaultValidity);
     }
 
     public void AssignCrew(Pilot crew)

@@ -13,6 +13,7 @@ public sealed class AircraftTypeConfiguration : IEntityTypeConfiguration<Aircraf
         builder.Property(a => a.Name).HasMaxLength(60).IsRequired();
         builder.Property(a => a.MaintenanceIntervalHours).HasDefaultValue(AircraftType.DefaultMaintenanceIntervalHours);
         builder.Property(a => a.RegistrationPrefix).HasMaxLength(2);
+        builder.Property(a => a.DeliveryAirportIcao).HasMaxLength(4);
         builder.HasIndex(a => new { a.IcaoCode, a.IsCargo }).IsUnique();
         builder.HasIndex(a => a.RegistrationPrefix).IsUnique();
 

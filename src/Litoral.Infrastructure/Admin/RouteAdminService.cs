@@ -154,7 +154,8 @@ public sealed class RouteAdminService(LitoralDbContext db) : IRouteAdminService
         db.Routes
             .Include(r => r.DepartureAirport)
             .Include(r => r.ArrivalAirport)
-            .Include(r => r.AircraftTypes);
+            .Include(r => r.AircraftTypes)
+            .Where(r => !r.IsSpecial);
 
     private async Task<Route> FindAsync(Guid id, CancellationToken ct) =>
         await RoutesQuery().FirstOrDefaultAsync(r => r.Id == id, ct)

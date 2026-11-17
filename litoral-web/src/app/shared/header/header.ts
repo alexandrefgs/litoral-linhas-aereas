@@ -157,7 +157,7 @@ export class Header {
   private readonly pilotNavItems: NavItem[] = [
     { path: '/dashboard', icon: 'ti-home', label: 'Dashboard' },
     { path: '/book', icon: 'ti-world-search', label: 'Book flight' },
-    { path: '/routes', icon: 'ti-route', label: 'Routes' },
+    { path: '/special-flights', icon: 'ti-calendar-star', label: 'Special Flights' },
     { path: '/airports', icon: 'ti-building-airport', label: 'Airports' },
     { path: '/fleet', icon: 'ti-plane', label: 'Fleet' },
     { path: '/pireps', icon: 'ti-clipboard-list', label: 'PIREPs' },

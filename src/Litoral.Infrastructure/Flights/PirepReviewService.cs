@@ -12,6 +12,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
 {
     private const int ListLimit = 200;
     private const int DefaultCrewDutyPoints = 10;
+    private const int DefaultSpecialDomesticPoints = 300;
+    private const int DefaultSpecialInternationalPoints = 500;
 
     public async Task<IReadOnlyList<AdminPirepListItemDto>> ListAsync(string? status, CancellationToken ct)
     {
@@ -72,6 +74,7 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
 
         await PayCrewAsync(pirep, ct);
         await PayRosterBonusAsync(pirep, ct);
+        await PaySpecialFlightAsync(pirep, ct);
         await UpdateRankAsync(pilot, ct);
 
         await db.SaveChangesAsync(ct);
@@ -117,6 +120,28 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
         var points = rule?.Points ?? DefaultCrewDutyPoints;
         if (points != 0)
             crew.AddPoints(points, PointTransactionType.CrewDuty, $"Rostered as crew on {pirep.Callsign}");
+    }
+
+        private async Task PaySpecialFlightAsync(Pirep pirep, CancellationToken ct)
+    {
+        if (pirep.Booking.Type != BookingType.Special) return;
+
+        var leg = await db.SpecialFlightLegs.AsNoTracking()
+            .Include(l => l.Route).ThenInclude(r => r.DepartureAirport)
+            .Include(l => l.Route).ThenInclude(r => r.ArrivalAirport)
+            .FirstOrDefaultAsync(l => l.BookingId == pirep.BookingId, ct);
+        if (leg is null) return;
+
+        var international = leg.Route.DepartureAirport.Country != leg.Route.ArrivalAirport.Country;
+        var check = international ? ScoringCheck.SpecialFlightInternational : ScoringCheck.SpecialFlightDomestic;
+
+        var rule = await db.ScoringRules.AsNoTracking().FirstOrDefaultAsync(r => r.IsActive && r.Check == check, ct);
+        if (rule is null && await db.ScoringRules.AnyAsync(r => r.Check == check, ct)) return;
+
+        var points = rule?.Points ?? (international ? DefaultSpecialInternationalPoints : DefaultSpecialDomesticPoints);
+        if (points != 0)
+            pirep.Pilot.AddPoints(points, PointTransactionType.SpecialSchedule,
+                $"Special flight {pirep.Callsign} ({(international ? "international" : "domestic")} leg)");
     }
 
     private async Task PayRosterBonusAsync(Pirep pirep, CancellationToken ct)

@@ -38,7 +38,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
                 a.Operations,
                 a.MinimumRankLevel,
                 OnGround = db.Aircraft.Count(x => x.CurrentAirportId == a.Id && x.Status != AircraftStatus.InFlight && x.Status != AircraftStatus.Inactive),
-                Departures = db.Routes.Count(r => r.DepartureAirportId == a.Id && r.IsActive && r.ArrivalAirport.MinimumRankLevel <= level)
+                Departures = db.Routes.Count(r => r.DepartureAirportId == a.Id && r.IsActive && !r.IsSpecial && r.ArrivalAirport.MinimumRankLevel <= level)
             })
             .ToListAsync(ct);
 

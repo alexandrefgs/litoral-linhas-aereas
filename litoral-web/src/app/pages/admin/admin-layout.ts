@@ -16,10 +16,10 @@ const MENU: AdminMenuItem[] = [
   { area: 'fleet', label: 'Fleet', icon: 'ti-plane', path: '/admin/fleet' },
   { area: 'pilots', label: 'Pilots', icon: 'ti-users' },
   { area: 'staff', label: 'Staff', icon: 'ti-shield-lock' },
-  { area: 'operations', label: 'Operations', icon: 'ti-calendar-event' },
+  { area: 'operations', label: 'Operations', icon: 'ti-calendar-event', path: '/admin/operations' },
   { area: 'pireps', label: 'PIREPs', icon: 'ti-clipboard-check', path: '/admin/pireps' },
   { area: 'pireps', label: 'Scoring', icon: 'ti-scale', path: '/admin/scoring' },
-  { area: 'reports', label: 'Reports', icon: 'ti-chart-line' }
+  { area: 'reports', label: 'Reports', icon: 'ti-chart-line' },
 ];
 
 @Component({

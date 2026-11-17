@@ -38,14 +38,15 @@ public sealed class BookingSupport(LitoralDbContext db)
             throw new AppException(AppErrorKind.Conflict, $"You already have an open flight ({open.Callsign}). Cancel it or complete it first.");
     }
 
-    public IQueryable<Route> RouteQuery() =>
+    public IQueryable<Route> RouteQuery(bool includeSpecial = false) =>
         db.Routes
+            .Where(r => includeSpecial || !r.IsSpecial)
             .Include(r => r.DepartureAirport)
             .Include(r => r.ArrivalAirport)
             .Include(r => r.AircraftTypes);
 
     public async Task<Route> GetRouteAsync(Guid routeId, CancellationToken ct) =>
-        await RouteQuery().FirstOrDefaultAsync(r => r.Id == routeId, ct)
+        await RouteQuery(includeSpecial: true).FirstOrDefaultAsync(r => r.Id == routeId, ct)
         ?? throw new AppException(AppErrorKind.NotFound, "Route not found.");
 
     public async Task<HashSet<string>> GetBaseIcaosAsync(CancellationToken ct)

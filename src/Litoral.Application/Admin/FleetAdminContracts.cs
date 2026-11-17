@@ -8,6 +8,7 @@ public sealed record AdminAircraftTypeDto(
     int MaxRangeNm,
     int MaintenanceIntervalHours,
     string? RegistrationPrefix,
+    string? DeliveryAirportIcao,
     int AircraftCount,
     int RouteCount);
 
@@ -17,7 +18,8 @@ public sealed record AircraftTypeRequest(
     bool IsCargo,
     int MaxRangeNm,
     int MaintenanceIntervalHours,
-    string RegistrationPrefix);
+    string RegistrationPrefix,
+    string? DeliveryAirportIcao);
 
 public sealed record AdminAircraftDto(
     Guid Id,

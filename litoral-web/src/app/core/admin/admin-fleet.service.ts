@@ -12,6 +12,7 @@ export interface AdminAircraftType {
   maxRangeNm: number;
   maintenanceIntervalHours: number;
   registrationPrefix: string | null;
+  deliveryAirportIcao: string | null;
   aircraftCount: number;
   routeCount: number;
 }
@@ -23,6 +24,7 @@ export interface AircraftTypePayload {
   maxRangeNm: number;
   maintenanceIntervalHours: number;
   registrationPrefix: string;
+  deliveryAirportIcao: string | null;
 }
 
 export interface RegistrationSuggestion {

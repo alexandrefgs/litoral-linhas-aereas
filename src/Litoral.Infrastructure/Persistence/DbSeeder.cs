@@ -25,9 +25,20 @@ public static class DbSeeder
         await SeedAirportsAndHubsAsync(db);
         await SeedScoringRulesAsync(db);
         await SeedRejectionPenaltiesAsync(db);
+        await SeedDeliveryAirportsAsync(db);
 
         await db.SaveChangesAsync();
         await scope.ServiceProvider.GetRequiredService<AirportCatalogImporter>().ImportIfEmptyAsync();
+    }  
+
+    private static async Task SeedDeliveryAirportsAsync(LitoralDbContext db)
+    {
+        var boeing = await db.AircraftTypes
+            .Where(t => t.DeliveryAirportIcao == null && t.Name.StartsWith("Boeing"))
+            .ToListAsync();
+
+        foreach (var type in boeing)
+            type.SetDeliveryAirport("KBFI");
     }
 
     private static async Task SeedStaffRolesAsync(RoleManager<IdentityRole> roleManager)

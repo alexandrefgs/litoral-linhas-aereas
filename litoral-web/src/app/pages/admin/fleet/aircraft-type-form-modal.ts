@@ -69,6 +69,15 @@ const DEFAULT_INTERVAL_HOURS = 500;
               <p class="field-error">Required field.</p>
             }
           </div>
+          <div class="sm:col-span-2">
+            <label for="typeDelivery" class="field-label">Delivery airport</label>
+            <input id="typeDelivery" formControlName="deliveryAirportIcao" maxlength="4" placeholder="KBFI" class="field-input font-mono uppercase sm:w-1/2" />
+            @if (showError('deliveryAirportIcao')) {
+              <p class="field-error">Enter a 4-character ICAO code.</p>
+            } @else {
+              <p class="mt-1 text-xs text-ink-muted">Where redeliveries of this type depart from (Boeing: KBFI).</p>
+            }
+          </div>
 
           <fieldset class="sm:col-span-2">
             <legend class="field-label">Operation</legend>
@@ -126,7 +135,8 @@ export class AircraftTypeFormModal implements OnInit {
     isCargo: [false],
     maxRangeNm: [null as number | null, [Validators.required, Validators.min(1)]],
     registrationPrefix: ['', [Validators.required, Validators.pattern(/^[A-Z]{2}$/)]],
-    maintenanceIntervalHours: [DEFAULT_INTERVAL_HOURS as number | null, [Validators.required, Validators.min(1)]]
+    maintenanceIntervalHours: [DEFAULT_INTERVAL_HOURS as number | null, [Validators.required, Validators.min(1)]],
+    deliveryAirportIcao: ['', Validators.pattern(/^[A-Za-z0-9]{4}$/)]
   });
 
   protected prefixProblem(): string | null {
@@ -145,7 +155,8 @@ export class AircraftTypeFormModal implements OnInit {
       isCargo: type.isCargo,
       maxRangeNm: type.maxRangeNm,
       registrationPrefix: type.registrationPrefix ?? '',
-      maintenanceIntervalHours: type.maintenanceIntervalHours
+      maintenanceIntervalHours: type.maintenanceIntervalHours,
+      deliveryAirportIcao: type.deliveryAirportIcao ?? ''
     });
 
     if (type.aircraftCount > 0 || type.routeCount > 0) this.form.controls.isCargo.disable();
@@ -184,7 +195,8 @@ export class AircraftTypeFormModal implements OnInit {
       isCargo: value.isCargo,
       maxRangeNm: value.maxRangeNm!,
       registrationPrefix: value.registrationPrefix,
-      maintenanceIntervalHours: value.maintenanceIntervalHours!
+      maintenanceIntervalHours: value.maintenanceIntervalHours!,
+      deliveryAirportIcao: value.deliveryAirportIcao.trim().toUpperCase() || null
     };
 
     this.saving.set(true);

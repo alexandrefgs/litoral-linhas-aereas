@@ -69,6 +69,11 @@ public sealed class PirepFiling(LitoralDbContext db)
             .Include(r => r.Legs)
             .FirstOrDefaultAsync(r => r.Legs.Any(l => l.BookingId == booking.Id), ct);
         roster?.CompleteLeg(booking.Id);
+        
+        var specialLeg = await db.SpecialFlightLegs
+            .Include(l => l.SpecialFlight).ThenInclude(f => f.Legs)
+            .FirstOrDefaultAsync(l => l.BookingId == booking.Id, ct);
+        specialLeg?.SpecialFlight.CompleteLeg(booking.Id, DateTime.UtcNow);
 
         session?.Complete();
 

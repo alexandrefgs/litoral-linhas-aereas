@@ -78,7 +78,14 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support) 
         booking.Cancel();
 
         if (booking.Type == BookingType.Special)
-            pilot.AddPoints(-BookingSupport.SpecialSchedulePenalty, PointTransactionType.Penalty, $"Special schedule {booking.Callsign} cancelled");
+        {
+            pilot.AddPoints(-BookingSupport.SpecialSchedulePenalty, PointTransactionType.Penalty, $"Special flight {booking.Callsign} cancelled");
+
+            var leg = await db.SpecialFlightLegs
+                .Include(l => l.SpecialFlight).ThenInclude(f => f.Legs)
+                .FirstOrDefaultAsync(l => l.BookingId == booking.Id, ct);
+            leg?.SpecialFlight.ReleaseLeg(booking.Id, DateTime.UtcNow);
+        }
 
         await db.SaveChangesAsync(ct);
     }

@@ -28,6 +28,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
         await EnsurePrefixIsFreeAsync(request.RegistrationPrefix, null, ct);
 
         var type = new AircraftType(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours);
+        type.SetDeliveryAirport(request.DeliveryAirportIcao);
         db.AircraftTypes.Add(type);
         await db.SaveChangesAsync(ct);
 
@@ -56,6 +57,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
             throw new AppException(AppErrorKind.Conflict, $"Route {Airline.Icao}{longest.FlightNumber} is {longest.DistanceNm} NM long. The range cannot be lower than that.");
 
         type.Update(request.IcaoCode, request.Name, request.IsCargo, request.MaxRangeNm, request.RegistrationPrefix, request.MaintenanceIntervalHours);
+        type.SetDeliveryAirport(request.DeliveryAirportIcao);
         await db.SaveChangesAsync(ct);
 
         return ToDto(type, aircraftCount, routes.Count);
@@ -291,7 +293,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos)
     }
 
     private static AdminAircraftTypeDto ToDto(AircraftType type, int aircraftCount, int routeCount) =>
-        new(type.Id, type.IcaoCode, type.Name, type.IsCargo, type.MaxRangeNm, type.MaintenanceIntervalHours, type.RegistrationPrefix, aircraftCount, routeCount);
+        new(type.Id, type.IcaoCode, type.Name, type.IsCargo, type.MaxRangeNm, type.MaintenanceIntervalHours, type.RegistrationPrefix, type.DeliveryAirportIcao, aircraftCount, routeCount);
 
     private static AdminAircraftDto ToDto(Aircraft aircraft) =>
         new(

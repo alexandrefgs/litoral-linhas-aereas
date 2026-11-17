@@ -18,6 +18,7 @@ public sealed class AircraftType : Entity
     public int MaxRangeNm { get; private set; }
     public int MaintenanceIntervalHours { get; private set; } = DefaultMaintenanceIntervalHours;
     public string? RegistrationPrefix { get; private set; }
+    public string? DeliveryAirportIcao { get; private set; }
 
     public string? RegistrationStart => RegistrationPrefix is null ? null : $"{RegistrationNationality}{RegistrationPrefix}";
 
@@ -49,6 +50,15 @@ public sealed class AircraftType : Entity
         IsCargo = isCargo;
         MaxRangeNm = maxRangeNm;
         MaintenanceIntervalHours = maintenanceIntervalHours;
+    }
+
+    public void SetDeliveryAirport(string? icao)
+    {
+        var code = string.IsNullOrWhiteSpace(icao) ? null : icao.Trim().ToUpperInvariant();
+        if (code is not null && (code.Length != 4 || !code.All(char.IsAsciiLetterOrDigit)))
+            throw new DomainException("Delivery airport must be a 4-character ICAO code.");
+
+        DeliveryAirportIcao = code;
     }
 
     public void AssignRegistrationPrefix(string registrationPrefix)

@@ -97,6 +97,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("DeliveryAirportIcao")
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
                     b.Property<string>("IcaoCode")
                         .IsRequired()
                         .HasMaxLength(4)
@@ -839,6 +843,9 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsCargo")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSpecial")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ArrivalAirportId");
@@ -914,6 +921,108 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.HasIndex("Category", "Order");
 
                     b.ToTable("ScoringRules");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.SpecialFlight", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AircraftId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MinimumRankLevel")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhotoCredit")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<Guid?>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("TakenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AircraftId");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("Status", "EndsAt");
+
+                    b.ToTable("SpecialFlights");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.SpecialFlightLeg", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("RouteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SpecialFlightId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("RouteId");
+
+                    b.HasIndex("SpecialFlightId", "Order")
+                        .IsUnique();
+
+                    b.ToTable("SpecialFlightLegs");
                 });
 
             modelBuilder.Entity("Litoral.Infrastructure.Identity.ApplicationUser", b =>
@@ -1480,6 +1589,50 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Navigation("DepartureAirport");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.SpecialFlight", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Aircraft", "Aircraft")
+                        .WithMany()
+                        .HasForeignKey("AircraftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Aircraft");
+
+                    b.Navigation("Pilot");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.SpecialFlightLeg", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Litoral.Domain.Entities.Route", "Route")
+                        .WithMany()
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Litoral.Domain.Entities.SpecialFlight", "SpecialFlight")
+                        .WithMany("Legs")
+                        .HasForeignKey("SpecialFlightId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Route");
+
+                    b.Navigation("SpecialFlight");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1559,6 +1712,11 @@ namespace Litoral.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>
                 {
                     b.Navigation("PointTransactions");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.SpecialFlight", b =>
+                {
+                    b.Navigation("Legs");
                 });
 #pragma warning restore 612, 618
         }

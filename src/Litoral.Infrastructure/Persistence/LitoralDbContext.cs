@@ -26,6 +26,8 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<FlightSession> FlightSessions => Set<FlightSession>();
     public DbSet<FlightTrackPoint> FlightTrackPoints => Set<FlightTrackPoint>();
     public DbSet<Pirep> Pireps => Set<Pirep>();
+    public DbSet<SpecialFlight> SpecialFlights => Set<SpecialFlight>();
+    public DbSet<SpecialFlightLeg> SpecialFlightLegs => Set<SpecialFlightLeg>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

@@ -35,23 +35,47 @@ public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<Bo
         var db = scope.ServiceProvider.GetRequiredService<LitoralDbContext>();
         var now = DateTime.UtcNow;
 
+        var specials = await ExpireSpecialFlightsAsync(db, now, ct);
+
         var expired = await db.Bookings
             .Include(b => b.Aircraft)
             .Include(b => b.Pilot)
-            .Where(b => b.Status == BookingStatus.Booked && b.ExpiresAt <= now)
+            .Where(b => b.Status == BookingStatus.Booked && b.ExpiresAt <= now && b.Type != BookingType.Special)
             .ToListAsync(ct);
 
-        if (expired.Count == 0) return;
-
         foreach (var booking in expired)
-        {
-            if (!booking.Expire(now)) continue;
+            booking.Expire(now);
 
-            if (booking.Type == BookingType.Special)
-                booking.Pilot.AddPoints(-BookingSupport.SpecialSchedulePenalty, PointTransactionType.Penalty, $"Special schedule {booking.Callsign} expired");
-        }
+        if (expired.Count == 0 && specials == 0) return;
 
         await db.SaveChangesAsync(ct);
-        logger.LogInformation("Expired {Count} bookings.", expired.Count);
+        logger.LogInformation("Expired {Bookings} bookings and {Specials} special flights.", expired.Count, specials);
+    }
+
+    private static async Task<int> ExpireSpecialFlightsAsync(LitoralDbContext db, DateTime now, CancellationToken ct)
+    {
+        var flights = await db.SpecialFlights
+            .Include(f => f.Pilot)
+            .Include(f => f.Legs).ThenInclude(l => l.Booking).ThenInclude(b => b!.Aircraft)
+            .Where(f => (f.Status == SpecialFlightStatus.Open || f.Status == SpecialFlightStatus.Taken) && f.EndsAt <= now)
+            .ToListAsync(ct);
+
+        var count = 0;
+        foreach (var flight in flights)
+        {
+            var booking = flight.NextLeg?.Booking;
+            if (booking?.Status == BookingStatus.InProgress) continue;
+
+            if (booking?.Status == BookingStatus.Booked)
+                booking.Expire(now);
+
+            if (flight.Status == SpecialFlightStatus.Taken && flight.Pilot is not null)
+                flight.Pilot.AddPoints(-BookingSupport.SpecialSchedulePenalty, PointTransactionType.Penalty, $"Special flight {flight.Title} expired");
+
+            flight.Expire(now);
+            count++;
+        }
+
+        return count;
     }
 }
