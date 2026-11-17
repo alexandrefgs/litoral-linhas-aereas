@@ -57,7 +57,7 @@ O sistema reúne em um só lugar:
 - Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
 - Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety e promoção automática
 - **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
-- Painel administrativo com permissões por posição de staff
+- Painel administrativo com permissões por posição de staff, gestão de pilotos e staff, e **logs de auditoria** de tudo o que é alterado
 
 Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**, voando nas networks **IVAO** e **VATSIM**.
 
@@ -200,7 +200,7 @@ As rotas são cadastradas pelo Route Manager em **Admin › Routes**. Os pilotos
 
 ## Carreira do piloto
 
-Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O login é feito por **e-mail e senha**. A idade mínima é de **13 anos**.
+Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O cadastro pega sempre o **menor número livre**: o número de uma conta **excluída** volta a ficar disponível, e o de uma conta **inativa** continua reservado para ela. O login é feito por **e-mail e senha**. A idade mínima é de **13 anos**.
 
 | Patente | Requisitos |
 |---|---|
@@ -233,6 +233,8 @@ Cada piloto tem um perfil público em `/profile/{número}`:
 - **Awards** e **Downloads:** abas preparadas para medalhas e documentos da tripulação.
 
 Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa.
+
+**Excluir conta:** também em Settings, o piloto pode excluir a própria conta. São duas confirmações: a primeira lista tudo o que será apagado, e a segunda (*Are you sure?*) pede a senha. A exclusão é **permanente** e apaga perfil, fotos, voos, PIREPs, flight logs, horas, pontos, escala, reservas, login e e-mail. Não é possível excluir com um voo aberto ou uma Special Flight em andamento, nem sendo do staff.
 
 ---
 
@@ -463,6 +465,31 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 |---|---|:---:|
 | Safety Manager | Análise e aprovação de PIREPs | Várias |
 
+### Gestão de pilotos (Head of HR)
+
+Em **Admin › Pilots**: lista com busca por nome, ID ou e-mail, abas **Active / Inactive / All**, horas, pontos, voos, último voo e posições de staff.
+
+- **Desativar / reativar:** o piloto inativo não consegue reservar voos e mantém o número.
+- **Excluir:** apaga a conta e todos os registros de forma permanente, com duas confirmações. Nos voos em que ele foi tripulação, passa a aparecer o "Severino". Horas e ciclos das aeronaves continuam, porque pertencem ao avião.
+- A própria conta, a do CEO e as de quem é do staff não podem ser desativadas nem excluídas por aqui.
+
+### Gestão do staff (Chairman)
+
+Em **Admin › Staff**, as posições aparecem por time, com quem ocupa cada uma:
+
+- **Assign / Replace / Remove:** nas posições de vaga única, escolher outra pessoa substitui quem estava. Safety Manager aceita várias pessoas.
+- **CEO & Founder** não muda; **Chairman** e **Vice Chairman** só podem ser alterados pelo CEO. Ninguém altera as próprias posições, e piloto inativo não pode entrar no staff.
+- As permissões são lidas do banco a cada chamada da API: quem perde uma posição perde o acesso na hora, sem precisar sair e entrar de novo.
+
+### Logs (General Director)
+
+Em **Admin › Logs**, fica registrado para sempre tudo o que é alterado em contas, staff e telas de administração, com **data e hora em UTC**, categoria, ação, **quem fez**, **em quem ou em quê**, os detalhes e o **IP**.
+
+- As alterações feitas pelo Admin, pelo Settings do piloto e pelo cadastro são registradas automaticamente, com **valor antigo → novo**. Itens criados ou excluídos guardam todos os campos.
+- Troca de senha, posições do staff e exclusão de conta também são registradas. Nome, e-mail e números ficam salvos no log, então ele continua legível depois que a conta é excluída.
+- Filtros por categoria (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations) e busca por ação, piloto, item ou detalhe.
+- Ainda não entram as ações dos pilotos (reservas, jumpseat, voos) nem os logins.
+
 ---
 
 ## Stack
@@ -511,7 +538,7 @@ flowchart LR
 |---|---|
 | **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, checks de manutenção, Special Flights, pontos e staff |
 | **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão e pontuação |
-| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos e jobs em segundo plano (expiração de reservas e Special Flights, manutenção) |
+| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
 ---
@@ -669,8 +696,14 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Voo de teste (check flight) após C e D-check
 - [x] **Route Manager:** IATA e foto com crédito nos aeroportos
 - [ ] Tag MEL/CDL nas aeronaves (a confirmar)
-- [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
-- [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
+- [x] **Chairman:** gestão de staff, com vaga única por posição (exceto Safety Manager) e permissões aplicadas na hora
+- [x] **Head of HR:** listar, desativar, reativar e excluir pilotos
+- [x] Exclusão permanente de conta (pelo staff ou pelo próprio piloto) com dupla confirmação
+- [x] Reaproveitamento do número de piloto de contas excluídas
+- [x] **General Director:** logs de auditoria de contas, staff e ações do staff, com antes → depois e IP
+- [ ] Cores por gravidade nos logs e filtro "Só críticos"
+- [ ] Logs de ações dos pilotos (reservas, jumpseat, voos) e logins com IP
+- [ ] Confirmações do site todo no estilo popup (componente `ConfirmDialog`)
 
 ### Fase 2B: Páginas do piloto
 - [x] Aeroportos em cards, com aeronaves no solo, partidas e jumpseat (grátis para bases, 3 pontos por NM para os demais)
@@ -726,7 +759,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 ### Fase 5: Estatísticas e comunidade
 - [ ] Estatísticas do piloto e da VA
-- [ ] **General Director:** painel de estatísticas e logs
+- [ ] **General Director:** painel de estatísticas (Reports)
 - [ ] Ranking de pilotos e pilotos do mês (+800/+600/+400)
 - [ ] Jobs de conta: inatividade (−50 por dia após 40 dias) e perda de conta
 - [ ] Páginas públicas de staff, carreira e regulamento
