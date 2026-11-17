@@ -10,5 +10,6 @@ public enum AuditCategory
     Fleet,
     Routes,
     Airports,
-    Operations
+    Operations,
+    Awards
 }

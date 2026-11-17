@@ -29,6 +29,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<SpecialFlight> SpecialFlights => Set<SpecialFlight>();
     public DbSet<SpecialFlightLeg> SpecialFlightLegs => Set<SpecialFlightLeg>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<MonthlyAward> MonthlyAwards => Set<MonthlyAward>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

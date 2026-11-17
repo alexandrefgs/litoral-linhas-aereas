@@ -27,7 +27,7 @@ export const routes: Routes = [
   { path: 'special-flights', canActivate: [authGuard], loadComponent: () => import('./pages/special-flights/special-flights').then(m => m.SpecialFlights) },
   { path: 'airports', canActivate: [authGuard], loadComponent: () => import('./pages/airports/airports').then(m => m.Airports) },
   { path: 'points', canActivate: [authGuard], loadComponent: () => import('./pages/points/points').then(m => m.Points) },
-  comingSoon('statistics', 'Statistics', 'ti-chart-bar'),
+  { path: 'statistics', canActivate: [authGuard], loadComponent: () => import('./pages/statistics/statistics').then(m => m.Statistics) },
   {
     path: 'admin',
     canActivate: [staffGuard()],
@@ -68,6 +68,11 @@ export const routes: Routes = [
         path: 'staff',
         canActivate: [staffGuard('staff')],
         loadComponent: () => import('./pages/admin/staff/admin-staff').then(m => m.AdminStaff)
+      },
+      {
+        path: 'reports',
+        canActivate: [staffGuard('reports')],
+        loadComponent: () => import('./pages/admin/reports/admin-reports').then(m => m.AdminReports)
       },
       {
         path: 'logs',

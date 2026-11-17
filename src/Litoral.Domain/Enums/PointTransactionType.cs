@@ -10,5 +10,6 @@ public enum PointTransactionType
     ManualAdjustment,
     Jumpseat,
     CrewDuty,
-    AircraftTransfer
+    AircraftTransfer,
+    PilotOfTheMonth
 }

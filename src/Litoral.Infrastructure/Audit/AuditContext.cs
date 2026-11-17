@@ -23,6 +23,8 @@ public sealed class AuditContext(IHttpContextAccessor accessor)
     {
         if (_actor is { } cached) return cached;
 
+        if (accessor.HttpContext is null) return (null, "System");
+
         var userId = UserId;
         if (userId is null) return (null, "Visitor");
 

@@ -479,6 +479,55 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("Hubs");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.MonthlyAward", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AwardedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PilotName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("PilotNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("Year", "Month", "Category", "Position")
+                        .IsUnique();
+
+                    b.ToTable("MonthlyAwards");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1453,6 +1502,16 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Airport");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.MonthlyAward", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Pilot");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
