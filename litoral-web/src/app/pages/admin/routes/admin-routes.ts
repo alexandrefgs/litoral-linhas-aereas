@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminAirport, AdminAirportsService } from '../../../core/admin/admin-airports.service';
 import { AdminRoute, AdminRoutesService, AircraftTypeOption, FlightNumberSuggestion } from '../../../core/admin/admin-routes.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import {
   FLIGHT_BLOCK_LABELS,
   blockFromNumber,
@@ -128,24 +129,15 @@ interface AirportCheck {
                     }
                   </td>
                   <td class="px-4 py-3">
-                    @if (confirmDelete() === route.id) {
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">Delete this route?</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          (click)="remove(route)">Delete</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="flex justify-end gap-1">
-                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit route" (click)="openEdit(route)">
-                          <i class="ti ti-pencil" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete route"
-                          (click)="askDelete(route.id)">
-                          <i class="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    }
+                    <div class="flex justify-end gap-1">
+                      <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit route" (click)="openEdit(route)">
+                        <i class="ti ti-pencil" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete route"
+                        (click)="remove(route)">
+                        <i class="ti ti-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                     @if (rowError()?.id === route.id) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                     }
@@ -366,6 +358,7 @@ interface AirportCheck {
 })
 export class AdminRoutes implements OnInit {
   private readonly api = inject(AdminRoutesService);
+  private readonly confirm = inject(ConfirmService);
   private readonly airportsApi = inject(AdminAirportsService);
 
   protected readonly blockLabels = FLIGHT_BLOCK_LABELS;
@@ -386,7 +379,6 @@ export class AdminRoutes implements OnInit {
   protected readonly suggesting = signal(false);
   protected readonly typesTouched = signal(false);
   protected readonly formError = signal<string | null>(null);
-  protected readonly confirmDelete = signal<string | null>(null);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
   protected readonly suggestion = signal<FlightNumberSuggestion | null>(null);
   protected readonly airportModal = signal<{ airport: AdminAirport | null; icao: string } | null>(null);
@@ -707,18 +699,20 @@ export class AdminRoutes implements OnInit {
     }
   }
 
-  protected askDelete(id: string): void {
-    this.rowError.set(null);
-    this.confirmDelete.set(id);
-  }
-
   protected async remove(route: AdminRoute): Promise<void> {
+    this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: `Delete ${route.callsign}?`,
+      message: 'The route will be removed and can no longer be booked. This can\'t be undone.',
+      confirmLabel: 'Yes, delete',
+      icon: 'ti-trash'
+    });
+    if (!ok) return;
+
     try {
       await this.api.remove(route.id);
       this.routes.update(list => list.filter(r => r.id !== route.id));
-      this.confirmDelete.set(null);
     } catch (error) {
-      this.confirmDelete.set(null);
       this.rowError.set({ id: route.id, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     }
   }

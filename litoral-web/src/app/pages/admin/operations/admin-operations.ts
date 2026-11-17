@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AdminSpecialFlightsService } from '../../../core/admin/admin-special-flights.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import {
   SPECIAL_FLIGHT_STATE,
   SPECIAL_FLIGHT_TYPE_LABEL,
@@ -97,33 +98,25 @@ const ACTIVE_STATES = ['ComingSoon', 'Available', 'Taken'];
                     }
                   </td>
                   <td class="px-4 py-3">
-                    @if (confirm()?.id === f.id) {
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">{{ confirm()!.action === 'delete' ? 'Delete?' : 'Cancel this flight?' }}</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90" (click)="run(f)">Yes</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirm.set(null)">No</button>
-                      </div>
-                    } @else {
-                      <div class="flex justify-end gap-1">
-                        @if (canEdit(f)) {
-                          <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit" (click)="openEdit(f)">
-                            <i class="ti ti-pencil" aria-hidden="true"></i>
-                          </button>
-                        }
-                        @if (isActive(f)) {
-                          <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Cancel flight" title="Cancel flight"
-                            (click)="confirm.set({ id: f.id, action: 'cancel' })">
-                            <i class="ti ti-ban" aria-hidden="true"></i>
-                          </button>
-                        }
-                        @if (!f.pilotDisplayId) {
-                          <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete" title="Delete"
-                            (click)="confirm.set({ id: f.id, action: 'delete' })">
-                            <i class="ti ti-trash" aria-hidden="true"></i>
-                          </button>
-                        }
-                      </div>
-                    }
+                    <div class="flex justify-end gap-1">
+                      @if (canEdit(f)) {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit" (click)="openEdit(f)">
+                          <i class="ti ti-pencil" aria-hidden="true"></i>
+                        </button>
+                      }
+                      @if (isActive(f)) {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Cancel flight" title="Cancel flight"
+                          (click)="run(f, 'cancel')">
+                          <i class="ti ti-ban" aria-hidden="true"></i>
+                        </button>
+                      }
+                      @if (!f.pilotDisplayId) {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete" title="Delete"
+                          (click)="run(f, 'delete')">
+                          <i class="ti ti-trash" aria-hidden="true"></i>
+                        </button>
+                      }
+                    </div>
                     @if (rowError()?.id === f.id) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                     }
@@ -143,6 +136,7 @@ const ACTIVE_STATES = ['ComingSoon', 'Available', 'Taken'];
 })
 export class AdminOperations implements OnInit {
   private readonly api = inject(AdminSpecialFlightsService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly tabs: { value: Tab; label: string }[] = [
     { value: 'active', label: 'Active' },
@@ -159,7 +153,6 @@ export class AdminOperations implements OnInit {
   protected readonly tab = signal<Tab>('active');
   protected readonly modalOpen = signal(false);
   protected readonly editing = signal<SpecialFlight | null>(null);
-  protected readonly confirm = signal<{ id: string; action: 'cancel' | 'delete' } | null>(null);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
 
   protected readonly filtered = computed(() => {
@@ -210,10 +203,26 @@ export class AdminOperations implements OnInit {
     await this.load();
   }
 
-  protected async run(flight: SpecialFlight): Promise<void> {
-    const action = this.confirm()?.action;
-    this.confirm.set(null);
+  protected async run(flight: SpecialFlight, action: 'cancel' | 'delete'): Promise<void> {
     this.rowError.set(null);
+    const ok = await this.confirm.ask(action === 'delete'
+      ? {
+          title: 'Delete this special flight?',
+          message: `"${flight.title}" will be removed. Nobody has booked it yet.`,
+          confirmLabel: 'Yes, delete',
+          icon: 'ti-trash'
+        }
+      : {
+          title: 'Cancel this special flight?',
+          message: flight.pilotDisplayId
+            ? `"${flight.title}" is booked by ${flight.pilotDisplayId}. The booking will be cancelled and the flight closed.`
+            : `"${flight.title}" will be closed and can no longer be booked.`,
+          confirmLabel: 'Yes, cancel flight',
+          cancelLabel: 'Keep flight',
+          tone: 'warning',
+          icon: 'ti-ban'
+        });
+    if (!ok) return;
 
     try {
       if (action === 'delete') await this.api.remove(flight.id);

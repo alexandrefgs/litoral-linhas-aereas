@@ -1,17 +1,34 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RULE_TONE_CLASS, RULE_TONE_ICON, ScoringRule, ScoringSection, ruleTone, ruleValue } from '../../core/scoring/scoring.models';
 import { ScoringService } from '../../core/scoring/scoring.service';
+import { PointsStatementView } from './points-statement';
+
+type Tab = 'statement' | 'scoring';
 
 @Component({
   selector: 'app-points',
+  imports: [PointsStatementView],
   template: `
     <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
-      <div>
-        <h1 class="text-2xl font-bold text-ink">Points</h1>
-        <p class="text-ink-muted">How every flight is scored. Rejected flights still count as flight hours.</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-ink">Points</h1>
+          <p class="text-ink-muted">{{ tab() === 'statement' ? 'Every point you earned and spent.' : 'How every flight is scored. Rejected flights still count as flight hours.' }}</p>
+        </div>
+        <div class="flex rounded-lg border border-line p-0.5 text-sm font-semibold">
+          @for (t of tabs; track t.value) {
+            <button type="button" class="flex items-center gap-1.5 rounded-md px-4 py-1.5" (click)="setTab(t.value)"
+              [class]="tab() === t.value ? 'bg-primary text-on-primary' : 'text-ink-muted hover:text-ink'">
+              <i class="ti {{ t.icon }}" aria-hidden="true"></i>{{ t.label }}
+            </button>
+          }
+        </div>
       </div>
 
-      @if (loading()) {
+      @if (tab() === 'statement') {
+        <app-points-statement />
+      } @else if (loading()) {
         <p class="panel px-6 py-12 text-center text-ink-muted">Loading...</p>
       } @else if (loadError()) {
         <div class="panel flex flex-col items-center gap-3 px-6 py-12 text-center">
@@ -63,6 +80,14 @@ import { ScoringService } from '../../core/scoring/scoring.service';
 })
 export class Points implements OnInit {
   private readonly api = inject(ScoringService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  protected readonly tabs: { value: Tab; label: string; icon: string }[] = [
+    { value: 'statement', label: 'My statement', icon: 'ti-receipt' },
+    { value: 'scoring', label: 'How scoring works', icon: 'ti-list-details' }
+  ];
+  protected readonly tab = signal<Tab>(this.route.snapshot.queryParamMap.get('tab') === 'scoring' ? 'scoring' : 'statement');
 
   protected readonly sections = signal<ScoringSection[]>([]);
   protected readonly loading = signal(true);
@@ -70,6 +95,11 @@ export class Points implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  protected setTab(value: Tab): void {
+    this.tab.set(value);
+    this.router.navigate([], { queryParams: { tab: value === 'scoring' ? 'scoring' : null }, replaceUrl: true });
   }
 
   protected async load(): Promise<void> {

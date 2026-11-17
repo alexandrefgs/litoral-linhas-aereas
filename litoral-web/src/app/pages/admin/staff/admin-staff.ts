@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { AdminStaffService, StaffMember, StaffOverview, StaffPosition, StaffTeam } from '../../../core/admin/admin-staff.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 
 const TEAMS: { team: StaffTeam; label: string; icon: string }[] = [
   { team: 'Executive', label: 'Executive Team', icon: 'ti-crown' },
@@ -59,18 +60,10 @@ const TEAMS: { team: StaffTeam; label: string; icon: string }[] = [
                           <p class="font-mono text-xs text-ink-muted">{{ member.displayId }}</p>
                         </div>
                         @if (position.editable && member.pilotNumber !== myNumber()) {
-                          @if (confirmRemove() === key(position, member)) {
-                            <div class="flex items-center gap-1">
-                              <button type="button" class="rounded-md bg-danger px-2.5 py-1 text-xs font-medium text-white hover:opacity-90"
-                                [disabled]="busy()" (click)="remove(position, member)">Remove</button>
-                              <button type="button" class="btn-secondary px-2.5 py-1 text-xs" (click)="confirmRemove.set(null)">Cancel</button>
-                            </div>
-                          } @else {
-                            <button type="button" class="icon-btn h-8 w-8 text-lg hover:text-danger" title="Remove from position" aria-label="Remove from position"
-                              (click)="askRemove(position, member)">
-                              <i class="ti ti-x" aria-hidden="true"></i>
-                            </button>
-                          }
+                          <button type="button" class="icon-btn h-8 w-8 text-lg hover:text-danger" title="Remove from position" aria-label="Remove from position"
+                            (click)="askRemove(position, member)">
+                            <i class="ti ti-x" aria-hidden="true"></i>
+                          </button>
                         }
                       </div>
                     } @empty {
@@ -135,13 +128,13 @@ const TEAMS: { team: StaffTeam; label: string; icon: string }[] = [
 export class AdminStaff implements OnInit {
   private readonly api = inject(AdminStaffService);
   private readonly auth = inject(AuthService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly overview = signal<StaffOverview | null>(null);
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
   protected readonly picking = signal<string | null>(null);
   protected readonly query = signal('');
-  protected readonly confirmRemove = signal<string | null>(null);
   protected readonly error = signal<{ code: string; message: string } | null>(null);
 
   protected readonly myNumber = computed(() => this.auth.pilot()?.pilotNumber ?? null);
@@ -177,7 +170,6 @@ export class AdminStaff implements OnInit {
 
   protected openPicker(code: string): void {
     this.error.set(null);
-    this.confirmRemove.set(null);
     this.query.set('');
     this.picking.set(code);
   }
@@ -187,13 +179,15 @@ export class AdminStaff implements OnInit {
     this.query.set('');
   }
 
-  protected key(position: StaffPosition, member: StaffMember): string {
-    return `${position.code}:${member.pilotId}`;
-  }
-
-  protected askRemove(position: StaffPosition, member: StaffMember): void {
+  protected async askRemove(position: StaffPosition, member: StaffMember): Promise<void> {
     this.error.set(null);
-    this.confirmRemove.set(this.key(position, member));
+    const ok = await this.confirm.ask({
+      title: `Remove ${member.name}?`,
+      message: `${member.name} will no longer be ${position.name} and loses the admin access that comes with it.`,
+      confirmLabel: 'Yes, remove',
+      icon: 'ti-user-minus'
+    });
+    if (ok) await this.remove(position, member);
   }
 
   protected async assign(position: StaffPosition, member: StaffMember): Promise<void> {
@@ -203,7 +197,6 @@ export class AdminStaff implements OnInit {
 
   protected async remove(position: StaffPosition, member: StaffMember): Promise<void> {
     await this.run(position.code, () => this.api.remove(position.code, member.pilotId));
-    this.confirmRemove.set(null);
   }
 
   protected initials(name: string): string {

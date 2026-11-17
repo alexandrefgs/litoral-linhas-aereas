@@ -1,11 +1,12 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminPirepsService } from '../../../core/admin/admin-pireps.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { AdminPirep, NETWORK_LABELS, PIREP_STATUS_CLASS, PirepScoreItem } from '../../../core/pirep/pirep.models';
 import { RULE_TONE_CLASS, RULE_TONE_ICON, ruleTone } from '../../../core/scoring/scoring.models';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import { TrackMap } from '../../../shared/track-map/track-map';
 import { formatMinutes } from '../../../shared/utils/flight';
 
@@ -219,24 +220,12 @@ type Decision = 'approve' | 'reject';
                   <p class="mt-1 text-xs text-ink-muted">Hours and the aircraft position stay as they are either way.</p>
                 </div>
 
-                @if (confirm(); as c) {
-                  <div class="flex flex-wrap items-center justify-end gap-2">
-                    <span class="text-sm text-ink-muted">{{ c === 'approve' ? 'Approve this PIREP?' : 'Reject this PIREP?' }}</span>
-                    <button type="button" class="btn-secondary" (click)="confirm.set(null)" [disabled]="busy()">Cancel</button>
-                    <button type="button" [disabled]="busy()" (click)="decide(c)"
-                      class="rounded-md px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
-                      [class]="c === 'approve' ? 'bg-onda-500' : 'bg-danger'">
-                      {{ busy() ? 'Loading...' : c === 'approve' ? 'Yes, approve' : 'Yes, reject' }}
-                    </button>
-                  </div>
-                } @else {
-                  <div class="flex flex-wrap justify-end gap-2">
-                    <button type="button" class="rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger hover:text-white"
-                      (click)="askReject()">Reject</button>
-                    <button type="button" class="rounded-md bg-onda-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-                      [disabled]="s.hasRejection" (click)="confirm.set('approve')">Approve</button>
-                  </div>
-                }
+                <div class="flex flex-wrap justify-end gap-2">
+                  <button type="button" class="rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger hover:text-white disabled:opacity-60"
+                    [disabled]="busy()" (click)="askReject()">Reject</button>
+                  <button type="button" class="rounded-md bg-onda-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                    [disabled]="busy() || s.hasRejection" (click)="askApprove()">{{ busy() ? 'Loading...' : 'Approve' }}</button>
+                </div>
 
                 @if (actionError(); as message) {
                   <p class="rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">{{ message }}</p>
@@ -252,7 +241,7 @@ type Decision = 'approve' | 'reject';
 export class AdminPirepReview implements OnInit {
   private readonly api = inject(AdminPirepsService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly Math = Math;
   protected readonly format = formatMinutes;
@@ -264,7 +253,6 @@ export class AdminPirepReview implements OnInit {
   protected readonly loadError = signal<string | null>(null);
   protected readonly busy = signal(false);
   protected readonly actionError = signal<string | null>(null);
-  protected readonly confirm = signal<Decision | null>(null);
 
   protected ruleId = '';
   protected quantity = 1;
@@ -306,31 +294,49 @@ export class AdminPirepReview implements OnInit {
     });
   }
 
-  protected askReject(): void {
+  protected async askApprove(): Promise<void> {
+    const d = this.data();
+    if (!d) return;
+    const ok = await this.confirm.ask({
+      title: 'Approve this PIREP?',
+      message: `${d.pirep.summary.callsign} will be approved with ${this.signed(d.pirep.summary.scorePoints)} points.`,
+      confirmLabel: 'Yes, approve',
+      tone: 'success'
+    });
+    if (ok) this.decide('approve');
+  }
+
+  protected async askReject(): Promise<void> {
+    const d = this.data();
+    if (!d) return;
     if (!this.note.trim()) {
       this.actionError.set('Write a note explaining why the PIREP is being rejected.');
       return;
     }
     this.actionError.set(null);
-    this.confirm.set('reject');
+
+    const preview = d.rejectionPreview;
+    const details = [
+      `${this.ordinal(preview.rejectionNumber)} rejection this month`,
+      `${this.signed(-Math.abs(preview.penalty))} points`
+    ];
+    if (preview.deactivatesAccount) details.push('The pilot account will be deactivated');
+
+    const ok = await this.confirm.ask({
+      title: 'Reject this PIREP?',
+      message: `${d.pirep.summary.callsign} will be rejected and the pilot will see your note.`,
+      details,
+      confirmLabel: 'Yes, reject',
+      icon: 'ti-circle-x'
+    });
+    if (ok) this.decide('reject');
   }
 
-  protected async decide(decision: Decision): Promise<void> {
+  protected decide(decision: Decision): void {
     const note = this.note.trim();
-    this.busy.set(true);
-    this.actionError.set(null);
-
-    try {
-      if (decision === 'approve') await this.api.approve(this.id, note || null);
-      else await this.api.reject(this.id, note);
-
-      this.router.navigate(['/admin/pireps']);
-    } catch (error) {
-      this.actionError.set(apiErrorMessage(error) ?? 'Something went wrong. Try again.');
-      this.confirm.set(null);
-    } finally {
-      this.busy.set(false);
-    }
+    this.run(() => decision === 'approve'
+      ? this.api.approve(this.id, note || null)
+      : this.api.reject(this.id, note));
   }
 
   protected value(item: PirepScoreItem): string {

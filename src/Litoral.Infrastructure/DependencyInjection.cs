@@ -112,6 +112,7 @@ public static class DependencyInjection
         services.AddSingleton<IPhotoStorage, LocalPhotoStorage>();
         services.AddHostedService<MaintenanceReleaseService>();
         services.AddScoped<IStatisticsService, StatisticsService>();
+        services.AddScoped<IPointsStatementService, PointsStatementService>();
         services.AddHostedService<MonthlyAwardService>();
         services.AddScoped<BookingSupport>();
         services.AddScoped<IBookingService, BookingService>();

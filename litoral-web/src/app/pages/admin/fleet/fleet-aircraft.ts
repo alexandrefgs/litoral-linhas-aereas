@@ -8,6 +8,7 @@ import {
   FleetAirport
 } from '../../../core/admin/admin-fleet.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import { formatMinutes } from '../../../shared/utils/flight';
 import { AircraftFormModal } from './aircraft-form-modal';
 import { MaintenanceModal } from './maintenance-modal';
@@ -147,41 +148,32 @@ const STATUS_CLASSES: Record<AircraftStatus, string> = {
                     </div>
                   </td>
                   <td class="px-4 py-3">
-                    @if (confirmDelete() === item.id) {
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">Delete this aircraft?</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          (click)="remove(item)">Delete</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="flex justify-end gap-1">
-                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit aircraft" title="Edit" (click)="openEdit(item)">
-                          <i class="ti ti-pencil" aria-hidden="true"></i>
+                    <div class="flex justify-end gap-1">
+                      <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit aircraft" title="Edit" (click)="openEdit(item)">
+                        <i class="ti ti-pencil" aria-hidden="true"></i>
+                      </button>
+                      @if (item.status === 'Maintenance') {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg text-accent" aria-label="Release from maintenance"
+                          title="Release from maintenance" [disabled]="busy() === item.id" (click)="release(item)">
+                          <i class="ti ti-circle-check" aria-hidden="true"></i>
                         </button>
-                        @if (item.status === 'Maintenance') {
-                          <button type="button" class="icon-btn h-9 w-9 text-lg text-accent" aria-label="Release from maintenance"
-                            title="Release from maintenance" [disabled]="busy() === item.id" (click)="release(item)">
-                            <i class="ti ti-circle-check" aria-hidden="true"></i>
-                          </button>
-                        } @else {
-                          <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Send to maintenance" title="Send to maintenance"
-                            [disabled]="item.status !== 'Available'" (click)="maintenanceFor.set(item)">
-                            <i class="ti ti-tool" aria-hidden="true"></i>
-                          </button>
-                        }
-                        <button type="button" class="icon-btn h-9 w-9 text-lg"
-                          [attr.aria-label]="item.status === 'Inactive' ? 'Activate' : 'Deactivate'"
-                          [title]="item.status === 'Inactive' ? 'Activate' : 'Deactivate'"
-                          [disabled]="busy() === item.id || !['Available', 'Inactive'].includes(item.status)" (click)="toggleActive(item)">
-                          <i class="ti ti-power" aria-hidden="true"></i>
+                      } @else {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Send to maintenance" title="Send to maintenance"
+                          [disabled]="item.status !== 'Available'" (click)="maintenanceFor.set(item)">
+                          <i class="ti ti-tool" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete aircraft" title="Delete"
-                          (click)="askDelete(item.id)">
-                          <i class="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    }
+                      }
+                      <button type="button" class="icon-btn h-9 w-9 text-lg"
+                        [attr.aria-label]="item.status === 'Inactive' ? 'Activate' : 'Deactivate'"
+                        [title]="item.status === 'Inactive' ? 'Activate' : 'Deactivate'"
+                        [disabled]="busy() === item.id || !['Available', 'Inactive'].includes(item.status)" (click)="toggleActive(item)">
+                        <i class="ti ti-power" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete aircraft" title="Delete"
+                        (click)="remove(item)">
+                        <i class="ti ti-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                     @if (rowError()?.id === item.id) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                     }
@@ -206,6 +198,7 @@ const STATUS_CLASSES: Record<AircraftStatus, string> = {
 })
 export class FleetAircraft implements OnInit {
   private readonly api = inject(AdminFleetService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly format = formatMinutes;
   protected readonly statusLabels = STATUS_LABELS;
@@ -223,7 +216,6 @@ export class FleetAircraft implements OnInit {
   protected readonly formOpen = signal(false);
   protected readonly editing = signal<AdminAircraft | null>(null);
   protected readonly maintenanceFor = signal<AdminAircraft | null>(null);
-  protected readonly confirmDelete = signal<string | null>(null);
   protected readonly busy = signal<string | null>(null);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
 
@@ -329,18 +321,20 @@ export class FleetAircraft implements OnInit {
     await this.run(item, () => this.api.setActive(item.id, item.status === 'Inactive'));
   }
 
-  protected askDelete(id: string): void {
-    this.rowError.set(null);
-    this.confirmDelete.set(id);
-  }
-
   protected async remove(item: AdminAircraft): Promise<void> {
+    this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: `Delete ${item.registration}?`,
+      message: 'The aircraft will be removed from the fleet. This can\'t be undone.',
+      confirmLabel: 'Yes, delete',
+      icon: 'ti-trash'
+    });
+    if (!ok) return;
+
     try {
       await this.api.removeAircraft(item.id);
       this.aircraft.update(list => list.filter(a => a.id !== item.id));
-      this.confirmDelete.set(null);
     } catch (error) {
-      this.confirmDelete.set(null);
       this.rowError.set({ id: item.id, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     }
   }

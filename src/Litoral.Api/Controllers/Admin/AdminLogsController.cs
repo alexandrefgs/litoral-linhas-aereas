@@ -14,8 +14,9 @@ public class AdminLogsController(IAuditLogQuery logs) : ControllerBase
     public async Task<ActionResult<AuditLogPageDto>> List(
         [FromQuery] string? category,
         [FromQuery] string? search,
+        [FromQuery] bool criticalOnly = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken ct = default) =>
-        Ok(await logs.ListAsync(category, search, page, pageSize, ct));
+        Ok(await logs.ListAsync(category, search, criticalOnly, page, pageSize, ct));
 }

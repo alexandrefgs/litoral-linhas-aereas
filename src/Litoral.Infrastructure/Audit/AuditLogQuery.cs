@@ -9,7 +9,7 @@ public sealed class AuditLogQuery(LitoralDbContext db) : IAuditLogQuery
 {
     private const int MaxPageSize = 100;
 
-    public async Task<AuditLogPageDto> ListAsync(string? category, string? search, int page, int pageSize, CancellationToken ct)
+        public async Task<AuditLogPageDto> ListAsync(string? category, string? search, bool criticalOnly, int page, int pageSize, CancellationToken ct)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 10, MaxPageSize);
@@ -18,6 +18,9 @@ public sealed class AuditLogQuery(LitoralDbContext db) : IAuditLogQuery
 
         if (Enum.TryParse<AuditCategory>(category, true, out var parsed))
             query = query.Where(l => l.Category == parsed);
+
+        if (criticalOnly)
+            query = query.Where(AuditSeverity.IsCritical);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -37,7 +40,7 @@ public sealed class AuditLogQuery(LitoralDbContext db) : IAuditLogQuery
             .ToListAsync(ct);
 
         return new AuditLogPageDto(
-            items.Select(l => new AuditLogDto(l.Id, l.At, l.Category.ToString(), l.Action, l.ActorName, l.TargetType, l.TargetName, l.Details, l.IpAddress)).ToList(),
+            items.Select(l => new AuditLogDto(l.Id, l.At, l.Category.ToString(), AuditSeverity.Of(l.Action), l.Action, l.ActorName, l.TargetType, l.TargetName, l.Details, l.IpAddress)).ToList(),
             total,
             page,
             pageSize);

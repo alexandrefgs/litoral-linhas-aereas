@@ -5,11 +5,11 @@ import { apiErrorMessage } from '../../../core/api/api-error';
 import { AdminPilot, AdminPilotsService } from '../../../core/admin/admin-pilots.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { STAFF_POSITION_NAMES } from '../../../core/staff/staff-positions';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import { DeleteAccountDialog } from '../../../shared/delete-account-dialog/delete-account-dialog';
 import { formatMinutes } from '../../../shared/utils/flight';
 
 type StatusFilter = 'active' | 'inactive' | 'all';
-type PendingAction = { id: string; kind: 'deactivate' };
 
 const PAGE_SIZE = 25;
 
@@ -116,20 +116,13 @@ const PAGE_SIZE = 25;
                     }
                   </td>
                   <td class="px-4 py-3">
-                    @if (pending()?.id === p.id && pending()!.kind === 'deactivate') {
-                      <div class="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <span class="text-xs text-ink-muted">Deactivate?</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          [disabled]="busy()" (click)="confirm(p)">Yes</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="pending.set(null)">Cancel</button>
-                      </div>
-                    } @else if (isLocked(p)) {
+                    @if (isLocked(p)) {
                       <p class="text-right text-xs text-ink-muted">{{ p.pilotNumber === myNumber() ? 'You' : 'Staff' }}</p>
                     } @else {
                       <div class="flex justify-end gap-1">
                         @if (p.isActive) {
                           <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" title="Deactivate" aria-label="Deactivate pilot"
-                            (click)="ask(p.id, 'deactivate')">
+                            [disabled]="busy()" (click)="deactivate(p)">
                             <i class="ti ti-user-off" aria-hidden="true"></i>
                           </button>
                         } @else {
@@ -179,6 +172,7 @@ const PAGE_SIZE = 25;
 })
 export class AdminPilots implements OnInit {
   private readonly api = inject(AdminPilotsService);
+  private readonly confirm = inject(ConfirmService);
   private readonly auth = inject(AuthService);
 
   protected readonly format = formatMinutes;
@@ -195,7 +189,6 @@ export class AdminPilots implements OnInit {
   protected readonly status = signal<StatusFilter>('active');
   protected readonly search = signal('');
   protected readonly current = signal(1);
-  protected readonly pending = signal<PendingAction | null>(null);
   protected readonly busy = signal(false);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
   protected readonly toDelete = signal<AdminPilot | null>(null);
@@ -262,14 +255,8 @@ export class AdminPilots implements OnInit {
     return pilot.staffPositions.length > 0 || pilot.pilotNumber === this.myNumber();
   }
 
-  protected ask(id: string, kind: PendingAction['kind']): void {
-    this.rowError.set(null);
-    this.pending.set({ id, kind });
-  }
-
   protected askDelete(pilot: AdminPilot): void {
     this.rowError.set(null);
-    this.pending.set(null);
     this.deleteError.set(null);
     this.toDelete.set(pilot);
   }
@@ -288,15 +275,21 @@ export class AdminPilots implements OnInit {
     }
   }
 
-  protected async confirm(pilot: AdminPilot): Promise<void> {
-    if (!this.pending()) return;
+  protected async deactivate(pilot: AdminPilot): Promise<void> {
+    this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: `Deactivate ${pilot.fullName}?`,
+      message: 'The pilot will not be able to book or fly until the account is reactivated. Hours, points and flights are kept.',
+      confirmLabel: 'Yes, deactivate',
+      tone: 'warning',
+      icon: 'ti-user-off'
+    });
+    if (!ok) return;
 
     this.busy.set(true);
     try {
       this.replace(await this.api.deactivate(pilot.id));
-      this.pending.set(null);
     } catch (error) {
-      this.pending.set(null);
       this.rowError.set({ id: pilot.id, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     } finally {
       this.busy.set(false);

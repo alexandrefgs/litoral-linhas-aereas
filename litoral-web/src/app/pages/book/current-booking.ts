@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../core/api/api-error';
 import { Booking } from '../../core/booking/booking.models';
 import { BookingService } from '../../core/booking/booking.service';
+import { ConfirmService } from '../../shared/confirm-dialog/confirm.service';
 import { formatMinutes } from '../../shared/utils/flight';
 
 const TYPE_LABELS: Record<Booking['type'], string> = {
@@ -64,17 +65,11 @@ const TYPE_LABELS: Record<Booking['type'], string> = {
       }
 
       <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line px-6 py-4">
-        @if (confirmCancel()) {
-          <span class="text-sm text-ink-muted">{{ cancelWarning() }}</span>
-          <button type="button" class="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90" [disabled]="cancelling()" (click)="cancel()">
-            {{ cancelling() ? 'Cancelling...' : 'Yes, cancel' }}
-          </button>
-          <button type="button" class="btn-secondary" (click)="confirmCancel.set(false)">Keep flight</button>
-        } @else {
-          <button type="button" class="btn-secondary hover:text-danger" (click)="confirmCancel.set(true)">Cancel flight</button>
-          @if (showBriefingLink()) {
-            <a routerLink="/briefing" class="btn-primary gap-2 px-5"><i class="ti ti-file-description" aria-hidden="true"></i>Open briefing</a>
-          }
+        <button type="button" class="btn-secondary hover:text-danger" [disabled]="cancelling()" (click)="cancel()">
+          {{ cancelling() ? 'Cancelling...' : 'Cancel flight' }}
+        </button>
+        @if (showBriefingLink()) {
+          <a routerLink="/briefing" class="btn-primary gap-2 px-5"><i class="ti ti-file-description" aria-hidden="true"></i>Open briefing</a>
         }
       </div>
     </div>
@@ -82,13 +77,13 @@ const TYPE_LABELS: Record<Booking['type'], string> = {
 })
 export class CurrentBooking implements OnDestroy {
   private readonly api = inject(BookingService);
+  private readonly confirm = inject(ConfirmService);
 
   readonly booking = input.required<Booking>();
   readonly showBriefingLink = input(true);
   readonly cancelled = output<void>();
 
   protected readonly format = formatMinutes;
-  protected readonly confirmCancel = signal(false);
   protected readonly cancelling = signal(false);
   protected readonly error = signal<string | null>(null);
   private readonly now = signal(Date.now());
@@ -104,8 +99,8 @@ export class CurrentBooking implements OnDestroy {
   protected readonly cancelWarning = computed(() => {
     const flight = this.booking();
     if (flight.type === 'Special') return 'Cancelling a special schedule costs 500 points.';
-    if (flight.pointsCost > 0) return `The ${flight.pointsCost} points are not refunded.`;
-    return 'Cancel this flight?';
+    if (flight.pointsCost > 0) return `The ${flight.pointsCost} points you spent are not refunded.`;
+    return 'The booking is released and you can book another flight.';
   });
 
   ngOnDestroy(): void {
@@ -113,6 +108,16 @@ export class CurrentBooking implements OnDestroy {
   }
 
   protected async cancel(): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: `Cancel ${this.booking().callsign}?`,
+      message: this.cancelWarning(),
+      confirmLabel: 'Yes, cancel flight',
+      cancelLabel: 'Keep flight',
+      tone: this.booking().type === 'Special' || this.booking().pointsCost > 0 ? 'danger' : 'warning',
+      icon: 'ti-plane-off'
+    });
+    if (!ok) return;
+
     this.cancelling.set(true);
     this.error.set(null);
 
@@ -123,7 +128,6 @@ export class CurrentBooking implements OnDestroy {
       this.error.set(apiErrorMessage(error) ?? 'Something went wrong. Try again.');
     } finally {
       this.cancelling.set(false);
-      this.confirmCancel.set(false);
     }
   }
 }

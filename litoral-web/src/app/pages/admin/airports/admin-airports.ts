@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AdminAirport, AdminAirportsService } from '../../../core/admin/admin-airports.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import { RankInfo } from '../../../core/reference/reference.models';
 import { ReferenceService } from '../../../core/reference/reference.service';
 import { AirportFormModal } from './airport-form-modal';
@@ -66,7 +67,7 @@ type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
             <tbody>
               @for (airport of filtered(); track airport.icao) {
                 <tr class="border-b border-line last:border-0 hover:bg-surface-alt/50">
-                                    <td class="px-4 py-3">
+                  <td class="px-4 py-3">
                     <div class="flex items-center gap-3">
                       <div class="flex h-9 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-alt">
                         @if (airport.photoUrl) {
@@ -112,24 +113,15 @@ type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
                     }
                   </td>
                   <td class="px-4 py-3">
-                    @if (confirmDelete() === airport.icao) {
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">Delete this airport?</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          (click)="remove(airport.icao)">Delete</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="flex justify-end gap-1">
-                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit airport" (click)="openEdit(airport)">
-                          <i class="ti ti-pencil" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete"
-                          (click)="askDelete(airport.icao)">
-                          <i class="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    }
+                    <div class="flex justify-end gap-1">
+                      <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit airport" (click)="openEdit(airport)">
+                        <i class="ti ti-pencil" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete"
+                        (click)="remove(airport)">
+                        <i class="ti ti-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                     @if (rowError()?.icao === airport.icao) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                     }
@@ -150,6 +142,7 @@ type AirportFilter = 'all' | 'hubs' | 'base' | 'restricted';
 })
 export class AdminAirports implements OnInit {
   private readonly api = inject(AdminAirportsService);
+  private readonly confirm = inject(ConfirmService);
   private readonly reference = inject(ReferenceService);
 
   protected readonly airports = signal<AdminAirport[]>([]);
@@ -161,7 +154,6 @@ export class AdminAirports implements OnInit {
 
   protected readonly modalOpen = signal(false);
   protected readonly editing = signal<AdminAirport | null>(null);
-  protected readonly confirmDelete = signal<string | null>(null);
   protected readonly rowError = signal<{ icao: string; message: string } | null>(null);
 
   protected readonly registeredIcaos = computed(() => this.airports().map(a => a.icao));
@@ -228,18 +220,21 @@ export class AdminAirports implements OnInit {
     this.modalOpen.set(false);
   }
 
-  protected askDelete(icao: string): void {
+  protected async remove(airport: { icao: string; name: string }): Promise<void> {
+    const icao = airport.icao;
     this.rowError.set(null);
-    this.confirmDelete.set(icao);
-  }
+    const ok = await this.confirm.ask({
+      title: `Delete ${icao}?`,
+      message: `${airport.name} will be removed from the airports list. This can't be undone.`,
+      confirmLabel: 'Yes, delete',
+      icon: 'ti-trash'
+    });
+    if (!ok) return;
 
-  protected async remove(icao: string): Promise<void> {
     try {
       await this.api.remove(icao);
       this.airports.update(list => list.filter(a => a.icao !== icao));
-      this.confirmDelete.set(null);
     } catch (error) {
-      this.confirmDelete.set(null);
       this.rowError.set({ icao, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     }
   }

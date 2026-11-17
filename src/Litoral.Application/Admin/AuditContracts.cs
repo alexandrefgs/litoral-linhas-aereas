@@ -14,6 +14,7 @@ public sealed record AuditLogDto(
     Guid Id,
     DateTime At,
     string Category,
+    string Severity,
     string Action,
     string ActorName,
     string? TargetType,
@@ -30,5 +31,5 @@ public interface IAuditLog
 
 public interface IAuditLogQuery
 {
-    Task<AuditLogPageDto> ListAsync(string? category, string? search, int page, int pageSize, CancellationToken ct);
+    Task<AuditLogPageDto> ListAsync(string? category, string? search, bool criticalOnly, int page, int pageSize, CancellationToken ct);
 }

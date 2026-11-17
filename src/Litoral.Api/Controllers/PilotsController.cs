@@ -10,13 +10,21 @@ namespace Litoral.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/pilots/me")]
-public class PilotsController(IPilotSettingsService settings) : ControllerBase
+public class PilotsController(IPilotSettingsService settings, IPointsStatementService points) : ControllerBase
 {
     private const int MaxUploadBytes = 6 * 1024 * 1024;
 
     [HttpGet("settings")]
     public async Task<ActionResult<PilotSettingsDto>> Get(CancellationToken ct) =>
         Ok(await settings.GetAsync(User.GetUserId(), ct));
+    
+    [HttpGet("points")]
+    public async Task<ActionResult<PointsStatementDto>> Points(
+        [FromQuery] string? group,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default) =>
+        Ok(await points.GetAsync(User.GetUserId(), group, page, pageSize, ct));
 
     [HttpPut("settings/personal")]
     public async Task<ActionResult<PilotSettingsDto>> UpdatePersonal(UpdatePersonalRequest request, CancellationToken ct) =>

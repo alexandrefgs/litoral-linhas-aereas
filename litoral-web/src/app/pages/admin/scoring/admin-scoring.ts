@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AdminScoringService } from '../../../core/admin/admin-scoring.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import {
   RULE_TONE_CLASS, RULE_TONE_ICON, ScoringCatalog, ScoringRule, ruleTone, ruleValue
 } from '../../../core/scoring/scoring.models';
@@ -66,24 +67,15 @@ import { ScoringRuleFormModal } from './scoring-rule-form-modal';
                         }
                       </td>
                       <td class="w-48 px-4 py-3">
-                        @if (confirmDelete() === rule.id) {
-                          <div class="flex items-center justify-end gap-2">
-                            <span class="text-xs text-ink-muted">Delete?</span>
-                            <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                              (click)="remove(rule)">Delete</button>
-                            <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
-                          </div>
-                        } @else {
-                          <div class="flex justify-end gap-1">
-                            <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit rule" (click)="openEdit(rule)">
-                              <i class="ti ti-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete rule"
-                              (click)="confirmDelete.set(rule.id)">
-                              <i class="ti ti-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        }
+                        <div class="flex justify-end gap-1">
+                          <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit rule" (click)="openEdit(rule)">
+                            <i class="ti ti-pencil" aria-hidden="true"></i>
+                          </button>
+                          <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete rule"
+                            (click)="remove(rule)">
+                            <i class="ti ti-trash" aria-hidden="true"></i>
+                          </button>
+                        </div>
                         @if (rowError()?.id === rule.id) {
                           <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                         }
@@ -106,6 +98,7 @@ import { ScoringRuleFormModal } from './scoring-rule-form-modal';
 })
 export class AdminScoring implements OnInit {
   private readonly api = inject(AdminScoringService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly catalog = signal<ScoringCatalog | null>(null);
   protected readonly rules = signal<ScoringRule[]>([]);
@@ -114,7 +107,6 @@ export class AdminScoring implements OnInit {
   protected readonly modalOpen = signal(false);
   protected readonly editing = signal<ScoringRule | null>(null);
   protected readonly newCategory = signal<string | null>(null);
-  protected readonly confirmDelete = signal<string | null>(null);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
 
   protected readonly sections = computed(() => {
@@ -167,14 +159,19 @@ export class AdminScoring implements OnInit {
 
   protected async remove(rule: ScoringRule): Promise<void> {
     this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: 'Delete this rule?',
+      message: `"${rule.description}" will no longer be applied to new PIREPs. PIREPs already scored keep their points.`,
+      confirmLabel: 'Yes, delete',
+      icon: 'ti-trash'
+    });
+    if (!ok) return;
 
     try {
       await this.api.delete(rule.id);
       this.rules.update(list => list.filter(r => r.id !== rule.id));
     } catch (error) {
       this.rowError.set({ id: rule.id, message: apiErrorMessage(error) ?? 'Could not delete the rule.' });
-    } finally {
-      this.confirmDelete.set(null);
     }
   }
 

@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { AdminAircraftType, AdminFleetService } from '../../../core/admin/admin-fleet.service';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
 import { AircraftTypeFormModal } from './aircraft-type-form-modal';
 
 @Component({
@@ -29,6 +30,7 @@ import { AircraftTypeFormModal } from './aircraft-type-form-modal';
             <thead class="border-b border-line text-xs uppercase tracking-wide text-ink-muted">
               <tr>
                 <th class="px-4 py-3 font-semibold">Type</th>
+                <th class="px-4 py-3 font-semibold">Registrations</th>
                 <th class="px-4 py-3 font-semibold">Operation</th>
                 <th class="px-4 py-3 font-semibold">Range</th>
                 <th class="px-4 py-3 font-semibold">Maintenance</th>
@@ -43,6 +45,13 @@ import { AircraftTypeFormModal } from './aircraft-type-form-modal';
                     <p class="font-mono font-bold text-ink">{{ type.icaoCode }}</p>
                     <p class="text-xs text-ink-muted">{{ type.name }}</p>
                   </td>
+                  <td class="px-4 py-3 font-mono text-ink">
+                    @if (type.registrationPrefix) {
+                      PS-{{ type.registrationPrefix }}<span class="text-ink-muted">_</span>
+                    } @else {
+                      <span class="font-sans text-xs font-semibold text-danger">Prefix not set</span>
+                    }
+                  </td>
                   <td class="px-4 py-3">
                     @if (type.isCargo) {
                       <span class="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-semibold text-ink">Cargo</span>
@@ -51,27 +60,18 @@ import { AircraftTypeFormModal } from './aircraft-type-form-modal';
                     }
                   </td>
                   <td class="px-4 py-3 text-ink">{{ type.maxRangeNm }} NM</td>
-                                    <td class="px-4 py-3 font-mono text-xs text-ink">A {{ type.maintenanceIntervalHours }}h · C {{ type.cCheckIntervalHours }}h · D {{ type.dCheckIntervalHours }}h</td>
+                  <td class="px-4 py-3 font-mono text-xs text-ink">A {{ type.maintenanceIntervalHours }}h · C {{ type.cCheckIntervalHours }}h · D {{ type.dCheckIntervalHours }}h</td>
                   <td class="px-4 py-3 text-ink-muted">{{ type.aircraftCount }} aircraft · {{ type.routeCount }} routes</td>
                   <td class="px-4 py-3">
-                    @if (confirmDelete() === type.id) {
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="text-xs text-ink-muted">Delete this type?</span>
-                        <button type="button" class="rounded-md bg-danger px-3 py-1 text-xs font-medium text-white hover:opacity-90"
-                          (click)="remove(type)">Delete</button>
-                        <button type="button" class="btn-secondary px-3 py-1 text-xs" (click)="confirmDelete.set(null)">Cancel</button>
-                      </div>
-                    } @else {
-                      <div class="flex justify-end gap-1">
-                        <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit type" (click)="openEdit(type)">
-                          <i class="ti ti-pencil" aria-hidden="true"></i>
-                        </button>
-                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete type"
-                          (click)="askDelete(type.id)">
-                          <i class="ti ti-trash" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    }
+                    <div class="flex justify-end gap-1">
+                      <button type="button" class="icon-btn h-9 w-9 text-lg" aria-label="Edit type" (click)="openEdit(type)">
+                        <i class="ti ti-pencil" aria-hidden="true"></i>
+                      </button>
+                      <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" aria-label="Delete type"
+                        (click)="remove(type)">
+                        <i class="ti ti-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                     @if (rowError()?.id === type.id) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()?.message }}</p>
                     }
@@ -91,13 +91,13 @@ import { AircraftTypeFormModal } from './aircraft-type-form-modal';
 })
 export class FleetTypes implements OnInit {
   private readonly api = inject(AdminFleetService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly types = signal<AdminAircraftType[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadError = signal(false);
   protected readonly modalOpen = signal(false);
   protected readonly editing = signal<AdminAircraftType | null>(null);
-  protected readonly confirmDelete = signal<string | null>(null);
   protected readonly rowError = signal<{ id: string; message: string } | null>(null);
 
   ngOnInit(): void {
@@ -134,18 +134,20 @@ export class FleetTypes implements OnInit {
     this.modalOpen.set(false);
   }
 
-  protected askDelete(id: string): void {
-    this.rowError.set(null);
-    this.confirmDelete.set(id);
-  }
-
   protected async remove(type: AdminAircraftType): Promise<void> {
+    this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: `Delete ${type.icaoCode}?`,
+      message: `The ${type.name} type will be removed from the fleet. This can't be undone.`,
+      confirmLabel: 'Yes, delete',
+      icon: 'ti-trash'
+    });
+    if (!ok) return;
+
     try {
       await this.api.removeType(type.id);
       this.types.update(list => list.filter(t => t.id !== type.id));
-      this.confirmDelete.set(null);
     } catch (error) {
-      this.confirmDelete.set(null);
       this.rowError.set({ id: type.id, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
     }
   }
