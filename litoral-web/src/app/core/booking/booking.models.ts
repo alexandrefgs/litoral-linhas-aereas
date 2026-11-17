@@ -1,3 +1,5 @@
+import { FlightCrewMember } from '../flights/flight.models';
+
 export interface BookingAirport {
   icao: string;
   name: string;
@@ -7,6 +9,7 @@ export interface BookingAirport {
   longitude: number;
   photoUrl: string | null;
   photoCredit: string | null;
+  iata: string | null;
 }
 
 export interface BookingAircraft {
@@ -150,10 +153,21 @@ export interface TransferQuote {
   blockedReason: string | null;
 }
 
+export type FlightCategory = 'VFR' | 'MVFR' | 'IFR' | 'LIFR';
+
 export interface Metar {
   icao: string;
   raw: string | null;
   observedAt: string | null;
+  category: FlightCategory | null;
+  temperatureC: number | null;
+  dewpointC: number | null;
+  windDirection: string | null;
+  windSpeedKt: number | null;
+  windGustKt: number | null;
+  visibility: string | null;
+  qnhHpa: number | null;
+  taf: string | null;
 }
 
 export interface Briefing {
@@ -161,6 +175,30 @@ export interface Briefing {
   simBriefUsername: string | null;
   simBriefDispatchUrl: string;
   metars: Metar[];
+  captain: FlightCrewMember;
+  firstOfficer: FlightCrewMember;
+  baseIcaos: string[];
+  simBriefApiEnabled: boolean;
+}
+
+export interface SimBriefLoadsheet {
+  passengers: number | null;
+  cargo: number | null;
+  payload: number | null;
+  zeroFuelWeight: number | null;
+  maxZeroFuelWeight: number | null;
+  takeoffWeight: number | null;
+  maxTakeoffWeight: number | null;
+  landingWeight: number | null;
+  maxLandingWeight: number | null;
+  taxiFuel: number | null;
+  tripFuel: number | null;
+  contingencyFuel: number | null;
+  alternateFuel: number | null;
+  reserveFuel: number | null;
+  extraFuel: number | null;
+  takeoffFuel: number | null;
+  blockFuel: number | null;
 }
 
 export interface SimBriefOfp {
@@ -177,4 +215,10 @@ export interface SimBriefOfp {
   vatsimPrefileUrl: string | null;
   ivaoPrefileUrl: string | null;
   generatedAt: string | null;
+  departureRunway: string | null;
+  arrivalRunway: string | null;
+  costIndex: number | null;
+  airac: string | null;
+  loadsheet: SimBriefLoadsheet;
+  planHtml: string | null;
 }

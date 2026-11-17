@@ -100,12 +100,14 @@ public static class DependencyInjection
         services.AddScoped<IRosterService, RosterService>();
         services.AddScoped<IPilotFleetService, PilotFleetService>();
         services.AddScoped<IBriefingService, BriefingService>();
-        services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.Configure<SimBriefOptions>(configuration.GetSection(SimBriefOptions.SectionName));
         services.AddHttpClient<ISimBriefProvider, SimBriefProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
         services.AddHostedService<BookingExpiryService>();
         services.AddScoped<PirepFiling>();
         services.AddScoped<IFlightTrackingService, FlightTrackingService>();
         services.AddScoped<IPirepService, PirepService>();
+        services.AddScoped<CrewCards>();
         services.AddScoped<IFlightDetailService, FlightDetailService>();
         services.AddScoped<IPirepReviewService, PirepReviewService>();
         services.AddScoped<IFlightSimulator, FlightSimulator>();

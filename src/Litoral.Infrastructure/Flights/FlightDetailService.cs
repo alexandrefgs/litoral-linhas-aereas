@@ -10,11 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class FlightDetailService(LitoralDbContext db, UserManager<ApplicationUser> userManager) : IFlightDetailService
+public sealed class FlightDetailService(LitoralDbContext db, UserManager<ApplicationUser> userManager, CrewCards crewCards) : IFlightDetailService
 {
     private const int MaxTrackPoints = 1500;
     private const int MaxRecent = 12;
-    private const string VirtualCrewName = "Severino";
 
     public async Task<FlightDetailDto> GetAsync(string viewerUserId, Guid id, CancellationToken ct)
     {
@@ -37,7 +36,7 @@ public sealed class FlightDetailService(LitoralDbContext db, UserManager<Applica
             ? await db.FlightSessions.AsNoTracking().Where(s => s.Id == sessionId).Select(s => s.Simulator).FirstOrDefaultAsync(ct)
             : null;
 
-        var (captain, firstOfficer) = await CrewAsync(pirep, ct);
+        var (captain, firstOfficer) = await crewCards.BuildAsync(pirep.Pilot, pirep.Booking.CrewPilot, ct);
         var canSeePrivate = pirep.Pilot.UserId == viewerUserId || await IsStaffAsync(viewerUserId);
 
         return new FlightDetailDto(
@@ -142,43 +141,6 @@ public sealed class FlightDetailService(LitoralDbContext db, UserManager<Applica
 
         return new RecentFlightsDto(monthTotal, flights);
     }
-
-    private async Task<(FlightCrewMemberDto Captain, FlightCrewMemberDto FirstOfficer)> CrewAsync(Pirep pirep, CancellationToken ct)
-    {
-        var ranks = await db.Ranks.AsNoTracking().OrderBy(r => r.Level).ToListAsync(ct);
-        var pilot = pirep.Pilot;
-        var crew = pirep.Booking.CrewPilot;
-
-        var pilotIsCaptain = crew is null
-            ? pilot.Rank.Level == ranks[^1].Level
-            : pilot.Rank.Level >= crew.Rank.Level;
-
-        var pilotDto = await MemberAsync(pilot, ct);
-        var crewDto = crew is not null
-            ? await MemberAsync(crew, ct)
-            : Virtual(pilotIsCaptain ? ranks[0] : ranks[^1]);
-
-        return pilotIsCaptain ? (pilotDto, crewDto) : (crewDto, pilotDto);
-    }
-
-    private async Task<FlightCrewMemberDto> MemberAsync(Pilot pilot, CancellationToken ct)
-    {
-        var flights = await db.Pireps.CountAsync(p => p.PilotId == pilot.Id && p.Status != PirepStatus.Pending, ct);
-        return new FlightCrewMemberDto(
-            pilot.PilotNumber,
-            pilot.DisplayId,
-            pilot.PublicName,
-            pilot.Rank.Code,
-            pilot.Rank.Name,
-            pilot.PhotoUrl,
-            flights,
-            pilot.TotalFlightMinutes,
-            pilot.Points,
-            false);
-    }
-
-    private static FlightCrewMemberDto Virtual(Rank rank) =>
-        new(null, null, VirtualCrewName, rank.Code, rank.Name, null, 0, 0, 0, true);
 
     private static FlightAirportDto AirportDto(List<Airport> airports, string icao)
     {

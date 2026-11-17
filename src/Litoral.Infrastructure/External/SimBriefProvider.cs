@@ -1,23 +1,84 @@
+using System.Globalization;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
+using Litoral.Domain.Common;
+using Microsoft.Extensions.Options;
 
 namespace Litoral.Infrastructure.External;
 
-public sealed class SimBriefProvider(HttpClient http) : ISimBriefProvider
+public sealed class SimBriefProvider(HttpClient http, IOptions<SimBriefOptions> options) : ISimBriefProvider
 {
-    public async Task<SimBriefOfpDto?> GetLatestAsync(string username, string expectedOrigin, string expectedDestination, CancellationToken ct)
+    private const string NotResponding = "SimBrief is not responding. Try again in a few minutes.";
+    private const string LoaderUrl = "https://www.simbrief.com/ofp/ofp.loader.api.php";
+
+    public bool CanGenerate => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
+
+    public string BuildGenerateUrl(SimBriefRequest request)
+    {
+        if (!CanGenerate)
+            throw new AppException(AppErrorKind.Conflict, "The SimBrief API is not configured.");
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
+        var outputPage = options.Value.OutputPage;
+        var apiCode = Convert.ToHexStringLower(MD5.HashData(Encoding.UTF8.GetBytes(
+            options.Value.ApiKey + request.Origin + request.Destination + request.AircraftType + timestamp + outputPage)));
+
+        var query = new Dictionary<string, string>
+        {
+            ["orig"] = request.Origin,
+            ["dest"] = request.Destination,
+            ["type"] = request.AircraftType,
+            ["reg"] = request.Registration,
+            ["airline"] = Airline.Icao,
+            ["fltnum"] = request.FlightNumber,
+            ["callsign"] = request.Callsign,
+            ["cpt"] = request.Captain,
+            ["fo"] = request.FirstOfficer,
+            ["units"] = "KGS",
+            ["navlog"] = "1",
+            ["etops"] = "1",
+            ["stepclimbs"] = "1",
+            ["tlr"] = "1",
+            ["notams"] = "1",
+            ["firnot"] = "1",
+            ["maps"] = "detail",
+            ["planformat"] = "lido",
+            ["find_sidstar"] = "R",
+            ["extrarmks"] = Airline.Name.ToUpperInvariant(),
+            ["static_id"] = request.StaticId,
+            ["outputpage"] = outputPage,
+            ["timestamp"] = timestamp,
+            ["apicode"] = apiCode
+        };
+
+        return LoaderUrl + "?" + string.Join('&', query.Select(q => $"{q.Key}={Uri.EscapeDataString(q.Value)}"));
+    }
+
+    public async Task<SimBriefOfpDto?> GetLatestAsync(string username, string? staticId, string expectedOrigin, string expectedDestination, CancellationToken ct)
+    {
+        if (staticId is not null && await FetchAsync(username, staticId, expectedOrigin, expectedDestination, ct) is { } plan)
+            return plan;
+
+        return await FetchAsync(username, null, expectedOrigin, expectedDestination, ct);
+    }
+
+    private async Task<SimBriefOfpDto?> FetchAsync(string username, string? staticId, string expectedOrigin, string expectedDestination, CancellationToken ct)
     {
         HttpResponseMessage response;
+        var url = $"https://www.simbrief.com/api/xml.fetcher.php?username={Uri.EscapeDataString(username)}&json=1";
+        if (staticId is not null) url += $"&static_id={Uri.EscapeDataString(staticId)}";
 
         try
         {
-            response = await http.GetAsync($"https://www.simbrief.com/api/xml.fetcher.php?username={Uri.EscapeDataString(username)}&json=1", ct);
+            response = await http.GetAsync(url, ct);
         }
         catch (HttpRequestException)
         {
-            throw new AppException(AppErrorKind.Conflict, "SimBrief is not responding. Try again in a few minutes.");
+            throw new AppException(AppErrorKind.Conflict, NotResponding);
         }
 
         using (response)
@@ -25,7 +86,7 @@ public sealed class SimBriefProvider(HttpClient http) : ISimBriefProvider
             if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
                 return null;
             if (!response.IsSuccessStatusCode)
-                throw new AppException(AppErrorKind.Conflict, "SimBrief is not responding. Try again in a few minutes.");
+                throw new AppException(AppErrorKind.Conflict, NotResponding);
 
             await using var stream = await response.Content.ReadAsStreamAsync(ct);
             using var json = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
@@ -51,7 +112,51 @@ public sealed class SimBriefProvider(HttpClient http) : ISimBriefProvider
                 directory is not null && pdf is not null ? directory + pdf : null,
                 Text(root, "prefile", "vatsim", "link"),
                 Text(root, "prefile", "ivao", "link"),
-                generated is null ? null : DateTimeOffset.FromUnixTimeSeconds(generated.Value).UtcDateTime);
+                generated is null ? null : DateTimeOffset.FromUnixTimeSeconds(generated.Value).UtcDateTime,
+                Text(root, "origin", "plan_rwy"),
+                Text(root, "destination", "plan_rwy"),
+                (int?)Number(root, "general", "costindex"),
+                Text(root, "params", "airac"),
+                new SimBriefLoadsheetDto(
+                    Weight(root, "weights", "pax_count"),
+                    Weight(root, "weights", "cargo"),
+                    Weight(root, "weights", "payload"),
+                    Weight(root, "weights", "est_zfw"),
+                    Weight(root, "weights", "max_zfw"),
+                    Weight(root, "weights", "est_tow"),
+                    Weight(root, "weights", "max_tow"),
+                    Weight(root, "weights", "est_ldw"),
+                    Weight(root, "weights", "max_ldw"),
+                    Weight(root, "fuel", "taxi"),
+                    Weight(root, "fuel", "enroute_burn"),
+                    Weight(root, "fuel", "contingency"),
+                    Weight(root, "fuel", "alternate_burn"),
+                    Weight(root, "fuel", "reserve"),
+                    Weight(root, "fuel", "extra"),
+                    Weight(root, "fuel", "plan_takeoff"),
+                    Weight(root, "fuel", "plan_ramp")),
+                    Text(root, "text", "plan_html"));
+        }
+    }
+
+    public async Task<byte[]> DownloadPdfAsync(string url, CancellationToken ct)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            || uri.Scheme != Uri.UriSchemeHttps
+            || !(uri.Host == "simbrief.com" || uri.Host.EndsWith(".simbrief.com", StringComparison.OrdinalIgnoreCase)))
+            throw new AppException(AppErrorKind.Validation, "Invalid OFP address.");
+
+        try
+        {
+            using var response = await http.GetAsync(uri, ct);
+            if (!response.IsSuccessStatusCode)
+                throw new AppException(AppErrorKind.NotFound, "The OFP PDF is not available on SimBrief anymore. Generate a new one.");
+
+            return await response.Content.ReadAsByteArrayAsync(ct);
+        }
+        catch (HttpRequestException)
+        {
+            throw new AppException(AppErrorKind.Conflict, NotResponding);
         }
     }
 
@@ -80,4 +185,9 @@ public sealed class SimBriefProvider(HttpClient http) : ISimBriefProvider
 
     private static long? Number(JsonElement element, params string[] path) =>
         long.TryParse(Text(element, path), out var value) ? value : null;
+
+    private static int? Weight(JsonElement element, params string[] path) =>
+        double.TryParse(Text(element, path), NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            ? (int)Math.Round(value)
+            : null;
 }

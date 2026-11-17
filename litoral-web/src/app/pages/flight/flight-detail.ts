@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { apiErrorMessage } from '../../core/api/api-error';
 import {
   BOOKING_TYPE_LABEL,
@@ -11,6 +11,7 @@ import {
 } from '../../core/flights/flight.models';
 import { FlightService } from '../../core/flights/flight.service';
 import { NETWORK_LABELS, PIREP_STATUS_CLASS, PirepScoreItem } from '../../core/pirep/pirep.models';
+import { CrewCard } from '../../shared/crew-card/crew-card';
 import { TrackMap } from '../../shared/track-map/track-map';
 import { countryFlagUrl } from '../../shared/utils/country-flag';
 import { FlightChart } from './flight-chart';
@@ -36,7 +37,7 @@ const EVENT_STYLE: Record<string, { icon: string; title: string }> = {
 
 @Component({
   selector: 'app-flight-detail',
-  imports: [DatePipe, DecimalPipe, RouterLink, TrackMap, FlightChart],
+  imports: [DatePipe, DecimalPipe, CrewCard, TrackMap, FlightChart],
   template: `
     <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
       @if (loading()) {
@@ -61,31 +62,7 @@ const EVENT_STYLE: Record<string, { icon: string; title: string }> = {
 
         <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_2fr]">
           @for (member of crew(); track member.role) {
-            @let m = member.data;
-            <div class="relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border border-line border-t-4 border-t-primary bg-gradient-to-b from-atlantico-800 to-atlantico-900 px-5 pb-5 pt-6 text-center text-white card-hover">
-              <img [src]="'images/ranks/' + m.rankCode.toLowerCase() + '.png'" alt="" class="absolute right-4 top-4 h-6 w-auto" />
-              <span class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary text-3xl font-bold ring-4 ring-white/20">
-                @if (m.photoUrl) {
-                  <img [src]="m.photoUrl" alt="" class="h-full w-full object-cover" />
-                } @else if (m.isVirtual) {
-                  <i class="ti ti-user-star" aria-hidden="true"></i>
-                } @else {
-                  {{ initials(m.name) }}
-                }
-              </span>
-              @if (m.pilotNumber) {
-                <a [routerLink]="['/profile', m.pilotNumber]" class="text-xl font-bold hover:underline">{{ m.name }}</a>
-              } @else {
-                <p class="text-xl font-bold">{{ m.name }}</p>
-              }
-              <p class="text-sm text-white/70">{{ member.role }}</p>
-              <span class="rounded-md bg-sol-400 px-2.5 py-0.5 font-mono text-xs font-bold text-atlantico-900">{{ m.displayId ?? 'Virtual crew' }}</span>
-              <div class="mt-2 grid w-full grid-cols-3 gap-2">
-                <div><p class="text-lg font-bold">{{ m.flights }}</p><p class="text-xs text-white/70">Flights</p></div>
-                <div><p class="text-lg font-bold">{{ m.minutes / 60 | number: '1.0-0' }}</p><p class="text-xs text-white/70">Hours</p></div>
-                <div><p class="text-lg font-bold">{{ m.points | number }}</p><p class="text-xs text-white/70">Points</p></div>
-              </div>
-            </div>
+            <app-crew-card [member]="member.data" [role]="member.role" />
           }
 
           <div class="relative overflow-hidden rounded-xl border border-line border-t-4 border-t-primary bg-atlantico-900 bg-cover bg-center text-white card-hover lg:col-span-2 xl:col-span-1"
@@ -356,10 +333,6 @@ export class FlightDetail {
     this.route.paramMap
       .pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe(params => this.load(params.get('id') ?? ''));
-  }
-
-  protected initials(name: string): string {
-    return name.split(/[\s.]+/).filter(Boolean).map(p => p[0]).slice(0, 2).join('').toUpperCase();
   }
 
   protected barWidth(item: PirepScoreItem): number {

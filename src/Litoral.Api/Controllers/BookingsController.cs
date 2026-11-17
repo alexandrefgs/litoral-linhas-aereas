@@ -44,6 +44,18 @@ public class BookingsController(IBookingService bookings, IBriefingService brief
     [HttpGet("current/briefing")]
     public async Task<ActionResult<BriefingDto>> Briefing(CancellationToken ct) =>
         Ok(await briefing.GetAsync(User.GetUserId(), ct));
+    
+    [HttpGet("current/weather")]
+    public async Task<ActionResult<IReadOnlyList<MetarDto>>> Weather(CancellationToken ct) =>
+        Ok(await briefing.GetWeatherAsync(User.GetUserId(), ct));
+    
+    [HttpPost("current/simbrief/generate")]
+    public async Task<ActionResult<SimBriefGenerateDto>> GenerateSimBrief(CancellationToken ct) =>
+        Ok(await briefing.GenerateSimBriefAsync(User.GetUserId(), ct));
+    
+    [HttpGet("current/simbrief/pdf")]
+    public async Task<IActionResult> SimBriefPdf(CancellationToken ct) =>
+        File(await briefing.GetSimBriefPdfAsync(User.GetUserId(), ct), "application/pdf");
 
     [HttpGet("current/simbrief")]
     public async Task<ActionResult<SimBriefOfpDto>> SimBrief(CancellationToken ct) =>

@@ -27,6 +27,7 @@
 - [Carreira do piloto](#carreira-do-piloto)
 - [Perfil do piloto](#perfil-do-piloto)
 - [Reserva de voos](#reserva-de-voos)
+- [Briefing](#briefing)
 - [Special Flights](#special-flights)
 - [ACARS e PIREP](#acars-e-pirep)
 - [Pontos](#pontos)
@@ -52,7 +53,7 @@ O sistema reúne em um só lugar:
 - Página de **aeroportos** com aeronaves no solo, partidas e **jumpseat** cobrado pela distância
 - Reserva de voos aleatórios, personalizados, **escala mensal** e **Special Flights** (fretamentos, traslados, redeliveries, traslados de manutenção e voos de teste)
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
-- Briefing integrado ao **SimBrief**
+- **Briefing** com METAR/TAF, OFP e loadsheet do **SimBrief** na própria página
 - Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
 - Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety e promoção automática
 - **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
@@ -221,7 +222,7 @@ Cada piloto recebe um **número sequencial** a partir de **1000**, exibido junto
 
 ## Perfil do piloto
 
-Cada piloto tem um perfil público em `/profile/{número}`, no estilo da FlyGOL:
+Cada piloto tem um perfil público em `/profile/{número}`:
 
 - **Capa e foto:** capa padrão da companhia ou enviada pelo piloto, e foto de perfil.
 - **Nome exibido:** o piloto escolhe como o nome aparece no site: `A. Fagundes` (padrão), `Alexandre F.`, nome completo, só o primeiro nome ou só o sobrenome.
@@ -287,6 +288,28 @@ A página **Airports** mostra, em cards, os aeroportos que a patente do piloto p
 - **Aircraft:** lista as aeronaves no solo naquele aeroporto.
 - **Flights:** lista as partidas daquele aeroporto, indicando se há aeronave disponível.
 - **Clique no card:** faz o jumpseat para aquele aeroporto.
+
+---
+
+## Briefing
+
+Com uma reserva aberta, o menu leva ao **Briefing**, uma página única com tudo o que o piloto precisa antes do voo.
+
+**Coluna da esquerda**
+- **Voo:** callsign, rota, distância e tempo, botões para atualizar (tempo e OFP) e cancelar a reserva.
+- **Flight plan:** prefile na **VATSIM** e na **IVAO** (já preenchido quando o OFP está carregado) e o callsign alternativo para a network.
+- **Tripulação:** cards do Captain e do First Officer.
+- **Menu:** Briefing, Loadsheet e OFP, que levam à seção na página.
+- **Aeronave:** foto, matrícula, modelo e último voo.
+
+**Seções**
+- **Aeroportos:** foto, categoria do tempo (VFR, MVFR, IFR, LIFR), temperatura, vento, QNH, visibilidade (em km/m, ou SM nos EUA e no Canadá), pista e alternado do OFP, METAR, TAF e link para as cartas no ChartFox. O tempo se atualiza sozinho a cada 15 minutos.
+- **SimBrief:** gerar e carregar o OFP, com resumo (nível, cost index, alternado, combustível, tempo de rota e AIRAC) e a rota.
+- **Loadsheet:** passageiros, carga, pesos comparados aos limites e o combustível detalhado.
+- **OFP:** o plano de voo completo exibido no próprio site, com o PDF para baixar ou abrir em nova aba.
+- **Flight report:** PIREP manual e, em desenvolvimento, o simulador de voo.
+
+Cada reserva usa um `static_id` próprio no SimBrief, e o briefing busca exatamente o OFP daquela reserva.
 
 ---
 
@@ -367,7 +390,7 @@ Contas desativadas não conseguem reservar voos até serem reativadas pelo Head 
 
 As regras ficam no banco e são editadas pelo **Safety Manager** em **Admin › Scoring**: é possível alterar valores, criar, desativar e excluir regras. Os pilotos veem as regras ativas na página **Points**.
 
-Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. O ponto de partida foi a tabela da FlyGOL, adaptada à Litoral:
+Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o resultado (**pontos** ou **reprovação**), a forma de aplicação (uma vez, por ocorrência, por segundo ou por dia), parâmetros, tipos de aeronave e carência em segundos. A tabela inicial foi criada para a Litoral:
 
 | Categoria | Exemplos |
 |---|---|
@@ -459,8 +482,9 @@ As permissões são aplicadas por **policies** na API. O **CEO & Founder** acess
 - Tema claro, escuro e automático
 
 **Integrações**
-- SimBrief (geração e leitura de OFP)
-- aviationweather.gov (METAR)
+- SimBrief (leitura do OFP, PDF e geração por popup com a API)
+- aviationweather.gov (METAR e TAF)
+- **ChartFox**: link para as cartas de cada aeroporto
 - **smartCARS 3**: a API do Litoral implementa a [especificação REST](https://github.com/invernyx/smartcars-3-phpvms5-api/blob/development/openapi.json) usada pelo app, em .NET, sem PHP
 - **OurAirports**: catálogo de aeroportos para a busca por ICAO
 - **Wikimedia Commons**: origem recomendada das fotos de aeroportos, com crédito do autor
@@ -506,7 +530,7 @@ litoral-linhas-aereas/
 │   └── src/app/
 │       ├── core/                # auth, api, admin, staff, tema, dados de referência, config
 │       ├── shared/              # header, mapas (aeroporto, trilha, ao vivo), seletor de data, pipes e utilitários
-│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, frota, PIREPs, pontos e admin
+│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, voo, frota, pontos e admin
 ├── uploads/                     # fotos enviadas (pilotos, aeronaves, aeroportos, special flights), fora do Git
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
@@ -553,12 +577,19 @@ Ajuste o `Server` conforme a sua instalação: `localhost`, `localhost\\SQLEXPRE
 **4. Configure a chave do mapa** em `litoral-web/src/app/core/config/app-config.ts`.
 Os mapas usam tiles da [CARTO](https://carto.com/), que exigem uma chave gratuita. A chave do repositório funciona apenas em `localhost`; para outro domínio, crie a sua.
 
-**5. Confie no certificado HTTPS de desenvolvimento** (uma vez só)
+**5. (Opcional) Configure a chave da API do SimBrief**
+Sem a chave, o briefing usa o botão *Generate on SimBrief* (nova aba). Com a chave, o OFP é gerado num popup sem sair do briefing. Guarde a chave nos user-secrets, nunca no `appsettings`:
+```bash
+dotnet user-secrets set "SimBrief:ApiKey" "SUA_CHAVE" --project src/Litoral.Api
+```
+O endereço de retorno do popup fica em `SimBrief:OutputPage` no `appsettings.json` (em desenvolvimento, `http://localhost:4200/simbrief-return.html`).
+
+**6. Confie no certificado HTTPS de desenvolvimento** (uma vez só)
 ```bash
 dotnet dev-certs https --trust
 ```
 
-**6. Rode a API e o front juntos**
+**7. Rode a API e o front juntos**
 ```bash
 npm run dev
 ```
@@ -641,7 +672,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Gestão de staff, com vaga única por posição (exceto Safety Manager)
 - [ ] **Head of HR:** listar, inativar, reativar e excluir pilotos
 
-### Fase 2B: Páginas do piloto (estilo FlyGOL)
+### Fase 2B: Páginas do piloto
 - [x] Aeroportos em cards, com aeronaves no solo, partidas e jumpseat (grátis para bases, 3 pontos por NM para os demais)
 - [x] Limite de um jumpseat e um traslado de aeronave até o próximo voo
 - [x] Frota, com localização e status de cada matrícula
@@ -664,7 +695,11 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Confirmação da reserva e callsign no menu
 - [x] Briefing: SimBrief, METAR e prefile
 - [x] Cancelamento e expiração da reserva em 24 h
-- [ ] Briefing estilo FlyGOL: header com VATSIM/IVAO, cards de tripulação e aeroportos, TAF, OFP embutido, card da aeronave e atualização do tempo
+- [x] Briefing em página única: prefile VATSIM/IVAO, tripulação, aeroportos com METAR/TAF decodificados, card da aeronave e menu lateral
+- [x] OFP do SimBrief exibido no site (texto), com PDF para baixar ou abrir em nova aba
+- [x] Loadsheet: pesos contra os limites e combustível detalhado
+- [x] Tempo atualizado sozinho a cada 15 minutos
+- [ ] Geração do OFP em popup pela API do SimBrief (aguardando a chave de API)
 
 ### ✅ Fase 3B: Special Flights
 - [x] **Director of Operations:** Charter, Ferry, Redelivery e Maintenance ferry com 1 ou 2 pernas, patente mínima, dificuldade, foto e janela em UTC
@@ -678,7 +713,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Motor de pontuação com regras editáveis (Admin › Scoring) e % de conformidade
 - [x] PIREP automático ao final do voo e PIREP manual (sempre revisado)
 - [x] Simulador de voo para desenvolvimento (três cenários)
-- [x] Páginas de PIREPs do piloto com mapa, eventos e pontuação
+- [x] Página do voo com tripulação, aeronave, mapa, perfil do voo, flight log e pontuação
 - [x] **Safety Manager:** fila de revisão, itens de revisão manuais e falsos positivos
 - [x] Aprovação e rejeição de PIREP com penalidade progressiva no mês e desativação de conta
 - [x] Horas, localização da aeronave e do piloto, patente, tripulação e bônus da escala mensal

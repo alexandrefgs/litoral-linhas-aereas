@@ -10,6 +10,7 @@ import {
   Destination,
   FleetAircraft,
   FlightDuration,
+  Metar,
   RandomProposal,
   RosterStatus,
   SimBriefOfp,
@@ -71,6 +72,18 @@ export class BookingService {
 
   simBrief(): Promise<SimBriefOfp> {
     return firstValueFrom(this.http.get<SimBriefOfp>('/api/bookings/current/simbrief'));
+  }
+
+  weather(): Promise<Metar[]> {
+    return firstValueFrom(this.http.get<Metar[]>('/api/bookings/current/weather'));
+  }
+
+  simBriefGenerate(): Promise<{ url: string }> {
+    return firstValueFrom(this.http.post<{ url: string }>('/api/bookings/current/simbrief/generate', {}));
+  }
+
+  simBriefPdf(): Promise<Blob> {
+    return firstValueFrom(this.http.get('/api/bookings/current/simbrief/pdf', { responseType: 'blob' }));
   }
 
   roster(): Promise<RosterStatus> {
