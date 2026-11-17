@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { DEFAULT_COVER_URL } from '../../core/profile/profile.models';
 import { COUNTRIES, PASSWORD_RULES, PilotSettings } from '../../core/profile/settings.models';
 import { SettingsService } from '../../core/profile/settings.service';
+import { DeleteAccountDialog } from '../../shared/delete-account-dialog/delete-account-dialog';
 import { PilotAvatar } from './pilot-avatar';
 
 type Section = 'media' | 'personal' | 'config' | 'password';
@@ -19,7 +20,7 @@ const DIGITS = Validators.pattern(/^\d*$/);
 
 @Component({
   selector: 'app-profile-settings',
-  imports: [ReactiveFormsModule, PilotAvatar],
+  imports: [ReactiveFormsModule, PilotAvatar, DeleteAccountDialog],
   template: `
     @if (settings(); as s) {
       <div class="flex flex-col gap-6">
@@ -248,7 +249,23 @@ const DIGITS = Validators.pattern(/^\d*$/);
             </div>
           </form>
         </div>
+
+        <div class="panel flex flex-wrap items-center justify-between gap-4 border-danger/40 px-6 py-5">
+          <div>
+            <h2 class="text-lg font-semibold text-danger">Delete account</h2>
+            <p class="text-sm text-ink-muted">Permanently delete your account and all your flights, points and history. This can't be undone.</p>
+          </div>
+          <button type="button" class="rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger hover:text-white"
+            (click)="deleteError.set(null); deleting.set(true)">
+            Delete my account
+          </button>
+        </div>
       </div>
+
+      @if (deleting()) {
+        <app-delete-account-dialog [self]="true" [busy]="deleteBusy()" [error]="deleteError()"
+          (confirmed)="deleteAccount($event)" (cancelled)="deleting.set(false)" />
+      }
     } @else if (loadError()) {
       <div class="panel flex flex-col items-center gap-3 px-6 py-16 text-center">
         <p class="text-danger">Something went wrong. Try again.</p>
@@ -278,6 +295,9 @@ export class ProfileSettings implements OnInit {
   protected readonly feedback = signal<Partial<Record<Section, Feedback>>>({});
   protected readonly selectedAircraft = signal(new Set<string>());
   protected readonly visible = signal(new Set<PasswordField>());
+  protected readonly deleting = signal(false);
+  protected readonly deleteBusy = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
   private readonly newPassword = signal('');
   private readonly confirmPassword = signal('');
   private readonly currentPassword = signal('');
@@ -438,6 +458,20 @@ export class ProfileSettings implements OnInit {
       this.password.reset();
       return 'Password changed.';
     });
+  }
+
+  protected async deleteAccount(password: string | null): Promise<void> {
+    this.deleteBusy.set(true);
+    this.deleteError.set(null);
+    try {
+      await this.api.deleteAccount(password ?? '');
+      this.deleting.set(false);
+      this.auth.logout();
+    } catch (error) {
+      this.deleteError.set(apiErrorMessage(error) ?? 'Something went wrong. Try again.');
+    } finally {
+      this.deleteBusy.set(false);
+    }
   }
 
   private composeBirthDate(day: string, month: string, year: string): string | null | undefined {

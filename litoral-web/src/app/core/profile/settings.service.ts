@@ -23,6 +23,10 @@ export class SettingsService {
     return this.withRefresh(this.http.put<PilotSettings>(`${BASE_URL}/settings/config`, payload));
   }
 
+  deleteAccount(password: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${BASE_URL}/delete`, { password }));
+  }
+
   changePassword(currentPassword: string, newPassword: string): Promise<void> {
     return firstValueFrom(this.http.put<void>(`${BASE_URL}/password`, { currentPassword, newPassword }));
   }

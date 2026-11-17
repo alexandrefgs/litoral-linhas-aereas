@@ -13,7 +13,8 @@ namespace Litoral.Infrastructure.Pilots;
 public sealed class PilotSettingsService(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
-    IPhotoStorage storage) : IPilotSettingsService
+    IPhotoStorage storage,
+    PilotEraser eraser) : IPilotSettingsService
 {
     private const string PhotoFolder = "pilots";
     private const string CoverFolder = "covers";
@@ -70,6 +71,21 @@ public sealed class PilotSettingsService(
             throw new AppException(AppErrorKind.Validation, "The current password is incorrect.");
 
         throw new AppException(AppErrorKind.Validation, string.Join(" ", result.Errors.Select(e => e.Description)));
+    }
+
+    public async Task DeleteAccountAsync(string userId, DeleteAccountRequest request, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId)
+            ?? throw new AppException(AppErrorKind.NotFound, "User not found.");
+
+        if (string.IsNullOrEmpty(request.Password) || !await userManager.CheckPasswordAsync(user, request.Password))
+            throw new AppException(AppErrorKind.Validation, "The password is incorrect.");
+
+        var pilot = await FindPilotAsync(userId, ct);
+        if (await eraser.BlockReasonAsync(pilot, true, ct) is string reason)
+            throw new AppException(AppErrorKind.Conflict, reason);
+
+        await eraser.DeleteAsync(pilot, ct);
     }
 
     public async Task<PilotSettingsDto> UploadPhotoAsync(string userId, PhotoUpload upload, CancellationToken ct)

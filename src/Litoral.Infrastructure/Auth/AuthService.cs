@@ -41,8 +41,7 @@ public sealed class AuthService(
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
         var isFirstPilot = !await db.Pilots.AnyAsync(ct);
-        var lastNumber = await db.Pilots.MaxAsync(p => (int?)p.PilotNumber, ct);
-        var pilotNumber = (lastNumber ?? Pilot.FirstPilotNumber - 1) + 1;
+        var pilotNumber = await NextPilotNumberAsync(ct);
 
         var user = new ApplicationUser { UserName = email, Email = email };
         var created = await userManager.CreateAsync(user, request.Password);
@@ -86,6 +85,20 @@ public sealed class AuthService(
         var roles = await userManager.GetRolesAsync(user);
 
         return PilotSummaryMapper.ToSummary(user.Email!, pilot, roles.ToList());
+    }
+
+    private async Task<int> NextPilotNumberAsync(CancellationToken ct)
+    {
+        var numbers = await db.Pilots.OrderBy(p => p.PilotNumber).Select(p => p.PilotNumber).ToListAsync(ct);
+
+        var next = Pilot.FirstPilotNumber;
+        foreach (var number in numbers)
+        {
+            if (number != next) break;
+            next++;
+        }
+
+        return next;
     }
 
     private async Task<Pilot> LoadPilotAsync(string userId, CancellationToken ct) =>

@@ -60,6 +60,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/pireps/admin-pirep-review').then(m => m.AdminPirepReview)
       },
       {
+        path: 'pilots',
+        canActivate: [staffGuard('pilots')],
+        loadComponent: () => import('./pages/admin/pilots/admin-pilots').then(m => m.AdminPilots)
+      },
+      {
+        path: 'staff',
+        canActivate: [staffGuard('staff')],
+        loadComponent: () => import('./pages/admin/staff/admin-staff').then(m => m.AdminStaff)
+      },
+      {
         path: 'operations',
         canActivate: [staffGuard('operations')],
         loadComponent: () => import('./pages/admin/operations/admin-operations').then(m => m.AdminOperations)

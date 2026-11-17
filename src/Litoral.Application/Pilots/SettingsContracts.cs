@@ -42,6 +42,8 @@ public sealed record UpdateConfigRequest(
     [MaxLength(60)] string? SimBriefUsername,
     IReadOnlyList<string>? SimAircraft);
 
+public sealed record DeleteAccountRequest(string Password);
+
 public sealed record ChangePasswordRequest(
     [Required] string CurrentPassword,
     [Required, MinLength(8)] string NewPassword);
@@ -52,6 +54,7 @@ public interface IPilotSettingsService
     Task<PilotSettingsDto> UpdatePersonalAsync(string userId, UpdatePersonalRequest request, CancellationToken ct);
     Task<PilotSettingsDto> UpdateConfigAsync(string userId, UpdateConfigRequest request, CancellationToken ct);
     Task ChangePasswordAsync(string userId, ChangePasswordRequest request, CancellationToken ct);
+    Task DeleteAccountAsync(string userId, DeleteAccountRequest request, CancellationToken ct);
     Task<PilotSettingsDto> UploadPhotoAsync(string userId, PhotoUpload upload, CancellationToken ct);
     Task<PilotSettingsDto> RemovePhotoAsync(string userId, CancellationToken ct);
     Task<PilotSettingsDto> UploadCoverAsync(string userId, PhotoUpload upload, CancellationToken ct);

@@ -29,6 +29,7 @@ using Litoral.Application.Airports;
 using Litoral.Infrastructure.Airports;
 using Litoral.Application.Operations;
 using Litoral.Infrastructure.Operations;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Litoral.Infrastructure;
 
@@ -81,6 +82,11 @@ public static class DependencyInjection
                 options.AddPolicy(policy, p => p.RequireRole(positions.Prepend(StaffPositions.CeoFounder)));
         });
 
+        services.AddScoped<StaffRoles>();
+        services.AddScoped<IClaimsTransformation, StaffClaimsTransformation>();
+        services.AddScoped<PilotEraser>();
+        services.AddScoped<IPilotAdminService, PilotAdminService>();
+        services.AddScoped<IStaffAdminService, StaffAdminService>();
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPilotSettingsService, PilotSettingsService>();

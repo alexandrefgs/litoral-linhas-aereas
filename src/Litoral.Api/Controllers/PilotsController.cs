@@ -33,6 +33,13 @@ public class PilotsController(IPilotSettingsService settings) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("delete")]
+    public async Task<IActionResult> DeleteAccount(DeleteAccountRequest request, CancellationToken ct)
+    {
+        await settings.DeleteAccountAsync(User.GetUserId(), request, ct);
+        return NoContent();
+    }
+
     [HttpPost("photo")]
     [RequestSizeLimit(MaxUploadBytes)]
     public async Task<ActionResult<PilotSettingsDto>> UploadPhoto(IFormFile file, CancellationToken ct)
