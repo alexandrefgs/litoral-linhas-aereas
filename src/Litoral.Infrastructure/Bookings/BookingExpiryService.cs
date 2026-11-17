@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Bookings;
 
@@ -35,7 +36,8 @@ public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<Bo
         var db = scope.ServiceProvider.GetRequiredService<LitoralDbContext>();
         var now = DateTime.UtcNow;
 
-        var specials = await ExpireSpecialFlightsAsync(db, now, ct);
+        var maintenance = scope.ServiceProvider.GetRequiredService<MaintenanceFerryPlanner>();
+        var specials = await ExpireSpecialFlightsAsync(db, maintenance, now, ct);
 
         var expired = await db.Bookings
             .Include(b => b.Aircraft)
@@ -46,16 +48,21 @@ public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<Bo
         foreach (var booking in expired)
             booking.Expire(now);
 
-        if (expired.Count == 0 && specials == 0) return;
+        if (expired.Count > 0 || specials > 0)
+        {
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("Expired {Bookings} bookings and {Specials} special flights.", expired.Count, specials);
+        }
 
-        await db.SaveChangesAsync(ct);
-        logger.LogInformation("Expired {Bookings} bookings and {Specials} special flights.", expired.Count, specials);
+        var due = await maintenance.PlanDueAsync(ct);
+        if (due > 0)
+            logger.LogInformation("Handled {Count} aircraft due for maintenance.", due);
     }
 
-    private static async Task<int> ExpireSpecialFlightsAsync(LitoralDbContext db, DateTime now, CancellationToken ct)
+        private static async Task<int> ExpireSpecialFlightsAsync(LitoralDbContext db, MaintenanceFerryPlanner maintenance, DateTime now, CancellationToken ct)
     {
         var flights = await db.SpecialFlights
-            .Include(f => f.Pilot)
+            .Include(f => f.Aircraft).ThenInclude(a => a.AircraftType)
             .Include(f => f.Legs).ThenInclude(l => l.Booking).ThenInclude(b => b!.Aircraft)
             .Where(f => (f.Status == SpecialFlightStatus.Open || f.Status == SpecialFlightStatus.Taken) && f.EndsAt <= now)
             .ToListAsync(ct);
@@ -73,6 +80,7 @@ public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<Bo
                 flight.Pilot.AddPoints(-BookingSupport.SpecialSchedulePenalty, PointTransactionType.Penalty, $"Special flight {flight.Title} expired");
 
             flight.Expire(now);
+            await maintenance.AfterSpecialClosedAsync(flight, flight.Aircraft, ct);
             count++;
         }
 

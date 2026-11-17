@@ -72,12 +72,15 @@ public sealed class PilotFleetService(LitoralDbContext db, BookingSupport suppor
 
         var hasAircraftHere = await db.Aircraft.AnyAsync(
             a => a.CurrentAirportId == destination.Id && a.Status == AircraftStatus.Available, ct);
+        
+        var held = await support.HeldAircraftIds().AnyAsync(id => id == aircraft.Id, ct);
 
         var cost = hasAircraftHere ? TransferBaseCost + distance / 100 * TransferCostPer100Nm : 0;
 
         var blocked =
             aircraft.CurrentAirportId == destination.Id ? $"{aircraft.Registration} is already at {destination.Icao}."
             : aircraft.Status != AircraftStatus.Available ? $"{aircraft.Registration} is not available ({aircraft.Status})."
+            : held ? $"{aircraft.Registration} is reserved for a special flight."
             : !destination.Supports(aircraft.AircraftType.Operation) ? $"{destination.Icao} doesn't have {(aircraft.AircraftType.IsCargo ? "cargo" : "passenger")} operations."
             : !pilot.CanTransferAircraft ? Pilot.TransferUsedMessage
             : pilot.Points < cost ? $"You need {cost} points and you have {pilot.Points}."

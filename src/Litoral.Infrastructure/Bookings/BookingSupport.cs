@@ -55,6 +55,11 @@ public sealed class BookingSupport(LitoralDbContext db)
         return hubs.Where(h => h.Airport.Supports(OperationType.Passenger)).Select(h => h.Airport.Icao).ToHashSet();
     }
 
+    public IQueryable<Guid> HeldAircraftIds() =>
+        db.SpecialFlights
+            .Where(f => f.Status == SpecialFlightStatus.Open || f.Status == SpecialFlightStatus.Taken)
+            .Select(f => f.AircraftId);
+
     public async Task<List<Aircraft>> AvailableAircraftAsync(Route route, CancellationToken ct)
     {
         var typeIds = route.AircraftTypes.Select(t => t.Id).ToList();
@@ -63,7 +68,8 @@ public sealed class BookingSupport(LitoralDbContext db)
             .Include(a => a.AircraftType)
             .Where(a => a.CurrentAirportId == route.DepartureAirportId
                 && a.Status == AircraftStatus.Available
-                && typeIds.Contains(a.AircraftTypeId))
+                && typeIds.Contains(a.AircraftTypeId)
+                && !HeldAircraftIds().Contains(a.Id))
             .OrderBy(a => a.Registration)
             .ToListAsync(ct);
     }

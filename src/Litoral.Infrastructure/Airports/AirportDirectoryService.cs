@@ -118,7 +118,7 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
             .ToListAsync(ct);
 
         var availableTypes = (await db.Aircraft.AsNoTracking()
-            .Where(a => a.CurrentAirport.Icao == code && a.Status == AircraftStatus.Available)
+            .Where(a => a.CurrentAirport.Icao == code && a.Status == AircraftStatus.Available && !support.HeldAircraftIds().Contains(a.Id))
             .Select(a => a.AircraftTypeId)
             .ToListAsync(ct))
             .ToHashSet();

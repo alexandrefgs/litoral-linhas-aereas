@@ -109,6 +109,7 @@ public static class DependencyInjection
         services.AddScoped<IPirepReviewService, PirepReviewService>();
         services.AddScoped<IFlightSimulator, FlightSimulator>();
         services.AddScoped<SpecialFlightSupport>();
+        services.AddScoped<MaintenanceFerryPlanner>();
         services.AddScoped<ISpecialFlightAdminService, SpecialFlightAdminService>();
         services.AddScoped<ISpecialFlightService, SpecialFlightService>();
 

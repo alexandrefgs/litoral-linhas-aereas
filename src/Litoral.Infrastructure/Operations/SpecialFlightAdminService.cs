@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Operations;
 
-public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlightSupport support, IPhotoStorage photos) : ISpecialFlightAdminService
+public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlightSupport support, MaintenanceFerryPlanner maintenance, IPhotoStorage photos) : ISpecialFlightAdminService
 {
     private const string PhotoFolder = "special-flights";
     private const int FirstNumber = 9000;
@@ -66,7 +66,7 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
     public async Task<SpecialFlightDto> CreateAsync(SpecialFlightRequest request, CancellationToken ct)
     {
         var input = await ResolveAsync(request, null, ct);
-        var routes = await CreateRoutesAsync(input.Airports, input.Aircraft.AircraftType, [], ct);
+        var routes = await support.CreateRoutesAsync(input.Airports, input.Aircraft.AircraftType, [], ct);
 
         var flight = new SpecialFlight(
             request.Title, request.Description, input.Type, request.Difficulty, input.Aircraft,
@@ -85,7 +85,7 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
 
         var input = await ResolveAsync(request, id, ct);
         var oldRoutes = flight.Legs.Select(l => l.Route).ToList();
-        var routes = await CreateRoutesAsync(input.Airports, input.Aircraft.AircraftType, oldRoutes.Select(r => r.FlightNumber), ct);
+        var routes = await support.CreateRoutesAsync(input.Airports, input.Aircraft.AircraftType, oldRoutes.Select(r => r.FlightNumber), ct);
 
         flight.Update(
             request.Title, request.Description, input.Type, request.Difficulty, input.Aircraft,
@@ -108,6 +108,7 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
             booking.Cancel();
 
         flight.Cancel(DateTime.UtcNow);
+        await maintenance.AfterSpecialClosedAsync(flight, flight.Aircraft, ct);
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(flight.Id, ct);
     }
@@ -215,7 +216,6 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
     {
         var released = releasedNumbers.ToHashSet();
         var used = (await db.Routes
-            .Where(r => r.FlightNumber >= FirstNumber && r.FlightNumber <= LastNumber)
             .Select(r => r.FlightNumber)
             .ToListAsync(ct))
             .Where(n => !released.Contains(n))

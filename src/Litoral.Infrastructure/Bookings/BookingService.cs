@@ -4,10 +4,11 @@ using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Bookings;
 
-public sealed class BookingService(LitoralDbContext db, BookingSupport support) : IBookingService
+public sealed class BookingService(LitoralDbContext db, BookingSupport support, MaintenanceFerryPlanner maintenance) : IBookingService
 {
     public async Task<BookingOverviewDto> GetOverviewAsync(string userId, CancellationToken ct)
     {
@@ -84,7 +85,11 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support) 
             var leg = await db.SpecialFlightLegs
                 .Include(l => l.SpecialFlight).ThenInclude(f => f.Legs)
                 .FirstOrDefaultAsync(l => l.BookingId == booking.Id, ct);
-            leg?.SpecialFlight.ReleaseLeg(booking.Id, DateTime.UtcNow);
+            var flight = leg?.SpecialFlight;
+            flight?.ReleaseLeg(booking.Id, DateTime.UtcNow);
+
+            if (flight?.Status == SpecialFlightStatus.Expired)
+                await maintenance.AfterSpecialClosedAsync(flight, booking.Aircraft, ct);
         }
 
         await db.SaveChangesAsync(ct);
@@ -130,7 +135,7 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support) 
 
         var available = await db.Aircraft
             .AsNoTracking()
-            .Where(a => a.CurrentAirport.Icao == pilot.CurrentLocationIcao && a.Status == AircraftStatus.Available)
+            .Where(a => a.CurrentAirport.Icao == pilot.CurrentLocationIcao && a.Status == AircraftStatus.Available && !support.HeldAircraftIds().Contains(a.Id))
             .Select(a => a.AircraftTypeId)
             .ToListAsync(ct);
 

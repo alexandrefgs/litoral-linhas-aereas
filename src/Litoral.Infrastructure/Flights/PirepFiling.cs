@@ -6,14 +6,14 @@ using Litoral.Domain.Flights;
 using Litoral.Domain.Scoring;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class PirepFiling(LitoralDbContext db)
+public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner maintenance)
 {
     public const decimal KgPerPound = 0.45359237m;
     private const int MaxTrackPoints = 1500;
-    private static readonly TimeSpan ScheduledMaintenanceDuration = TimeSpan.FromDays(2);
 
     public async Task<Pirep> FileAsync(
         Booking booking,
@@ -57,10 +57,6 @@ public sealed class PirepFiling(LitoralDbContext db)
         pirep.ApplyEvaluation(evaluation);
 
         booking.Complete(pirep.BlockMinutes, landedAt);
-        if (booking.Aircraft.IsMaintenanceDue)
-            booking.Aircraft.SendToMaintenance(
-                $"Scheduled maintenance ({booking.Aircraft.AircraftType.MaintenanceIntervalHours}h interval)",
-                DateTime.UtcNow.Add(ScheduledMaintenanceDuration));
         booking.Pilot.AddFlightTime(pirep.BlockMinutes);
         booking.Pilot.MoveTo(landedAt.Icao);
         booking.Pilot.RecordFlight();
@@ -74,6 +70,8 @@ public sealed class PirepFiling(LitoralDbContext db)
             .Include(l => l.SpecialFlight).ThenInclude(f => f.Legs)
             .FirstOrDefaultAsync(l => l.BookingId == booking.Id, ct);
         specialLeg?.SpecialFlight.CompleteLeg(booking.Id, DateTime.UtcNow);
+        
+        await maintenance.AfterFlightAsync(booking.Aircraft, specialLeg?.SpecialFlight, ct);
 
         session?.Complete();
 
