@@ -1,21 +1,23 @@
 using System.Data;
+using Litoral.Application.Admin;
 using Litoral.Application.Auth;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Staff;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
+using Litoral.Infrastructure.Pilots;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Litoral.Infrastructure.Pilots;
-
 namespace Litoral.Infrastructure.Auth;
 
 public sealed class AuthService(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
-    JwtTokenGenerator tokenGenerator) : IAuthService
+    JwtTokenGenerator tokenGenerator,
+    IAuditLog auditLog) : IAuthService
 {
     private const string DefaultHubIcao = "SBGR";
 
@@ -69,10 +71,22 @@ public sealed class AuthService(
     {
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
 
-        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
+        if (user is null)
             throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
 
         var pilot = await LoadPilotAsync(user.Id, ct);
+        var label = AuditContext.PilotLabel(pilot);
+
+        if (!await userManager.CheckPasswordAsync(user, request.Password))
+        {
+            await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login failed", "Pilot", pilot.Id.ToString(), label,
+                "Wrong password", ActorName: "Visitor"), ct);
+            throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
+        }
+
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login", "Pilot", pilot.Id.ToString(), label,
+            pilot.IsActive ? null : "Account is inactive", user.Id, label), ct);
+
         return await BuildResponseAsync(user, pilot);
     }
 

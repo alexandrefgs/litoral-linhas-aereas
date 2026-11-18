@@ -32,4 +32,5 @@ public interface IPirepReviewService
     Task<AdminPirepDto> ToggleItemAsync(Guid id, Guid ruleId, CancellationToken ct);
     Task<AdminPirepDto> ApproveAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct);
     Task<AdminPirepDto> RejectAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct);
+    Task<bool> TryAutoApproveAsync(Guid id, CancellationToken ct);
 }

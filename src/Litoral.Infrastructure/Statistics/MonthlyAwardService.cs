@@ -2,6 +2,7 @@ using Litoral.Application.Admin;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Infrastructure.Audit;
+using Litoral.Infrastructure.Notifications;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,7 @@ public sealed class MonthlyAwardService(IServiceScopeFactory scopes, ILogger<Mon
         using var scope = scopes.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LitoralDbContext>();
         var auditLog = scope.ServiceProvider.GetRequiredService<IAuditLog>();
+        var notifier = scope.ServiceProvider.GetRequiredService<Notifier>();
 
         var now = DateTime.UtcNow;
         var thisMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -85,8 +87,15 @@ public sealed class MonthlyAwardService(IServiceScopeFactory scopes, ILogger<Mon
                 pilot.AddPoints(award.Points, PointTransactionType.PilotOfTheMonth,
                     $"Pilot of the month {label}: {Ordinal(position)} in {category.ToString().ToLowerInvariant()} ({valueText})");
 
+                notifier.Send(pilot.Id, NotificationType.Bonus,
+                    $"Pilot of the month: {Ordinal(position)} in {category.ToString().ToLowerInvariant()}",
+                    $"{label} · {valueText} · +{award.Points} points",
+                    "/statistics");
+
+                var previousLevel = pilot.Rank.Level;
                 var airport = await db.Airports.FirstOrDefaultAsync(a => a.Icao == pilot.CurrentLocationIcao, ct);
-                if (airport is not null) pilot.UpdateRank(ranks, airport);
+                if (airport is not null && pilot.UpdateRank(ranks, airport))
+                    notifier.RankChanged(pilot, previousLevel);
 
                 await auditLog.WriteAsync(new AuditEntry(
                     AuditCategory.Awards,

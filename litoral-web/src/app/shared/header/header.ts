@@ -1,12 +1,26 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { BookingService } from '../../core/booking/booking.service';
+import { AppNotification, NotificationsService } from '../../core/notifications/notifications.service';
 import { STAFF_POSITION_NAMES } from '../../core/staff/staff-positions';
 import { ThemeMode, ThemeService } from '../../core/theme/theme.service';
 import { ClickOutsideDirective } from '../directives/click-outside.directive';
 
-type Menu = 'theme' | 'notams' | 'news' | 'user';
+type Menu = 'theme' | 'notams' | 'news' | 'notifications' | 'user';
+
+const NOTIFICATION_STYLE: Record<string, { icon: string; tone: string }> = {
+  PirepApproved: { icon: 'ti-circle-check', tone: 'bg-onda-500/15 text-onda-600' },
+  PirepRejected: { icon: 'ti-circle-x', tone: 'bg-danger/10 text-danger' },
+  Bonus: { icon: 'ti-gift', tone: 'bg-onda-500/15 text-onda-600' },
+  Promotion: { icon: 'ti-chevrons-up', tone: 'bg-sol-400/25 text-ink' },
+  Demotion: { icon: 'ti-chevrons-down', tone: 'bg-danger/10 text-danger' },
+  InactivityWarning: { icon: 'ti-clock-exclamation', tone: 'bg-highlight/25 text-ink' },
+  InactivityPenalty: { icon: 'ti-clock-minus', tone: 'bg-danger/10 text-danger' },
+  AccountDeactivated: { icon: 'ti-user-off', tone: 'bg-danger/10 text-danger' },
+  SpecialFlight: { icon: 'ti-calendar-star', tone: 'bg-primary/15 text-primary' },
+  BookingExpired: { icon: 'ti-hourglass-empty', tone: 'bg-surface-alt text-ink-muted' }
+};
 
 interface NavItem {
   path: string;
@@ -74,7 +88,7 @@ interface NavItem {
 
             <div class="relative">
               <button type="button" class="icon-btn" aria-label="News" (click)="toggle('news')">
-                <i class="ti ti-bell" aria-hidden="true"></i>
+                <i class="ti ti-news" aria-hidden="true"></i>
               </button>
               @if (openMenu() === 'news') {
                 <div class="menu-panel w-80">
@@ -83,6 +97,54 @@ interface NavItem {
                     <i class="ti ti-news text-xl text-ink-muted" aria-hidden="true"></i>
                   </div>
                   <p class="px-4 py-8 text-center text-sm text-ink-muted">No news yet.</p>
+                </div>
+              }
+            </div>
+
+            <div class="relative">
+              <button type="button" class="icon-btn relative" aria-label="Notifications" (click)="toggleNotifications()">
+                <i class="ti ti-bell" aria-hidden="true"></i>
+                @if (notifications.unread() > 0) {
+                  <span class="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white">
+                    {{ notifications.unread() > 9 ? '9+' : notifications.unread() }}
+                  </span>
+                }
+              </button>
+              @if (openMenu() === 'notifications') {
+                <div class="menu-panel w-96 max-w-[calc(100vw-2rem)]">
+                  <div class="flex items-center justify-between border-b border-line px-4 py-3">
+                    <span class="font-semibold text-ink">Notifications</span>
+                    @if (notifications.unread() > 0) {
+                      <button type="button" class="text-xs font-medium text-primary hover:underline" (click)="notifications.markAllRead()">Mark all as read</button>
+                    }
+                  </div>
+                  @if (notifications.loading() && notifications.items().length === 0) {
+                    <p class="px-4 py-8 text-center text-sm text-ink-muted">Loading...</p>
+                  } @else if (notifications.items().length === 0) {
+                    <p class="px-4 py-8 text-center text-sm text-ink-muted">You're all caught up.</p>
+                  } @else {
+                    <ul class="max-h-[70vh] divide-y divide-line overflow-y-auto">
+                      @for (n of notifications.items(); track n.id) {
+                        <li>
+                          <button type="button" class="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-alt" (click)="open(n)">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg" [class]="styleOf(n).tone">
+                              <i class="ti {{ styleOf(n).icon }}" aria-hidden="true"></i>
+                            </span>
+                            <span class="min-w-0 flex-1">
+                              <span class="block text-sm text-ink" [class.font-semibold]="!n.isRead">{{ n.title }}</span>
+                              @if (n.message) {
+                                <span class="mt-0.5 block text-xs text-ink-muted">{{ n.message }}</span>
+                              }
+                              <span class="mt-1 block text-[11px] text-ink-muted">{{ ago(n.createdAt) }}</span>
+                            </span>
+                            @if (!n.isRead) {
+                              <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" aria-label="Unread"></span>
+                            }
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
                 </div>
               }
             </div>
@@ -115,6 +177,9 @@ interface NavItem {
                     <div class="p-2">
                       <a routerLink="/profile" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
                         <i class="ti ti-user text-xl" aria-hidden="true"></i>Profile
+                      </a>
+                      <a routerLink="/profile" [queryParams]="{ tab: 'settings' }" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-settings text-xl" aria-hidden="true"></i>Settings
                       </a>
                     </div>
                     <div class="border-t border-line p-3">
@@ -165,6 +230,8 @@ export class Header {
   ];
 
   private readonly booking = inject(BookingService);
+  private readonly router = inject(Router);
+  protected readonly notifications = inject(NotificationsService);
 
   protected readonly navItems = computed(() => {
     const current = this.booking.current();
@@ -180,7 +247,15 @@ export class Header {
   constructor() {
     effect(() => {
       const signedIn = !!this.auth.pilot();
-      untracked(() => (signedIn ? this.booking.refreshCurrent() : this.booking.current.set(null)));
+      untracked(() => {
+        if (signedIn) {
+          this.booking.refreshCurrent();
+          this.notifications.start();
+        } else {
+          this.booking.current.set(null);
+          this.notifications.stop();
+        }
+      });
     });
   }
 
@@ -214,6 +289,33 @@ export class Header {
 
   protected toggle(menu: Menu): void {
     this.openMenu.update(current => (current === menu ? null : menu));
+  }
+
+  protected toggleNotifications(): void {
+    this.toggle('notifications');
+    if (this.openMenu() === 'notifications') this.notifications.load();
+  }
+
+  protected open(item: AppNotification): void {
+    this.notifications.markRead(item);
+    if (item.link) {
+      this.openMenu.set(null);
+      this.router.navigateByUrl(item.link);
+    }
+  }
+
+  protected styleOf(item: AppNotification): { icon: string; tone: string } {
+    return NOTIFICATION_STYLE[item.type] ?? { icon: 'ti-bell', tone: 'bg-surface-alt text-ink-muted' };
+  }
+
+  protected ago(value: string): string {
+    const minutes = Math.max(0, Math.round((Date.now() - Date.parse(value)) / 60_000));
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `${hours} h ago`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? 'yesterday' : `${days} days ago`;
   }
 
   protected setTheme(mode: ThemeMode): void {

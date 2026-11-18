@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
@@ -11,6 +12,20 @@ public sealed class BookingSupport(LitoralDbContext db)
 {
     public const int CustomFlightCost = 50;
     public const int SpecialSchedulePenalty = 500;
+    
+    private static readonly Dictionary<BookingType, string> TypeLabels = new()
+    {
+        [BookingType.Random] = "Random flight",
+        [BookingType.Custom] = "Custom flight",
+        [BookingType.Monthly] = "Monthly roster",
+        [BookingType.Special] = "Special flight"
+    };
+
+    public static AuditEntry AuditEntryFor(Booking booking, string action, string? extra = null) =>
+        new(AuditCategory.Bookings, action, "Booking", booking.Id.ToString(), booking.Callsign,
+            $"Type: {TypeLabels[booking.Type]}\nRoute: {booking.Route.DepartureAirport.Icao} → {booking.Route.ArrivalAirport.Icao}\nAircraft: {booking.Aircraft.Registration}"
+            + (booking.PointsCost > 0 ? $"\nCost: {booking.PointsCost} points" : "")
+            + (extra is null ? "" : $"\n{extra}"));
     public const string FallbackCrewName = "Severino";
 
     public async Task<Pilot> GetPilotAsync(string userId, CancellationToken ct) =>

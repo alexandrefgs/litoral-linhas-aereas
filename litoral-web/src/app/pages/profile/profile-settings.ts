@@ -287,7 +287,7 @@ export class ProfileSettings implements OnInit {
   protected readonly days = Array.from({ length: 31 }, (_, i) => String(i + 1));
   protected readonly months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     .map((label, i) => ({ value: String(i + 1), label }));
-  protected readonly years = Array.from({ length: 88 }, (_, i) => String(new Date().getFullYear() - 13 - i));
+  protected readonly years = Array.from({ length: 88 }, (_, i) => String(new Date().getFullYear() - 16 - i));
 
   protected readonly settings = signal<PilotSettings | null>(null);
   protected readonly loadError = signal(false);

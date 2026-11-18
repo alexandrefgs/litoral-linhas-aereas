@@ -11,5 +11,7 @@ public enum AuditCategory
     Routes,
     Airports,
     Operations,
-    Awards
+    Awards,
+    Bookings,
+    Logins
 }

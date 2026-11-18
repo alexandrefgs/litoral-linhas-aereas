@@ -8,7 +8,14 @@ public sealed record AuditEntry(
     string? TargetType = null,
     string? TargetId = null,
     string? TargetName = null,
-    string? Details = null);
+    string? Details = null,
+    string? ActorUserId = null,
+    string? ActorName = null)
+{
+    public const string SystemActor = "System";
+
+    public AuditEntry AsSystem() => this with { ActorUserId = null, ActorName = SystemActor };
+}
 
 public sealed record AuditLogDto(
     Guid Id,

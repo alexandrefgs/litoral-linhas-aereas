@@ -7,7 +7,7 @@ public sealed class Pilot : Entity
 {
     public const int FirstPilotNumber = 1000;
 
-    public const int MinimumAge = 13;
+    public const int MinimumAge = 16;
     public const string JumpseatUsedMessage = "You already used your jumpseat. Fly at least once to use it again.";
     public const string TransferUsedMessage = "You already moved an aircraft. Fly at least once to move another one.";
 

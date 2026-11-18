@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Bookings;
 
-public sealed class RosterService(LitoralDbContext db, BookingSupport support) : IRosterService
+public sealed class RosterService(LitoralDbContext db, BookingSupport support, IAuditLog auditLog) : IRosterService
 {
     public async Task<RosterStatusDto> GetAsync(string userId, CancellationToken ct)
     {
@@ -63,8 +64,10 @@ public sealed class RosterService(LitoralDbContext db, BookingSupport support) :
         var (_, leg) = await GetNextLegAsync(pilot, legId, ct);
         var route = await support.GetRouteAsync(leg.RouteId, ct);
 
+        string? jumpseat = null;
         if (pilot.CurrentLocationIcao != route.DepartureAirport.Icao)
         {
+            jumpseat = $"Free jumpseat: {pilot.CurrentLocationIcao} → {route.DepartureAirport.Icao}";
             if (!route.DepartureAirport.IsAccessibleTo(pilot.Rank))
                 throw new AppException(AppErrorKind.Validation, $"Your rank does not allow operations at {route.DepartureAirport.Icao}.");
 
@@ -78,6 +81,7 @@ public sealed class RosterService(LitoralDbContext db, BookingSupport support) :
         db.Bookings.Add(booking);
         await support.AssignCrewAsync(booking, pilot, ct);
         await db.SaveChangesAsync(ct);
+        await auditLog.WriteAsync(BookingSupport.AuditEntryFor(booking, "Flight booked", jumpseat), ct);
 
         return BookingSupport.ToDto(booking);
     }

@@ -77,6 +77,7 @@ public sealed class PirepService(LitoralDbContext db, BookingSupport support, Pi
         };
 
         var pirep = await filing.FileAsync(booking, null, PirepSource.Manual, network, request.ArrivalIcao, report, data, [], ct);
+        await filing.LogFiledAsync(pirep, ct);
         return await filing.ToDtoAsync(pirep, ct);
     }
 }

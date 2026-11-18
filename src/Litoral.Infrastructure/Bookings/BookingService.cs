@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
@@ -8,7 +9,7 @@ using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Bookings;
 
-public sealed class BookingService(LitoralDbContext db, BookingSupport support, MaintenanceFerryPlanner maintenance) : IBookingService
+public sealed class BookingService(LitoralDbContext db, BookingSupport support, MaintenanceFerryPlanner maintenance, IAuditLog auditLog) : IBookingService
 {
     public async Task<BookingOverviewDto> GetOverviewAsync(string userId, CancellationToken ct)
     {
@@ -72,6 +73,7 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support, 
         var pilot = await support.GetPilotAsync(userId, ct);
         var booking = await support.FindOpenBookingAsync(pilot.Id, ct)
             ?? throw new AppException(AppErrorKind.NotFound, "You don't have an open flight.");
+        var wasInProgress = booking.Status == BookingStatus.InProgress;
         var session = await db.FlightSessions
             .FirstOrDefaultAsync(s => s.BookingId == booking.Id && s.Status == FlightSessionStatus.Active, ct);
         
@@ -93,6 +95,11 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support, 
         }
 
         await db.SaveChangesAsync(ct);
+        
+        var details = new List<string>();
+        if (wasInProgress) details.Add("Status: in progress");
+        if (booking.Type == BookingType.Special) details.Add($"Penalty: −{BookingSupport.SpecialSchedulePenalty} points");
+        await auditLog.WriteAsync(BookingSupport.AuditEntryFor(booking, "Flight cancelled", details.Count > 0 ? string.Join("\n", details) : null), ct);
     }
 
     private async Task<BookingDto> BookAsync(string userId, BookFlightRequest request, BookingType type, CancellationToken ct)
@@ -119,6 +126,7 @@ public sealed class BookingService(LitoralDbContext db, BookingSupport support, 
         db.Bookings.Add(booking);
         await support.AssignCrewAsync(booking, pilot, ct);
         await db.SaveChangesAsync(ct);
+        await auditLog.WriteAsync(BookingSupport.AuditEntryFor(booking, "Flight booked"), ct);
 
         return BookingSupport.ToDto(booking);
     }

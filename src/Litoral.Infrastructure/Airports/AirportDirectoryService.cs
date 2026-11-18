@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Airports;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Airports;
 
-public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport support) : IAirportDirectoryService
+public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport support, IAuditLog auditLog) : IAirportDirectoryService
 {
     public const int JumpseatPointsPerNm = 3;
     private const int PilotsPreview = 4;
@@ -158,6 +159,8 @@ public sealed class AirportDirectoryService(LitoralDbContext db, BookingSupport 
             pilot.Spend(cost, PointTransactionType.Jumpseat, $"Jumpseat {from} → {destination.Icao}");
 
         await db.SaveChangesAsync(ct);
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Bookings, "Jumpseat", "Airport", destination.Icao, $"{from} → {destination.Icao}",
+            cost > 0 ? $"Cost: {cost} points" : "Free (base)"), ct);
         return new JumpseatResultDto(from, destination.Icao, cost, pilot.Points);
     }
 

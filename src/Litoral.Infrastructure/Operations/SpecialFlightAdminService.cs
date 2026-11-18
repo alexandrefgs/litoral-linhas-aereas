@@ -1,15 +1,17 @@
+using System.Globalization;
 using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Application.Operations;
 using Litoral.Domain.Common;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
+using Litoral.Infrastructure.Notifications;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Operations;
 
-public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlightSupport support, MaintenanceFerryPlanner maintenance, IPhotoStorage photos) : ISpecialFlightAdminService
+public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlightSupport support, MaintenanceFerryPlanner maintenance, IPhotoStorage photos, Notifier notifier) : ISpecialFlightAdminService
 {
     private const string PhotoFolder = "special-flights";
     private const int FirstNumber = 9000;
@@ -73,6 +75,16 @@ public sealed class SpecialFlightAdminService(LitoralDbContext db, SpecialFlight
             input.RankLevel, input.StartsAt, input.EndsAt, routes);
 
         db.SpecialFlights.Add(flight);
+
+        var eligible = await db.Pilots
+            .Where(p => p.IsActive && p.Rank.Level >= flight.MinimumRankLevel)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+        notifier.SendMany(eligible, NotificationType.SpecialFlight,
+            $"New special flight: {flight.Title}",
+            $"{string.Join(" → ", input.Airports.Select(a => a.Icao))} · {input.Aircraft.Registration} · opens {flight.StartsAt.ToString("dd MMM HH:mm", CultureInfo.InvariantCulture)}Z",
+            "/special-flights");
+
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(flight.Id, ct);
     }

@@ -6,10 +6,11 @@ using Litoral.Domain.Flights;
 using Litoral.Infrastructure.Bookings;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport support, PirepFiling filing) : IFlightTrackingService
+public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport support, PirepFiling filing, IPirepReviewService reviews, ILogger<FlightTrackingService> logger) : IFlightTrackingService
 {
     private const int MaxPositionsPerBatch = 500;
     private const int MaxLiveTrackPoints = 1000;
@@ -197,6 +198,15 @@ public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport su
         };
 
         var pirep = await filing.FileAsync(booking, session, PirepSource.Acars, session.Network, request.ArrivalIcao, report, data, events, ct);
+        await filing.LogFiledAsync(pirep, ct);
+        try
+        {
+            await reviews.TryAutoApproveAsync(pirep.Id, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Auto-approval failed for PIREP {PirepId}. It stays pending for review.", pirep.Id);
+        }
         return await filing.ToDtoAsync(pirep, ct);
     }
 

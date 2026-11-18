@@ -8,7 +8,9 @@ public sealed class AuditLogWriter(LitoralDbContext db, AuditContext audit) : IA
 {
     public async Task WriteAsync(AuditEntry entry, CancellationToken ct)
     {
-        var (userId, name) = await audit.ActorAsync(db, ct);
+        var (userId, name) = entry.ActorName is not null
+            ? (entry.ActorUserId, entry.ActorName)
+            : await audit.ActorAsync(db, ct);
         db.AuditLogs.Add(new AuditLog(entry.Category, entry.Action, userId, name, entry.TargetType, entry.TargetId, entry.TargetName, entry.Details, audit.IpAddress));
         await db.SaveChangesAsync(ct);
     }

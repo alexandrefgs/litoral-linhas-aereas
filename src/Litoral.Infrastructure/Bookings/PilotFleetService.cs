@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Bookings;
 
-public sealed class PilotFleetService(LitoralDbContext db, BookingSupport support) : IPilotFleetService
+public sealed class PilotFleetService(LitoralDbContext db, BookingSupport support, IAuditLog auditLog) : IPilotFleetService
 {
     public const int TransferBaseCost = 1000;
     public const int TransferCostPer100Nm = 100;
@@ -47,6 +48,8 @@ public sealed class PilotFleetService(LitoralDbContext db, BookingSupport suppor
             pilot.Spend(quote.Cost, PointTransactionType.AircraftTransfer, $"Transfer of {aircraft.Registration} from {origin} to {destination.Icao}");
 
         await db.SaveChangesAsync(ct);
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Bookings, "Aircraft transferred", "Aircraft", aircraft.Id.ToString(), aircraft.Registration,
+            $"Route: {origin} → {destination.Icao}\n{(quote.Cost > 0 ? $"Cost: {quote.Cost} points" : "Free")}"), ct);
         return ToDto(aircraft);
     }
 

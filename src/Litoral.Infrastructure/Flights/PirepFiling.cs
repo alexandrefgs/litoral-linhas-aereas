@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Application.Flights;
 using Litoral.Domain.Entities;
@@ -6,11 +7,12 @@ using Litoral.Domain.Flights;
 using Litoral.Domain.Scoring;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner maintenance)
+public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner maintenance, IAuditLog auditLog)
 {
     public const decimal KgPerPound = 0.45359237m;
     private const int MaxTrackPoints = 1500;
@@ -79,6 +81,15 @@ public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner mai
         await db.SaveChangesAsync(ct);
         return pirep;
     }
+
+    public Task LogFiledAsync(Pirep pirep, CancellationToken ct) =>
+        auditLog.WriteAsync(new AuditEntry(
+            AuditCategory.Pireps,
+            pirep.Source == PirepSource.Manual ? "Manual PIREP filed" : "PIREP filed",
+            "PIREP",
+            pirep.Id.ToString(),
+            pirep.Callsign,
+            $"Route: {pirep.DepartureIcao} → {pirep.ArrivalIcao}{(pirep.IsDiversion ? $" (planned {pirep.PlannedArrivalIcao})" : "")}\nAircraft: {pirep.Registration} · {pirep.AircraftTypeIcao}\nBlock time: {pirep.BlockMinutes / 60}h{pirep.BlockMinutes % 60:D2}\nNetwork: {pirep.Network}\nConformity: {pirep.Conformity}%\nPoints: {pirep.ScorePoints}{(pirep.HasRejection ? " (rejection item)" : "")}"), ct);
 
     public IQueryable<Pirep> PirepQuery() =>
         db.Pireps.Include(p => p.Pilot).ThenInclude(p => p.Rank);

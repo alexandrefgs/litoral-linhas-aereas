@@ -10,7 +10,7 @@ public static class AuditSeverity
     public const string Info = "Info";
 
     private static readonly string[] CriticalActions = ["Account deleted", "Pilot deactivated", "PIREP rejected"];
-    private static readonly string[] WarningActions = ["Pilot reactivated", "Password changed"];
+    private static readonly string[] WarningActions = ["Pilot reactivated", "Password changed", "Login failed", "Inactivity penalty started", "Special flight expired"];
 
     public static readonly Expression<Func<AuditLog, bool>> IsCritical = l =>
         CriticalActions.Contains(l.Action)

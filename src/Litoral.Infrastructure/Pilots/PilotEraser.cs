@@ -84,6 +84,7 @@ public sealed class PilotEraser(
         await db.Pireps.Where(p => p.PilotId == pilotId).ExecuteDeleteAsync(ct);
         await db.FlightSessions.Where(s => s.PilotId == pilotId).ExecuteDeleteAsync(ct);
         await db.Bookings.Where(b => b.PilotId == pilotId).ExecuteDeleteAsync(ct);
+        await db.Notifications.Where(n => n.PilotId == pilotId).ExecuteDeleteAsync(ct);
 
         db.Entry(pilot).State = EntityState.Detached;
         var deleted = await userManager.DeleteAsync(user);

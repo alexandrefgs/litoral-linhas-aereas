@@ -1,3 +1,4 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Application.Operations;
 using Litoral.Domain.Entities;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Operations;
 
-public sealed class SpecialFlightService(LitoralDbContext db, SpecialFlightSupport support, BookingSupport bookings) : ISpecialFlightService
+public sealed class SpecialFlightService(LitoralDbContext db, SpecialFlightSupport support, BookingSupport bookings, IAuditLog auditLog) : ISpecialFlightService
 {
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromDays(30);
 
@@ -56,9 +57,11 @@ public sealed class SpecialFlightService(LitoralDbContext db, SpecialFlightSuppo
             throw new AppException(AppErrorKind.Conflict, $"Aircraft {flight.Aircraft.Registration} is not available right now.");
 
         flight.Take(pilot, now);
-        await BookLegAsync(flight, flight.NextLeg!, pilot, ct);
+        var leg = flight.NextLeg!;
+        await BookLegAsync(flight, leg, pilot, ct);
 
         await db.SaveChangesAsync(ct);
+        await LogLegAsync(flight, leg, ct);
         return await ToDtoAsync(flight.Id, userId, ct);
     }
 
@@ -84,6 +87,7 @@ public sealed class SpecialFlightService(LitoralDbContext db, SpecialFlightSuppo
         await BookLegAsync(flight, leg, pilot, ct);
 
         await db.SaveChangesAsync(ct);
+        await LogLegAsync(flight, leg, ct);
         return await ToDtoAsync(flight.Id, userId, ct);
     }
 
@@ -93,6 +97,12 @@ public sealed class SpecialFlightService(LitoralDbContext db, SpecialFlightSuppo
         db.Bookings.Add(booking);
         flight.AttachBooking(leg, booking);
         await bookings.AssignCrewAsync(booking, pilot, ct);
+    }
+
+    private async Task LogLegAsync(SpecialFlight flight, SpecialFlightLeg leg, CancellationToken ct)
+    {
+        if (leg.Booking is null) return;
+        await auditLog.WriteAsync(BookingSupport.AuditEntryFor(leg.Booking, "Flight booked", $"Special flight: {flight.Title} (leg {leg.Order} of {flight.Legs.Count})"), ct);
     }
 
     private async Task<SpecialFlight> FindAsync(Guid id, CancellationToken ct) =>

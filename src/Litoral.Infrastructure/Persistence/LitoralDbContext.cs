@@ -30,6 +30,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<SpecialFlightLeg> SpecialFlightLegs => Set<SpecialFlightLeg>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<MonthlyAward> MonthlyAwards => Set<MonthlyAward>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

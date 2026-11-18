@@ -567,6 +567,46 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.ToTable("MonthlyRosters");
                 });
 
+            modelBuilder.Entity("Litoral.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilotId", "CreatedAt");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Pilot", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1515,6 +1555,17 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.MonthlyRoster", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pilot");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
                         .WithMany()

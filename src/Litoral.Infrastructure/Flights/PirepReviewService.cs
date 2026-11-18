@@ -1,15 +1,21 @@
+using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Application.Flights;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Scoring;
+using Litoral.Infrastructure.Audit;
+using Litoral.Infrastructure.Notifications;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) : IPirepReviewService
+public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, Notifier notifier, IAuditLog auditLog) : IPirepReviewService
 {
+    public const string SystemReviewer = "SYSTEM";
+    public const int AutoApprovalConformity = 98;
+
     private const int ListLimit = 200;
     private const int DefaultCrewDutyPoints = 10;
     private const int DefaultSpecialDomesticPoints = 300;
@@ -65,9 +71,41 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
     public async Task<AdminPirepDto> ApproveAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct)
     {
         var pirep = await FindAsync(id, ct);
+        await ApplyApprovalAsync(pirep, reviewerUserId, request.Note, ct);
+        await db.SaveChangesAsync(ct);
+        return await ToDtoAsync(pirep, ct);
+    }
+
+    public async Task<bool> TryAutoApproveAsync(Guid id, CancellationToken ct)
+    {
+        var pirep = await FindAsync(id, ct);
+
+        if (!pirep.IsPending
+            || pirep.Source != PirepSource.Acars
+            || pirep.HasRejection
+            || pirep.Conformity < AutoApprovalConformity
+            || !pirep.Pilot.IsActive)
+            return false;
+
+        await ApplyApprovalAsync(pirep, SystemReviewer, null, ct);
+        await db.SaveChangesAsync(ct);
+
+        await auditLog.WriteAsync(new AuditEntry(
+            AuditCategory.Pireps,
+            "PIREP auto-approved",
+            "PIREP",
+            pirep.Id.ToString(),
+            pirep.Callsign,
+            $"Pilot: {AuditContext.PilotLabel(pirep.Pilot)}\nRoute: {pirep.DepartureIcao} → {pirep.ArrivalIcao}\nConformity: {pirep.Conformity}%\nPoints: {pirep.ScorePoints}").AsSystem(), ct);
+
+        return true;
+    }
+
+    private async Task ApplyApprovalAsync(Pirep pirep, string reviewerUserId, string? note, CancellationToken ct)
+    {
         var pilot = pirep.Pilot;
 
-        pirep.Approve(reviewerUserId, request.Note);
+        pirep.Approve(reviewerUserId, note);
 
         if (pirep.ScorePoints != 0)
             pilot.AddPoints(pirep.ScorePoints, PointTransactionType.FlightScore, $"Flight {pirep.Callsign} {pirep.DepartureIcao}-{pirep.ArrivalIcao} approved");
@@ -75,10 +113,14 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
         await PayCrewAsync(pirep, ct);
         await PayRosterBonusAsync(pirep, ct);
         await PaySpecialFlightAsync(pirep, ct);
-        await UpdateRankAsync(pilot, ct);
 
-        await db.SaveChangesAsync(ct);
-        return await ToDtoAsync(pirep, ct);
+        var auto = reviewerUserId == SystemReviewer;
+        notifier.Send(pilot.Id, NotificationType.PirepApproved,
+            $"{pirep.Callsign} approved{(auto ? " automatically" : "")}",
+            $"{pirep.DepartureIcao} → {pirep.ArrivalIcao} · {Signed(pirep.ScorePoints)} points{(pirep.ReviewNote is { } n ? $" · \"{n}\"" : "")}",
+            $"/flights/{pirep.Id}");
+
+        await UpdateRankAsync(pilot, ct);
     }
 
     public async Task<AdminPirepDto> RejectAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct)
@@ -95,6 +137,16 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
 
         if (preview.DeactivatesAccount)
             pilot.Deactivate();
+
+        notifier.Send(pilot.Id, NotificationType.PirepRejected,
+            $"{pirep.Callsign} rejected",
+            $"{Ordinal(preview.RejectionNumber)} rejection this month · {Signed(-Math.Abs(preview.Penalty))} points · \"{pirep.ReviewNote}\"",
+            $"/flights/{pirep.Id}");
+
+        if (preview.DeactivatesAccount)
+            notifier.Send(pilot.Id, NotificationType.AccountDeactivated,
+                "Account deactivated",
+                "Your account was deactivated after too many rejected flights this month. Contact the staff to have it reactivated.");
 
         await UpdateRankAsync(pilot, ct);
 
@@ -119,10 +171,13 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
 
         var points = rule?.Points ?? DefaultCrewDutyPoints;
         if (points != 0)
+        {
             crew.AddPoints(points, PointTransactionType.CrewDuty, $"Rostered as crew on {pirep.Callsign}");
+            notifier.Send(crew.Id, NotificationType.Bonus, $"+{points} crew points", $"You were rostered as crew on {pirep.Callsign}.", "/points");
+        }
     }
 
-        private async Task PaySpecialFlightAsync(Pirep pirep, CancellationToken ct)
+    private async Task PaySpecialFlightAsync(Pirep pirep, CancellationToken ct)
     {
         if (pirep.Booking.Type != BookingType.Special) return;
 
@@ -163,6 +218,7 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
 
         roster.MarkBonusPaid();
         pirep.Pilot.AddPoints(roster.Bonus, PointTransactionType.MonthlyBonus, $"Monthly roster {roster.Month:D2}/{roster.Year} completed");
+        notifier.Send(pirep.Pilot.Id, NotificationType.Bonus, $"+{roster.Bonus} monthly roster bonus", $"All flights of your {roster.Month:D2}/{roster.Year} roster were approved.", "/points");
     }
 
     private async Task UpdateRankAsync(Pilot pilot, CancellationToken ct)
@@ -171,7 +227,9 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
         if (airport is null) return;
 
         var ranks = await db.Ranks.ToListAsync(ct);
-        pilot.UpdateRank(ranks, airport);
+        var previousLevel = pilot.Rank.Level;
+        if (pilot.UpdateRank(ranks, airport))
+            notifier.RankChanged(pilot, previousLevel);
     }
 
     private async Task<RejectionPreviewDto> RejectionPreviewAsync(Pirep pirep, CancellationToken ct)
@@ -203,8 +261,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
     {
         var email = await db.Users.Where(u => u.Id == pirep.Pilot.UserId).Select(u => u.Email).FirstOrDefaultAsync(ct);
 
-        string? reviewer = null;
-        if (pirep.ReviewedBy is { } reviewerId)
+        string? reviewer = pirep.ReviewedBy == SystemReviewer ? "System (auto-approved)" : null;
+        if (reviewer is null && pirep.ReviewedBy is { } reviewerId)
         {
             reviewer = await db.Pilots.Where(p => p.UserId == reviewerId)
                 .Select(p => p.FirstName + " " + p.LastName)
@@ -228,6 +286,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing) 
                 ? await RejectionPreviewAsync(pirep, ct)
                 : new RejectionPreviewDto(0, 0, false));
     }
+
+    private static string Signed(int points) => points > 0 ? $"+{points}" : points.ToString();
 
     private static string Ordinal(int n) => n switch
     {
