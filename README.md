@@ -627,6 +627,15 @@ Por enquanto as notificações são só no site. Os e-mails entram junto com o S
 - **Bloqueio:** 5 erros seguidos de senha ou de código bloqueiam a conta por 5 minutos.
 - Tudo fica nos logs: ativação, desativação, novos códigos, reset e o método de cada login (código, código de recuperação ou dispositivo confiável).
 
+### Chaves de ACARS
+
+- O ACARS da Litoral entra com uma **chave pessoal**, criada em **Settings › ACARS keys**, e nunca pede a senha nem o código do 2FA.
+- A chave tem o formato `ltl_` + 64 caracteres e aparece **uma única vez**. No banco ficam só o hash SHA-256 e os primeiros caracteres.
+- Até **3 chaves** por piloto, com nome, data de criação e último uso. Qualquer uma pode ser revogada.
+- O app envia a chave no header `X-Acars-Key`. Ela só vale nos endpoints `/api/acars` e nunca recebe as posições de staff.
+- Trocar a senha revoga todas as chaves. Conta desativada não consegue usar as suas, e excluir a conta apaga todas.
+- Criação, revogação e primeiro uso ficam nos logs.
+
 ### Regulamento e Política de Privacidade
 
 - Páginas públicas `/regulations` e `/privacy`, em **inglês e português** (`?lang=pt`), com índice e data da última atualização. Os links ficam no rodapé da home e no menu do usuário.
@@ -973,7 +982,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Aeronave reservada enquanto a Special Flight estiver aberta
 
 ### 🔜 Fase 4: ACARS e PIREP
-- [x] Camada de ACARS neutra: início do voo, posições, eventos e conclusão
+- [x] Chave pessoal de ACARS (Settings), aceita só nos endpoints de ACARS
 - [x] Trilha do voo e última posição gravadas por sessão
 - [x] Motor de pontuação com regras editáveis (Admin › Scoring) e % de conformidade
 - [x] PIREP automático ao final do voo e PIREP manual (sempre revisado)
@@ -1015,8 +1024,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 ### 🔜 Fase 6: Produção
 - [x] Monitor do sistema para o CEO (saúde da API e do banco, tráfego, integrações, jobs, erros e armazenamento)
-- [ ] Testes unitários do Domain
-- [ ] Testes de integração da API
+- [x] Testes unitários do Domain (motor de pontuação e chaves de ACARS)
+- [x] Testes de integração da API com Testcontainers (fluxo de ACARS e chaves)
 - [ ] CI com GitHub Actions (build e testes)
 - [ ] Configuração de ambiente de produção (segredos, connection strings, chave CARTO e chaves do Data Protection)
 - [ ] Trava que impede subir em produção com a chave JWT de desenvolvimento

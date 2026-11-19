@@ -10,7 +10,7 @@ namespace Litoral.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/pilots/me")]
-public class PilotsController(IPilotSettingsService settings, IPointsStatementService points) : ControllerBase
+public class PilotsController(IPilotSettingsService settings, IPointsStatementService points, IAcarsKeyService acarsKeys) : ControllerBase
 {
     private const int MaxUploadBytes = 6 * 1024 * 1024;
 
@@ -38,6 +38,21 @@ public class PilotsController(IPilotSettingsService settings, IPointsStatementSe
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request, CancellationToken ct)
     {
         await settings.ChangePasswordAsync(User.GetUserId(), request, ct);
+        return NoContent();
+    }
+    
+    [HttpGet("acars-keys")]
+    public async Task<ActionResult<IReadOnlyList<AcarsKeyDto>>> AcarsKeys(CancellationToken ct) =>
+        Ok(await acarsKeys.ListAsync(User.GetUserId(), ct));
+
+    [HttpPost("acars-keys")]
+    public async Task<ActionResult<CreatedAcarsKeyDto>> CreateAcarsKey(CreateAcarsKeyRequest request, CancellationToken ct) =>
+        Ok(await acarsKeys.CreateAsync(User.GetUserId(), request, ct));
+
+    [HttpDelete("acars-keys/{id:guid}")]
+    public async Task<IActionResult> RevokeAcarsKey(Guid id, CancellationToken ct)
+    {
+        await acarsKeys.RevokeAsync(User.GetUserId(), id, ct);
         return NoContent();
     }
 

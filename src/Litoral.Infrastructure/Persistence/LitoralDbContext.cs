@@ -46,6 +46,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<MelItem> MelItems => Set<MelItem>();
     public DbSet<AircraftMelItem> AircraftMelItems => Set<AircraftMelItem>();
     public DbSet<FlightMelCheck> FlightMelChecks => Set<FlightMelCheck>();
+    public DbSet<AcarsKey> AcarsKeys => Set<AcarsKey>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

@@ -9,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Api.IntegrationTests.Acars;
 
-public class AcarsFlowTests(LitoralApiFactory api) : IClassFixture<LitoralApiFactory>
+[Collection(ApiCollection.Name)]
+public class AcarsFlowTests(LitoralApiFactory api)
 {
     [Fact]
     public async Task Acars_endpoints_require_a_login()

@@ -9,6 +9,7 @@ import { DeleteAccountDialog } from '../../shared/delete-account-dialog/delete-a
 import { PilotAvatar } from './pilot-avatar';
 import { PrivacyPanel } from './privacy-panel';
 import { TwoFactorPanel } from './two-factor-panel';
+import { AcarsKeysPanel } from './acars-keys-panel';
 
 type Section = 'media' | 'personal' | 'config' | 'password';
 type PasswordField = 'current' | 'next' | 'confirm';
@@ -22,7 +23,7 @@ const DIGITS = Validators.pattern(/^\d*$/);
 
 @Component({
   selector: 'app-profile-settings',
-    imports: [ReactiveFormsModule, PilotAvatar, DeleteAccountDialog, TwoFactorPanel, PrivacyPanel],
+  imports: [ReactiveFormsModule, PilotAvatar, DeleteAccountDialog, TwoFactorPanel, AcarsKeysPanel, PrivacyPanel],
   template: `
     @if (settings(); as s) {
       <div class="flex flex-col gap-6">
@@ -253,6 +254,8 @@ const DIGITS = Validators.pattern(/^\d*$/);
         </div>
 
         <app-two-factor-panel />
+        
+        <app-acars-keys-panel />
         
         <app-privacy-panel (removed)="optionalDataRemoved()" />
 

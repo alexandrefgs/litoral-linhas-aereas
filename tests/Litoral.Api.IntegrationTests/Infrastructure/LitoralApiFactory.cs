@@ -22,11 +22,10 @@ public sealed class LitoralApiFactory : WebApplicationFactory<Program>
     public const string RouteNumber = "1001";
     public const string Departure = "SBGR";
     public const string Arrival = "SBFL";
-
+    public const string Password = "Tests-Password-123";
     private const string JwtKey = "litoral-integration-tests-signing-key-0123456789-abcdefghijklmnopqrstuvwxyz";
 
-    private readonly MsSqlContainer _sql = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+    private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
         .Build();
 
     private int _pilots;
@@ -70,7 +69,7 @@ public sealed class LitoralApiFactory : WebApplicationFactory<Program>
         return await action(db);
     }
 
-    public async Task<TestPilot> CreatePilotAsync()
+        public async Task<TestPilot> CreatePilotAsync()
     {
         var number = Interlocked.Increment(ref _pilots);
         using var scope = Services.CreateScope();
@@ -80,7 +79,7 @@ public sealed class LitoralApiFactory : WebApplicationFactory<Program>
 
         var email = $"pilot{number}@tests.litoral";
         var user = new ApplicationUser { UserName = email, Email = email };
-        var created = await users.CreateAsync(user, "Tests-Password-123");
+        var created = await users.CreateAsync(user, Password);
         if (!created.Succeeded)
             throw new InvalidOperationException(string.Join(" ", created.Errors.Select(e => e.Description)));
 
@@ -94,11 +93,12 @@ public sealed class LitoralApiFactory : WebApplicationFactory<Program>
 
     public Task<Guid> CreateAircraftAsync() => WithDbAsync(async db =>
     {
-        var letter = (char)('A' + Interlocked.Increment(ref _aircraft) - 1);
+        var index = Interlocked.Increment(ref _aircraft) - 1;
+        var registration = $"PR-T{(char)('A' + index / 26 % 16)}{(char)('A' + index % 26)}";
         var type = await db.AircraftTypes.SingleAsync(t => t.IcaoCode == "B738" && !t.IsCargo);
         var airport = await db.Airports.SingleAsync(a => a.Icao == Departure);
 
-        var aircraft = new Aircraft($"PS-LA{letter}", type, airport);
+        var aircraft = new Aircraft(registration, type, airport);
         db.Aircraft.Add(aircraft);
         await db.SaveChangesAsync();
         return aircraft.Id;

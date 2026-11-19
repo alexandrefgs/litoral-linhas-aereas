@@ -1,12 +1,13 @@
 using Litoral.Api.Extensions;
 using Litoral.Application.Flights;
+using Litoral.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Litoral.Api.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = AcarsKeyDefaults.AcarsSchemes)]
 [Route("api/acars")]
 public class AcarsController(IFlightTrackingService tracking) : ControllerBase
 {

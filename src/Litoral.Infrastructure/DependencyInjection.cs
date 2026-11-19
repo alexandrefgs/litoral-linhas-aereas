@@ -107,14 +107,15 @@ public static class DependencyInjection
                     NameClaimType = "sub",
                     RoleClaimType = "role"
                 };
-            });
+            })
+            .AddScheme<AuthenticationSchemeOptions, AcarsKeyAuthenticationHandler>(AcarsKeyDefaults.Scheme, _ => { });
 
         services.AddAuthorization(options =>
         {
             foreach (var (policy, positions) in StaffPolicies.Positions)
                 options.AddPolicy(policy, p => p.RequireRole(positions.Prepend(StaffPositions.CeoFounder)));
         });
-        
+
         services.AddSingleton<SystemMonitor>();
         services.AddScoped<ISystemMonitorService, SystemMonitorService>();
         services.AddScoped<StaffRoles>();
@@ -133,6 +134,7 @@ public static class DependencyInjection
         services.AddScoped<PilotRegistrar>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<IPilotSettingsService, PilotSettingsService>();
+        services.AddScoped<IAcarsKeyService, AcarsKeyService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAirportDirectoryService, AirportDirectoryService>();
         services.AddScoped<IReferenceService, ReferenceService>();

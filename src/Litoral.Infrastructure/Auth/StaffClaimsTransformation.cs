@@ -19,6 +19,7 @@ public sealed class StaffClaimsTransformation(
     {
         if (principal.Identity is not ClaimsIdentity { IsAuthenticated: true } identity
             || identity.HasClaim(c => c.Type == RefreshedMarker)
+            || identity.HasClaim(c => c.Type == AcarsKeyDefaults.KeyIdClaim)
             || identity.FindFirst("sub")?.Value is not string userId)
             return principal;
 

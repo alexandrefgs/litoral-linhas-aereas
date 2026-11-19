@@ -70,7 +70,9 @@ public sealed class PilotSettingsService(
         if (result.Succeeded)
         {
             var pilot = await FindPilotAsync(userId, ct);
-            await auditLog.WriteAsync(new AuditEntry(AuditCategory.Account, "Password changed", "Pilot", pilot.Id.ToString(), AuditContext.PilotLabel(pilot)), ct);
+            var revoked = await AcarsKeyService.RevokeAllAsync(db, pilot.Id, ct);
+            await auditLog.WriteAsync(new AuditEntry(AuditCategory.Account, "Password changed", "Pilot", pilot.Id.ToString(), AuditContext.PilotLabel(pilot),
+                revoked > 0 ? $"ACARS keys revoked: {revoked}" : null), ct);
             return;
         }
 

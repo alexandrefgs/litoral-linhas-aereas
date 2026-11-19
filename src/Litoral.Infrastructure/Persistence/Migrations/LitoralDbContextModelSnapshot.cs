@@ -22,6 +22,48 @@ namespace Litoral.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Litoral.Domain.Entities.AcarsKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<Guid>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
+                    b.HasIndex("PilotId", "RevokedAt");
+
+                    b.ToTable("AcarsKeys");
+                });
+
             modelBuilder.Entity("Litoral.Domain.Entities.Aircraft", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2124,6 +2166,17 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.HasIndex("AircraftTypeId");
 
                     b.ToTable("RouteAircraftTypes");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.AcarsKey", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pilot");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Aircraft", b =>
