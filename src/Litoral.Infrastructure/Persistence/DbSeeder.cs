@@ -11,6 +11,8 @@ namespace Litoral.Infrastructure.Persistence;
 
 public static class DbSeeder
 {
+    public const string RemarksRuleDescription = "Flight plan item 18 without OPR/LITORAL, PIC/ with your pilot ID (e.g. FO1000) and CS/LITORAL";
+    public const string RemarksRuleText = "OPR/LITORAL PIC/ CS/LITORAL";
     public static async Task SeedAsync(IServiceProvider services, bool importAirportCatalog = true)
     {
         using var scope = services.CreateScope();
@@ -28,11 +30,23 @@ public static class DbSeeder
         await MelCatalogSeed.SeedAsync(db);
         await Boeing777Seed.SeedAsync(db);
         await SeedDeliveryAirportsAsync(db);
+        await UpdateRemarksRuleAsync(db);
 
         await db.SaveChangesAsync();
         if (importAirportCatalog)
         await scope.ServiceProvider.GetRequiredService<AirportCatalogImporter>().ImportIfEmptyAsync();
     }  
+
+    private static async Task UpdateRemarksRuleAsync(LitoralDbContext db)
+    {
+        var rules = await db.ScoringRules
+            .Where(r => r.Check == ScoringCheck.MissingRemarks && r.Text == "OPR/LITORAL PIC/")
+            .ToListAsync();
+
+        foreach (var rule in rules)
+            rule.Update(rule.Category, rule.Check, RemarksRuleDescription, rule.Outcome, rule.Points, rule.Mode, rule.Min, rule.Max,
+                RemarksRuleText, rule.AircraftTypes, rule.GraceSeconds, rule.Order);
+    }
 
     private static async Task SeedDeliveryAirportsAsync(LitoralDbContext db)
     {
@@ -193,7 +207,7 @@ public static class DbSeeder
             new(ScoringCategory.Rejection, ScoringCheck.Crash, "Crash: aircraft crashed", reject, 0, once, order: 2),
             new(ScoringCategory.Rejection, ScoringCheck.UndeclaredAlternate, "Alternate: diverting without ALT, ALT1, ALT-1, ALT2 or ALT-2 and a justification in the log comments", reject, 0, once, text: "ALT,ALT1,ALT-1,ALT2,ALT-2", order: 3),
             new(ScoringCategory.Rejection, ScoringCheck.OverspeedTotal, "Overspeed: total overspeed penalty equal to or above 300 points", reject, 0, once, 300, order: 4),
-            new(ScoringCategory.Rejection, ScoringCheck.MissingRemarks, "Remarks: OPR/LITORAL and PIC/ missing from the flight plan remarks", reject, 0, once, text: "OPR/LITORAL PIC/", order: 5),
+            new(ScoringCategory.Rejection, ScoringCheck.MissingRemarks, RemarksRuleDescription, reject, 0, once, text: RemarksRuleText, order: 5),
             new(ScoringCategory.Rejection, ScoringCheck.EarlyFlapRetraction, "Takeoff flaps: flaps retracted below 800 ft AFE", reject, 0, once, max: 800, order: 6),
             new(ScoringCategory.Rejection, ScoringCheck.UnstableApproach, "Approach: aircraft not configured for landing at 1000 ft AFE", reject, 0, once, 1000, order: 7),
             new(ScoringCategory.Rejection, ScoringCheck.TouchdownRate, "Touchdown rate: above 500 ft/min", reject, 0, once, 501, null, order: 8),

@@ -48,7 +48,7 @@ public sealed class SimBriefProvider(HttpClient http, IOptions<SimBriefOptions> 
             ["maps"] = "detail",
             ["planformat"] = "lido",
             ["find_sidstar"] = "R",
-            ["extrarmks"] = Airline.Name.ToUpperInvariant(),
+            ["acdata"] = JsonSerializer.Serialize(new { extrarmk = request.Remarks }),
             ["static_id"] = request.StaticId,
             ["outputpage"] = outputPage,
             ["timestamp"] = timestamp,

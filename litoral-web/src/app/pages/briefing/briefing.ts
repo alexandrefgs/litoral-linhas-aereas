@@ -94,6 +94,17 @@ const WEATHER_RETRY_MS = 30 * 1000;
                 <p class="mt-2 text-center text-[11px] text-ink-muted">
                   Callsign taken on the network? Use <span class="font-mono font-semibold text-ink">{{ b.networkCallsign }}</span>
                 </p>
+                <div class="mt-3 rounded-md border border-line bg-surface-alt p-2">
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Item 18 must include</p>
+                  <div class="mt-1 flex items-center gap-2">
+                    <span class="flex-1 break-all font-mono text-xs font-semibold text-ink">{{ brief.flightPlanRemarks }}</span>
+                    <button type="button" class="rounded p-1 text-ink-muted hover:bg-line hover:text-ink"
+                      [title]="copied() ? 'Copied' : 'Copy'" (click)="copyRemarks(brief.flightPlanRemarks)">
+                      <i class="ti" [class.ti-copy]="!copied()" [class.ti-check]="copied()" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <p class="mt-1 text-[11px] text-ink-muted">The prefile buttons fill this in. Check it before sending.</p>
+                </div>
               </div>
 
               <p class="border-t border-line pt-3 text-center text-[11px] uppercase tracking-wide text-ink-muted">
@@ -272,6 +283,17 @@ export class Briefing implements OnInit {
   protected readonly confirmCancel = signal(false);
   protected readonly cancelling = signal(false);
   protected readonly cancelError = signal<string | null>(null);
+  protected readonly copied = signal(false);
+
+  protected async copyRemarks(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 2000);
+    } catch {
+      this.copied.set(false);
+    }
+  }
 
   protected readonly matchingOfp = computed(() => {
     const plan = this.ofp();

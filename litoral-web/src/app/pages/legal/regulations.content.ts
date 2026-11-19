@@ -76,7 +76,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
           'Flights are tracked by the Litoral ACARS and sent as a flight report (PIREP) at the end of the flight. If the ACARS fails, you may send a manual PIREP with a comment explaining what happened.',
           'The aircraft type, registration and route flown must match your booking.',
           'Flights must be flown online on VATSIM or IVAO, with at least 80% of the flight connected. Offline flights are rejected.',
-          'Your flight plan remarks must include OPR/LITORAL PIC/ followed by your name.',
+          'Item 18 of your flight plan (other information) must include OPR/LITORAL, PIC/ followed by your pilot ID on the site (for example PIC/FO1000) and CS/LITORAL, so ATC knows the Litoral radio callsign. The prefile buttons in the Briefing fill this in for you.',
           'Use a comment in the PIREP to explain anything unusual (diversion, go-around, technical problem). A comment helps the review but does not guarantee approval.',
           'It is not allowed to fly on two networks at the same time, to log the same flight in another virtual airline or to use another flight tracker for Litoral flights.'
         ]
@@ -212,7 +212,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
           'Os voos são acompanhados pelo ACARS da Litoral e enviados como PIREP ao final do voo. Se o ACARS falhar, você pode enviar um PIREP manual com um comentário explicando o que aconteceu.',
           'O tipo de aeronave, a matrícula e a rota voada precisam ser os da sua reserva.',
           'Os voos devem ser feitos online na VATSIM ou na IVAO, com pelo menos 80% do voo conectado. Voos offline são reprovados.',
-          'Os remarks do plano de voo devem ter OPR/LITORAL PIC/ seguido do seu nome.',
+          'O item 18 do plano de voo (outras informações) deve ter OPR/LITORAL, PIC/ seguido do seu ID de piloto no site (por exemplo PIC/FO1000) e CS/LITORAL, para o ATC saber o callsign de rádio da Litoral. Os botões de prefile do Briefing já preenchem isso para você.',
           'Use o comentário do PIREP para explicar qualquer situação fora do normal (alternado, arremetida, pane). O comentário ajuda na revisão, mas não garante a aprovação.',
           'Não é permitido voar em duas networks ao mesmo tempo, registrar o mesmo voo em outra companhia virtual ou usar outro rastreador de voo nos voos da Litoral.'
         ]

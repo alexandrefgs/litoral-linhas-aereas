@@ -24,7 +24,8 @@ public sealed record BriefingDto(
     FlightCrewMemberDto Captain,
     FlightCrewMemberDto FirstOfficer,
     IReadOnlyList<string> BaseIcaos,
-    bool SimBriefApiEnabled);
+    bool SimBriefApiEnabled,
+    string FlightPlanRemarks);
 
 public sealed record SimBriefLoadsheetDto(
     int? Passengers,
@@ -75,7 +76,8 @@ public sealed record SimBriefRequest(
     string FlightNumber,
     string Callsign,
     string Captain,
-    string FirstOfficer);
+    string FirstOfficer,
+    string Remarks);
 
 public sealed record SimBriefGenerateDto(string Url);
 

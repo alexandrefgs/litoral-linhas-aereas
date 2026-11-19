@@ -27,7 +27,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool _hasKey;
     private string _status = "";
     private bool _statusIsError;
-    private string _simStatus = "Simulator: looking for FSUIPC…";
+    private string _simStatus = "Looking for FSUIPC…";
     private string _bookingText = "No flight loaded.";
     private string _selectedNetwork = "Vatsim";
     private string _phase = "-";
@@ -46,6 +46,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private string _comments = "";
     private bool _diversionWarning;
     private string _pirepText = "";
+    private bool _simConnected;
+    private string _callsign = "";
+    private string _departure = "";
+    private string _arrival = "";
+    private string _aircraftText = "";
 
     public MainViewModel()
     {
@@ -76,7 +81,16 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     public string ServerUrl { get => _serverUrl; set => Set(ref _serverUrl, value); }
     public bool HasKey { get => _hasKey; private set => Set(ref _hasKey, value); }
-    public string Status { get => _status; private set => Set(ref _status, value); }
+    public string Status
+    {
+        get => _status;
+        private set
+        {
+            if (Set(ref _status, value)) Raise(nameof(HasStatus));
+        }
+    }
+
+    public bool HasStatus => !string.IsNullOrWhiteSpace(Status);
     public bool StatusIsError { get => _statusIsError; private set => Set(ref _statusIsError, value); }
     public string SimStatus { get => _simStatus; private set => Set(ref _simStatus, value); }
     public string BookingText { get => _bookingText; private set => Set(ref _bookingText, value); }
@@ -96,7 +110,22 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public string ArrivalIcao { get => _arrivalIcao; set => Set(ref _arrivalIcao, value); }
     public string Comments { get => _comments; set => Set(ref _comments, value); }
     public bool DiversionWarning { get => _diversionWarning; private set => Set(ref _diversionWarning, value); }
-    public string PirepText { get => _pirepText; private set => Set(ref _pirepText, value); }
+    public string PirepText
+    {
+        get => _pirepText;
+        private set
+        {
+            if (Set(ref _pirepText, value)) Raise(nameof(HasPirep));
+        }
+    }
+
+    public bool HasPirep => !string.IsNullOrWhiteSpace(PirepText);
+    public bool SimConnected { get => _simConnected; private set => Set(ref _simConnected, value); }
+    public bool HasFlight => _flight is not null;
+    public string Callsign { get => _callsign; private set => Set(ref _callsign, value); }
+    public string Departure { get => _departure; private set => Set(ref _departure, value); }
+    public string Arrival { get => _arrival; private set => Set(ref _arrival, value); }
+    public string AircraftText { get => _aircraftText; private set => Set(ref _aircraftText, value); }
 
     public bool FlightStarted => _flight?.Session is not null;
     public bool FlightInProgress => FlightStarted && _flight!.Pirep is null;
@@ -132,6 +161,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         var api = Api();
         _flight = await AcarsFlight.LoadAsync(api);
+        Raise(nameof(HasFlight));
         if (_flight is null)
         {
             BookingText = "No open flight. Book a flight on the website first.";
@@ -141,6 +171,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         var b = _flight.Booking;
         BookingText = $"{b.Callsign}   {b.DepartureIcao} → {b.ArrivalIcao}   {b.Registration} ({b.AircraftTypeName})";
+        Callsign = b.Callsign;
+        Departure = b.DepartureIcao;
+        Arrival = b.ArrivalIcao;
+        AircraftText = $"{b.Registration} · {b.AircraftTypeName}";
         ArrivalIcao = b.ArrivalIcao;
         PirepText = "";
 
@@ -197,7 +231,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             _lastConnectAttempt = DateTime.UtcNow;
             if (!_sim.TryConnect())
             {
-                SimStatus = "Simulator: not found. Open MSFS and FSUIPC7.";
+                SimConnected = false;
+                SimStatus = "Simulator not found. Open MSFS and FSUIPC7.";
                 return;
             }
         }
@@ -205,13 +240,15 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var snapshot = _sim.Read(DateTime.UtcNow);
         if (snapshot is null)
         {
-            SimStatus = "Simulator: connection lost. Trying again…";
+            SimConnected = false;
+            SimStatus = "Connection to the simulator lost. Trying again…";
             return;
         }
 
+        SimConnected = _sim.IsSupported;
         SimStatus = _sim.IsSupported
-            ? $"Simulator: {_sim.Simulator} — {_sim.AircraftTitle}"
-            : $"Simulator: {_sim.Simulator} is not supported yet. Use MSFS 2020 or 2024.";
+            ? $"{_sim.Simulator} · {_sim.AircraftTitle}"
+            : $"{_sim.Simulator} is not supported yet. Use MSFS 2020 or 2024.";
 
         if (FlightInProgress) _flight!.OnSnapshot(snapshot);
         ShowFlight(snapshot);

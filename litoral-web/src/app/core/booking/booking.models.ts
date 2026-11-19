@@ -179,6 +179,7 @@ export interface Briefing {
   firstOfficer: FlightCrewMember;
   baseIcaos: string[];
   simBriefApiEnabled: boolean;
+  flightPlanRemarks: string;
 }
 
 export interface SimBriefLoadsheet {

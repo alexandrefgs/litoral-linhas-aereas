@@ -3,6 +3,7 @@ using Litoral.Application.Common;
 using Litoral.Application.Flights;
 using Litoral.Domain.Common;
 using Litoral.Domain.Entities;
+using Litoral.Domain.Flights;
 using Litoral.Infrastructure.Flights;
 
 namespace Litoral.Infrastructure.Bookings;
@@ -37,7 +38,8 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
             captain,
             firstOfficer,
             bases.ToList(),
-            simBrief.CanGenerate);
+            simBrief.CanGenerate,
+            FlightPlanRemarks.Required(pilot.DisplayId));
     }
 
     public async Task<IReadOnlyList<MetarDto>> GetWeatherAsync(string userId, CancellationToken ct)
@@ -71,7 +73,8 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
             route.FlightNumber.ToString(),
             booking.Callsign,
             CrewName(captain),
-            CrewName(firstOfficer)));
+            CrewName(firstOfficer),
+            FlightPlanRemarks.Required(pilot.DisplayId)));
 
         return new SimBriefGenerateDto(url);
     }
@@ -86,8 +89,14 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
         var booking = await support.FindOpenBookingAsync(pilot.Id, ct)
             ?? throw new AppException(AppErrorKind.NotFound, "You don't have an open flight.");
 
-        return await simBrief.GetLatestAsync(pilot.SimBriefUsername, StaticId(booking), booking.Route.DepartureAirport.Icao, booking.Route.ArrivalAirport.Icao, ct)
+        var ofp = await simBrief.GetLatestAsync(pilot.SimBriefUsername, StaticId(booking), booking.Route.DepartureAirport.Icao, booking.Route.ArrivalAirport.Icao, ct)
             ?? throw new AppException(AppErrorKind.NotFound, "No SimBrief flight plan was found for your username.");
+
+        return ofp with
+        {
+            VatsimPrefileUrl = FlightPlanRemarks.ApplyToPrefileLink(ofp.VatsimPrefileUrl, pilot.DisplayId),
+            IvaoPrefileUrl = FlightPlanRemarks.ApplyToPrefileLink(ofp.IvaoPrefileUrl, pilot.DisplayId)
+        };
     }
 
     public async Task<byte[]> GetSimBriefPdfAsync(string userId, CancellationToken ct)

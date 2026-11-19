@@ -370,6 +370,7 @@ Com uma reserva aberta, o menu leva ao **Briefing**, uma página única com tudo
 **Coluna da esquerda**
 - **Voo:** callsign, rota, distância e tempo, botões para atualizar (tempo e OFP) e cancelar a reserva.
 - **Flight plan:** prefile na **VATSIM** e na **IVAO** (já preenchido quando o OFP está carregado) e o callsign alternativo para a network.
+- **Item 18:** os links de prefile já saem com `OPR/LITORAL PIC/<ID do piloto> CS/LITORAL` (o `CS/` mostra a telefonia "LITORAL" no Aurora da IVAO), e o texto aparece abaixo dos botões para copiar.
 - **Tripulação:** cards do Captain e do First Officer.
 - **Menu:** Briefing, Loadsheet e OFP, que levam à seção na página.
 - **Aeronave:** foto, matrícula, modelo e último voo, com as abas **Tech log** (itens de MEL e CDL abertos) e **Crew Docs** (documentos do tipo de aeronave; o 800BCF usa os do B738).
@@ -536,7 +537,7 @@ Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o res
 | Trem de pouso | 737: subir acima de 235 kt e baixar acima de 270 kt (reprova). 777: 270 kt nos dois |
 | Simulador | Slew −100, stall −150, pause −50, simulation rate −600, refuel −300 |
 | Procedimentos | Ordem de partida dos motores, taxi-in, motores cortados no envio do log, taxi acima de 30 kt |
-| Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg (737) ou 12.000 kg (777) no pushback, menos de 80% online... |
+| Reprovação | Offline, crash, item 18 sem `OPR/LITORAL PIC/<ID do piloto> CS/LITORAL`, combustível abaixo de 4.400 kg (737) ou 12.000 kg (777) no pushback, menos de 80% online... |
 | Voos especiais e eventos | Traslados e fretamentos (+300/+500), eventos IVAO/VATSIM (+500) e eventos da Litoral (+300/+500) |
 | MEL & CDL | Procedimento da MEL cumprido (+50) ou não cumprido (−500) |
 
