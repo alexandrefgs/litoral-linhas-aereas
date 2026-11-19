@@ -49,7 +49,7 @@
 
 ## Sobre o projeto
 
-A **Litoral Linhas Aéreas** é uma companhia aérea virtual (VA) para pilotos de simulador. Voamos pelo Brasil e para destinos na América do Sul, América Central, América do Norte e Europa, com frota 100% Boeing 737.
+A **Litoral Linhas Aéreas** é uma companhia aérea virtual (VA) para pilotos de simulador. Voamos pelo Brasil e para destinos na América do Sul, América Central, América do Norte e Europa, com jatos de passageiros e cargueiros. A frota é cadastrada pelo staff e pode receber novos modelos com o tempo.
 
 O sistema reúne em um só lugar:
 
@@ -149,8 +149,10 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 | B739 | Boeing 737-900ER | Passageiros | 2.900 NM | `PS-LD_` |
 | B38M | Boeing 737 MAX 8 | Passageiros | 3.500 NM | `PS-LE_` |
 | B736 | Boeing 737-600 | Passageiros | 3.000 NM | `PS-LF_` |
+| B77W | Boeing 777-300ER | Passageiros | 7.370 NM | `PS-LG_` |
+| B77F | Boeing 777F | Cargueiro | 4.970 NM | `PS-LH_` |
 
-- Os tipos de aeronave são cadastrados pelo Fleet Manager: ICAO, nome, operação, alcance, **prefixo de matrícula**, **intervalos de A, C e D-check** e **aeroporto de entrega** (de onde saem as redeliveries; Boeing: `KBFI`).
+- Os tipos de aeronave são cadastrados pelo Fleet Manager: ICAO, nome, operação, alcance, **prefixo de matrícula**, **intervalos de A, C e D-check** e **aeroporto de entrega** (de onde saem as redeliveries; 737: `KBFI`, 777: `KPAE`).
 - O sistema calcula a distância das rotas pelas coordenadas dos aeroportos e **não permite cadastrar uma rota maior que o alcance da aeronave**.
 - Cada aeronave tem **localização real**. Ela só pode ser reservada no aeroporto onde está, e ao fim do voo fica no destino.
 - Cada aeronave acumula **horas, ciclos** e as **horas desde o último A, C e D-check**.
@@ -169,11 +171,11 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 
 A manutenção segue os checks escalonados da aviação real. Os intervalos são **por tipo de aeronave**, em horas de voo, e podem ser editados pelo Fleet Manager.
 
-| Check | Intervalo padrão | Tempo parado | Onde é feito |
-|---|---|---|---|
-| **A-check** | 500 h | 12 horas | Em qualquer **base** ou em SBCF |
-| **C-check** | 5.000 h | 14 dias | Somente em **SBCF** |
-| **D-check** (heavy check) | 20.000 h | 30 dias | Somente em **SBCF** |
+| Check | 737 | 777 | Tempo parado | Onde é feito |
+|---|---|---|---|---|
+| **A-check** | 500 h | 1.000 h | 12 horas | Em qualquer **base** ou em SBCF |
+| **C-check** | 5.000 h | 7.500 h | 14 dias | Somente em **SBCF** |
+| **D-check** (heavy check) | 20.000 h | 25.000 h | 30 dias | Somente em **SBCF** |
 
 - Quando dois checks vencem juntos, vale o mais pesado (D, depois C, depois A). O C-check também zera o A, e o D-check zera o C e o A.
 - **Traslado automático:** ao vencer um check, se a aeronave estiver num lugar que faz aquele check, ela entra direto em manutenção. Se não estiver, o sistema cria uma Special Flight de **traslado de manutenção** com prazo de 3 dias:
@@ -189,7 +191,7 @@ A manutenção segue os checks escalonados da aviação real. Os intervalos são
 
 A Litoral tem uma **MEL** (itens inoperantes com que a aeronave pode voar) e uma **CDL** (peças externas faltando), com textos próprios da companhia. O catálogo fica no banco e é mantido pelo **Fleet Manager** em **Admin › MEL / CDL**: criar, editar, desativar e excluir itens. Só dá para excluir um item que **nunca foi aberto**; os outros são desativados.
 
-O catálogo inicial tem **40 itens de MEL** e **3 de CDL**. Cada item tem código (ATA), título, categoria, restrição, procedimento, forma de verificação, penalidade de combustível (CDL) e tipos de aeronave (nenhum = todos).
+O catálogo inicial tem **40 itens de MEL** e **3 de CDL** para todos os tipos, e mais **11 itens de MEL do 777** (códigos `xx-71` em diante), como HF, SATCOM, gerador de backup, fuel jettison e APU com limite de 120 minutos de um alternado. Cada item tem código (ATA), título, categoria, restrição, procedimento, forma de verificação, penalidade de combustível (CDL) e tipos de aeronave (nenhum = todos).
 
 | Categoria | Prazo |
 |---|---|
@@ -249,7 +251,7 @@ Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente
 ### Inscrição
 
 - O botão **Apply to join** fica no fim do **Regulamento** (os links *Join Litoral* do site levam até lá). Quando as inscrições estão **fechadas**, o botão aparece desativado.
-- A inscrição pede nome, e-mail, senha, base, **VATSIM e/ou IVAO ID**, **simulador**, os **add-ons do 737** que o piloto tem e um texto sobre a **experiência e a motivação** (30 a 1000 caracteres).
+- A inscrição pede nome, e-mail, senha, base, **VATSIM e/ou IVAO ID**, **simulador**, os **add-ons de aeronaves** que o piloto tem e um texto sobre a **experiência e a motivação** (30 a 1000 caracteres).
 - Enquanto espera, a pessoa pode entrar com e-mail e senha, mas só vê a tela *Application under review*. Ela ainda não tem número de piloto.
 - O **Head of HR** (e o CEO) recebe uma notificação e analisa em **Admin › Applications**, com links para o perfil na VATSIM e na IVAO e o aviso quando o ID já é usado por outro piloto.
 - **Aprovar:** cria o piloto como FO na base escolhida, com o próximo número livre, e leva os IDs das networks para o perfil. O resto da inscrição é apagado e o piloto é notificado.
@@ -512,11 +514,12 @@ Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o res
 |---|---|
 | Tempo de voo | +15 (até 1 h) a +100 (acima de 6 h), pelo block time |
 | Touchdown rate | +60 (101–150 fpm) a −50 (401–500 fpm); acima de 500 fpm reprova |
-| Flaps e configuração | Limites de velocidade por posição de flap (reprova); flaps certos para decolagem e pouso (+5) |
-| Decolagem | Tailstrike por tipo (reprova); VR acima de 192 kt (reprova) |
+| Flaps e configuração | Limites de velocidade por posição de flap (reprova); flaps certos para decolagem e pouso (+5). 737: decolagem 1/5/10/15/25 e pouso 30/40. 777: decolagem 5/15/20 e pouso 25/30 |
+| Decolagem | Tailstrike por tipo (reprova: 737-800/900/MAX 11°, 737-600/700 14°, 777-300ER 10°, 777F 12,1°); VR acima de 192 kt no 737 e 195 kt no 777 (reprova) |
+| Trem de pouso | 737: subir acima de 235 kt e baixar acima de 270 kt (reprova). 777: 270 kt nos dois |
 | Simulador | Slew −100, stall −150, pause −50, simulation rate −600, refuel −300 |
 | Procedimentos | Ordem de partida dos motores, taxi-in, motores cortados no envio do log, taxi acima de 30 kt |
-| Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg, menos de 80% online... |
+| Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg (737) ou 12.000 kg (777) no pushback, menos de 80% online... |
 | Voos especiais e eventos | Traslados e fretamentos (+300/+500), eventos IVAO/VATSIM (+500) e eventos da Litoral (+300/+500) |
 | MEL & CDL | Procedimento da MEL cumprido (+50) ou não cumprido (−500) |
 
@@ -881,7 +884,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Validação de alcance da aeronave por rota
 - [x] Entity Framework Core + SQL Server + migrations
 - [x] ASP.NET Core Identity
-- [x] Seed: patentes, frota 737, aeroportos, hubs e posições de staff
+- [x] Seed: patentes, frota (737 e 777), aeroportos, hubs e posições de staff
 - [x] Regra de promoção e rebaixamento automáticos (horas + pontos)
 - [x] Swagger
 - [x] Front-end Angular 22 + Tailwind CSS 4
@@ -904,6 +907,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 ### ✅ Fase 2: Regras de operação, staff e cadastros
 - [x] Frota com matrícula, variante, foto e localização real
+- [x] Boeing 777-300ER e 777F, com regras de pontuação e itens de MEL próprios
 - [x] Extrato de pontos (ledger)
 - [x] Patente mínima por aeroporto (FO ou CMD)
 - [x] Base do piloto e retorno automático à base no rebaixamento
@@ -1024,7 +1028,6 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Integração com Discord
 - [ ] Estatísticas detalhadas por aeronave e por rota
 - [ ] Checagens automáticas da MEL pelo ACARS (APU, autobrake, luzes, remarks...)
-- [ ] Boeing 777 (B77W e B77F)
 
 ---
 

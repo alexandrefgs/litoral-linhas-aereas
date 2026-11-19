@@ -21,7 +21,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
           head: ['Type', 'Data', 'When'],
           rows: [
             ['Account', 'First and last name, e-mail, password (stored only as a secure hash) and base', 'When you apply'],
-            ['Application', 'VATSIM and/or IVAO ID, simulator, 737 add-ons and a short text about your experience', 'When you apply'],
+            ['Application', 'VATSIM and/or IVAO ID, simulator, aircraft add-ons and a short text about your experience', 'When you apply'],
             ['Profile (optional)', 'Date of birth, country, state and city, VATSIM, IVAO and Discord IDs, SimBrief username, simulator aircraft, profile photo and cover', 'When you fill in Settings'],
             ['Flights', 'Bookings, flight reports (PIREPs), aircraft position and track during the flight, simulator events, scores, hours and points', 'When you book and fly'],
             ['Security', 'IP address, date and time of logins, failed logins, important actions and your two-factor authentication settings (authenticator key and recovery codes)', 'When you sign in, use the site or enable two-factor authentication']
@@ -149,7 +149,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
           head: ['Tipo', 'Dados', 'Quando'],
           rows: [
             ['Conta', 'Nome e sobrenome, e-mail, senha (guardada apenas como hash seguro) e base', 'Na inscrição'],
-            ['Inscrição', 'ID da VATSIM e/ou da IVAO, simulador, add-ons do 737 e um texto curto sobre a sua experiência', 'Na inscrição'],
+            ['Inscrição', 'ID da VATSIM e/ou da IVAO, simulador, add-ons de aeronaves e um texto curto sobre a sua experiência', 'Na inscrição'],
             ['Perfil (opcional)', 'Data de nascimento, país, estado e cidade, IDs da VATSIM, IVAO e Discord, usuário do SimBrief, aeronaves do simulador, foto de perfil e capa', 'Quando você preenche o Settings'],
             ['Voos', 'Reservas, PIREPs, posição e trilha da aeronave durante o voo, eventos do simulador, pontuação, horas e pontos', 'Quando você reserva e voa'],
             ['Segurança', 'Endereço IP, data e hora dos logins, tentativas de login com erro, ações importantes e as configurações da autenticação em dois fatores (chave do autenticador e códigos de recuperação)', 'Quando você entra, usa o site ou ativa a autenticação em dois fatores']

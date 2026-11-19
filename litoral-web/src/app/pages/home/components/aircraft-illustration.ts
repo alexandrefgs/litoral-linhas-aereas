@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-aircraft-illustration',
   host: { class: 'block' },
   template: `
-    <svg viewBox="0 0 400 150" class="h-auto w-full" role="img" aria-label="Boeing 737 Litoral">
+    <svg viewBox="0 0 400 150" class="h-auto w-full" role="img" aria-label="Litoral aircraft">
       <path d="M30 92 Q20 92 22 84 Q30 72 70 70 L330 70 Q350 70 362 60 L388 22 L398 22 L392 70 Q392 92 370 96 L60 100 Q34 100 30 92 Z" fill="#FFFFFF" />
       <path d="M340 70 L366 22 L396 22 L392 70 Z" fill="#1D6FD8" />
       <path d="M346 66 Q366 46 394 40 L393 50 Q370 54 352 70 Z" fill="#2EC4B6" />

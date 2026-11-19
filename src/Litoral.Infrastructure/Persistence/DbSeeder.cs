@@ -26,6 +26,7 @@ public static class DbSeeder
         await SeedScoringRulesAsync(db);
         await SeedRejectionPenaltiesAsync(db);
         await MelCatalogSeed.SeedAsync(db);
+        await Boeing777Seed.SeedAsync(db);
         await SeedDeliveryAirportsAsync(db);
 
         await db.SaveChangesAsync();

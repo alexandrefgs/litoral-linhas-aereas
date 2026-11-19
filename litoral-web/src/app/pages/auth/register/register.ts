@@ -156,12 +156,12 @@ type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword'
           </div>
 
           <div>
-            <p class="field-label">737 add-ons you have</p>
+            <p class="field-label">Aircraft add-ons you have</p>
             <div class="mt-1 grid gap-2 sm:grid-cols-2">
               @for (addOn of status()!.addOns; track addOn) {
                 <label class="flex cursor-pointer items-center gap-2.5 rounded-md border border-line px-3 py-2 text-sm text-ink hover:bg-surface-alt">
                   <input type="checkbox" class="h-4 w-4 accent-primary" [checked]="addOns().has(addOn)" (change)="toggleAddOn(addOn)" />
-                  {{ addOn === 'Other' ? 'Other quality 737 add-on' : addOn }}
+                  {{ addOn === 'Other' ? 'Other quality add-on' : addOn }}
                 </label>
               }
             </div>

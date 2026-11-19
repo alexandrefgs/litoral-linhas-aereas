@@ -10,7 +10,7 @@ public sealed class PilotApplication : Entity
     public const int MaxAddOnsLength = 200;
 
     public static readonly IReadOnlyList<string> Simulators = ["MSFS 2020", "MSFS 2024", "X-Plane 11", "X-Plane 12", "Prepar3D"];
-    public static readonly IReadOnlyList<string> AddOnOptions = ["PMDG 737", "iFly 737 MAX 8", "Zibo 737-800", "LevelUp 737NG", "Other"];
+    public static readonly IReadOnlyList<string> AddOnOptions = ["PMDG 737", "PMDG 777", "iFly 737 MAX 8", "Zibo 737-800", "LevelUp 737NG", "Other"];
 
     public string UserId { get; private set; } = null!;
     public string FirstName { get; private set; } = null!;

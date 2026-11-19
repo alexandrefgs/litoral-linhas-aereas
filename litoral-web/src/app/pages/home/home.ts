@@ -72,7 +72,7 @@ import { FlipCounter } from './components/flip-counter';
           </div>
         </div>
         <div class="space-y-5 text-ink-muted">
-          <p class="text-lg font-semibold text-ink">Litoral is a Brazilian VA dedicated to serious simulation, with a 100% Boeing 737 fleet.</p>
+          <p class="text-lg font-semibold text-ink">Litoral is a Brazilian VA dedicated to serious simulation, flying passenger jets and freighters.</p>
           <p>Our pilots fly on the IVAO and VATSIM networks, using MSFS 2020, MSFS 2024, X-Plane and Prepar3D, with hubs in Guarulhos, Florianópolis, Brasília, Manaus and Fortaleza, plus a cargo operation out of Viracopos.</p>
           <p class="text-lg font-semibold text-ink">Our mission is to deliver a realistic, professional and fun airline experience.</p>
           <p>Here you build your career from First Officer to Captain, plan every flight with SimBrief and track your progress through hours and points. All in a welcoming environment where we learn together and share our passion for aviation.</p>
@@ -221,14 +221,14 @@ export class Home implements OnInit {
   protected readonly simulators = ['MSFS 2020', 'MSFS 2024', 'X-Plane 11 / 12', 'Prepar3D'];
 
   protected readonly experienceCards = [
-    { key: 'operate', step: 'Operate', title: '100% Boeing 737 fleet', text: 'From the 737-600 to the MAX 8, plus the 737-800BCF freighter. Every route respects the real range of the chosen aircraft.', icon: 'ti-plane', tags: 'B736 · B737 · B738 · B739 · B38M' },
+    { key: 'operate', step: 'Operate', title: 'Passenger and cargo fleet', text: 'Narrowbodies for the regional network, widebodies for long haul and freighters for cargo. Every route respects the real range of the chosen aircraft.', icon: 'ti-plane', tags: 'Passenger · Cargo' },
     { key: 'brief', step: 'Brief', title: 'Planning with SimBrief', text: 'Book the flight and open SimBrief already filled in. Route, fuel and weights show up in your briefing before takeoff.', icon: 'ti-file-text', tags: 'SimBrief · OFP' },
     { key: 'fly', step: 'Fly', title: 'ACARS and scoring', text: 'Your flight is tracked from push back to the gate. Landing, procedures and deviations set the points that take you to the left seat.', icon: 'ti-radar-2', tags: 'ACARS · PIREP' }
   ];
 
   protected readonly highlights = [
     'Flights from Brazil to the Americas',
-    '100% Boeing 737 fleet',
+    'Passenger and cargo fleet',
     'Works with MSFS, X-Plane and P3D',
     'Fly on IVAO and VATSIM',
     'Career from First Officer to Captain'
@@ -239,7 +239,7 @@ export class Home implements OnInit {
     return [
       { value: s.activePilots, label: 'Pilots', text: 'Active pilots flying with the LITORAL callsign.' },
       { value: s.hubs, label: 'Hubs', text: 'Passenger and cargo bases across Brazil.' },
-      { value: s.aircraftTypes, label: 'Fleet models', text: 'Boeing 737 variants, passenger and freighter.' },
+      { value: s.aircraftTypes, label: 'Fleet models', text: 'Passenger jets and freighters.'},
       { value: s.destinations, label: 'Destinations', text: 'And growing with every new route.' }
     ];
   }

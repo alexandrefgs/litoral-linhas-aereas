@@ -20,7 +20,7 @@ const RANK_ICONS = ['ti-user', 'ti-star', 'ti-crown'];
       <div class="mx-auto max-w-6xl px-6 py-16">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-sol-300">Career at Litoral</p>
         <h1 class="mt-2 max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">From the right seat to the left seat</h1>
-        <p class="mt-4 max-w-2xl text-white/80">Every pilot starts as a First Officer. Fly online, earn points with good flying and reach the command of a Litoral 737.</p>
+        <p class="mt-4 max-w-2xl text-white/80">Every pilot starts as a First Officer. Fly online, earn points with good flying and reach the left seat of a Litoral jet.</p>
       </div>
     </section>
 

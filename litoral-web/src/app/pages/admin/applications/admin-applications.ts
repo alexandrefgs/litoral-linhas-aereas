@@ -74,7 +74,7 @@ import { ConfirmService } from '../../../shared/confirm-dialog/confirm.service';
                   <p class="mt-1 text-ink">{{ a.simulator }}</p>
                 </div>
                 <div class="text-sm">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">737 add-ons</p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Aircraft add-ons</p>
                   <div class="mt-1 flex flex-wrap gap-1">
                     @for (addOn of a.addOns; track addOn) {
                       <span class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{{ addOn }}</span>

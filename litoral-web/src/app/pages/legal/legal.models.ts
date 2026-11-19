@@ -21,6 +21,6 @@ export interface LegalDocument {
   sections: LegalSection[];
 }
 
-export const LEGAL_UPDATED_AT = '2026-11-18';
+export const LEGAL_UPDATED_AT = '2026-11-19';
 export const LEGAL_CONTACT_EMAIL = 'contact@litoral (to be defined)';
 export const LEGAL_DPO_ROLE = 'CEO & Founder';
