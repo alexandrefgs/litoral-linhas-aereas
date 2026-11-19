@@ -96,6 +96,27 @@ public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport su
         var a = Math.Pow(Math.Sin(dLat / 2), 2) + Math.Cos(Rad(lat1)) * Math.Cos(Rad(lat2)) * Math.Pow(Math.Sin(dLon / 2), 2);
         return 2 * earthRadiusNm * Math.Asin(Math.Sqrt(a));
     }
+        public async Task<AcarsBookingDto?> GetBookingAsync(string userId, CancellationToken ct)
+    {
+        var pilot = await support.GetPilotAsync(userId, ct);
+        var booking = await support.FindOpenBookingAsync(pilot.Id, ct);
+        if (booking is null) return null;
+
+        var departure = booking.Route.DepartureAirport;
+        var arrival = booking.Route.ArrivalAirport;
+        return new AcarsBookingDto(
+            booking.Id,
+            booking.Callsign,
+            departure.Icao,
+            departure.Latitude,
+            departure.Longitude,
+            arrival.Icao,
+            arrival.Latitude,
+            arrival.Longitude,
+            booking.Aircraft.Registration,
+            booking.Aircraft.AircraftType.IcaoCode,
+            booking.Aircraft.AircraftType.Name);
+    }
 
     public async Task<FlightSessionDto?> GetActiveAsync(string userId, CancellationToken ct)
     {

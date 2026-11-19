@@ -1,11 +1,14 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Litoral.Acars.Core/Litoral.Acars.Core.csproj" />
+    <Project Path="src/Litoral.Acars/Litoral.Acars.csproj" />
     <Project Path="src/Litoral.Api/Litoral.Api.csproj" />
     <Project Path="src/Litoral.Application/Litoral.Application.csproj" />
     <Project Path="src/Litoral.Domain/Litoral.Domain.csproj" />
     <Project Path="src/Litoral.Infrastructure/Litoral.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Litoral.Acars.Tests/Litoral.Acars.Tests.csproj" />
     <Project Path="tests/Litoral.Api.IntegrationTests/Litoral.Api.IntegrationTests.csproj" />
     <Project Path="tests/Litoral.Domain.Tests/Litoral.Domain.Tests.csproj" />
   </Folder>

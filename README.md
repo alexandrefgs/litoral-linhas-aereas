@@ -63,7 +63,7 @@ O sistema reúne em um só lugar:
 - Páginas públicas de **staff** e **carreira**
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - **Briefing** com METAR/TAF, OFP e loadsheet do **SimBrief** na própria página
-- Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
+- Acompanhamento do voo pelo **Litoral ACARS** (app para Windows com FSUIPC7, MSFS 2020/2024), camada pronta para o **smartCARS 3** e envio automático de **PIREP**
 - Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety, promoção automática e **extrato de pontos** do piloto
 - **Estatísticas** da VA e do piloto, ranking geral e **pilotos do mês** com bônus automático
 - **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
@@ -302,7 +302,7 @@ Cada piloto tem um perfil público em `/profile/{número}`:
 - **Awards:** os awards do piloto, com imagem, descrição e data (veja [Awards e Downloads](#awards-e-downloads)).
 - **Downloads:** liveries, documentos e software da companhia, só para membros.
 
-Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
+Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, cria as **chaves de ACARS**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
 
 **Excluir conta:** também em Settings, o piloto pode excluir a própria conta. São duas confirmações: a primeira lista tudo o que será apagado, e a segunda (*Are you sure?*) pede a senha. A exclusão é **permanente** e apaga perfil, fotos, voos, PIREPs, flight logs, horas, pontos, escala, reservas, login e e-mail. Não é possível excluir com um voo aberto ou uma Special Flight em andamento, nem sendo do staff.
 
@@ -453,10 +453,11 @@ Eventos da companhia com **janela em UTC**, até **20 aeroportos** (nenhum = qua
 
 ## ACARS e PIREP
 
-A API tem uma camada de ACARS **neutra**: o smartCARS 3 (ou qualquer outro cliente) só precisa traduzir os dados dele para estes endpoints.
+A API tem uma camada de ACARS **neutra**: o [Litoral ACARS](#litoral-acars-windows), o smartCARS 3 ou qualquer outro cliente só precisam usar estes endpoints.
 
 | Etapa | Endpoint | O que acontece |
 |---|---|---|
+| Antes do voo | `GET /api/acars/booking` | Devolve o voo reservado (callsign, rota, aeronave e coordenadas) para o ACARS mostrar ao piloto |
 | Início do voo | `POST /api/acars/flight` | Cria a sessão de voo e passa a reserva e a aeronave para "em voo" |
 | Durante o voo | `POST /api/acars/flight/positions` | Grava a trilha (até 500 posições por lote) e a última posição para o mapa ao vivo |
 | Fim do voo | `POST /api/acars/flight/complete` | Recebe o resumo e os eventos, aplica as regras de pontuação e cria o PIREP como **Pending** |
@@ -467,6 +468,22 @@ A API tem uma camada de ACARS **neutra**: o smartCARS 3 (ou qualquer outro clien
 - A perna da escala mensal ou da Special Flight é concluída, liberando a próxima.
 - O jumpseat e o traslado de aeronave do piloto são liberados de novo.
 - Se a aeronave venceu algum check, ela entra em manutenção ou ganha um traslado de manutenção (veja [Manutenção](#manutenção)).
+
+### Litoral ACARS (Windows)
+
+App WPF em `src/Litoral.Acars`, que lê o simulador pelo **FSUIPC7** (MSFS 2020/2024) e entra com a **chave de ACARS** do piloto (veja [Chaves de ACARS](#chaves-de-acars)). A lógica fica em `src/Litoral.Acars.Core`, que é testada sem simulador.
+
+- **Configuração:** endereço do servidor e chave de ACARS. A chave fica criptografada para o usuário do Windows (DPAPI) e só trafega por https (http só para o próprio PC).
+- **Fluxo:** *Load flight* mostra o voo reservado, o piloto escolhe a rede (Offline, VATSIM ou IVAO), clica em *Start flight* e, depois do block on, em *File PIREP*.
+- **Leitura:** 4 vezes por segundo. A posição é gravada a cada 5 s, a cada 1 s abaixo de 2.500 ft AGL e a cada 30 s no portão. O lote vai para a API a cada 30 s e, se o envio falhar, fica guardado para a próxima tentativa.
+- **Detecta sozinho:** block off/on, decolagem, pouso (um quique não conta), VR, pitch na decolagem, flaps na decolagem e no pouso, altura da recolhida dos flaps e da configuração de pouso, primeiro motor, nível de cruzeiro, táxi de chegada, combustível em kg e distância.
+- **Fases:** Preflight, TaxiOut, Takeoff, Climb, Cruise, Descent, Approach, Landing, TaxiIn e Arrived.
+- **Eventos:** overspeed, stall, slew, pausa, sim rate, crash e reabastecimento em voo, com início e duração.
+- **Flaps:** tabela por tipo (737: 0/1/2/5/10/15/25/30/40; 777: 0/1/5/15/20/25/30). Tipo desconhecido não envia flaps.
+- **Dados incompletos:** se a leitura do simulador parar por mais de 60 s durante o voo, o PIREP vai marcado como incompleto.
+- **Alternado:** se o block on for a mais de 5 NM do destino, o app avisa para informar o aeroporto de pouso.
+- **Demo flight:** com o servidor em `localhost`, grava um voo roteirizado para testar sem abrir o simulador.
+- **Ainda não faz:** retomar um voo depois de fechar o app, porcentagem online e frequência do COM1 (ficam para o Safety).
 
 **PIREP manual:** se o ACARS falhar, o piloto envia o PIREP pelo Briefing, com comentário obrigatório. Ele **sempre passa pela revisão**.
 
@@ -747,11 +764,21 @@ As métricas ficam em memória e recomeçam quando a API reinicia.
 - qrcode (QR do app autenticador)
 - Tema claro, escuro e automático
 
+**ACARS (desktop)**
+- WPF (.NET 10) para Windows
+- FSUIPCClientDLL (FSUIPC7) para ler o MSFS 2020/2024
+- DPAPI para guardar a chave de ACARS
+
+**Testes**
+- xUnit
+- WebApplicationFactory + Testcontainers (SQL Server)
+
 **Integrações**
 - SimBrief (leitura do OFP, PDF e geração por popup com a API)
 - aviationweather.gov (METAR e TAF)
 - **ChartFox**: link para as cartas de cada aeroporto
-- **smartCARS 3**: a API do Litoral implementa a [especificação REST](https://github.com/invernyx/smartcars-3-phpvms5-api/blob/development/openapi.json) usada pelo app, em .NET, sem PHP
+- **FSUIPC7**: leitura do simulador pelo Litoral ACARS
+- **smartCARS 3** (planejado): a API do Litoral vai implementar a [especificação REST](https://github.com/invernyx/smartcars-3-phpvms5-api/blob/development/openapi.json) usada pelo app, em .NET, sem PHP
 - **OurAirports**: catálogo de aeroportos para a busca por ICAO
 - **Wikimedia Commons**: origem recomendada das fotos de aeroportos, com crédito do autor
 - **VATSIM Radar** e **IVAO Webeye**: links para acompanhar o voo na rede
@@ -763,7 +790,8 @@ As métricas ficam em memória e recomeçam quando a API reinicia.
 ```mermaid
 flowchart LR
     WEB["litoral-web<br/>Angular + Tailwind"] -->|/api via proxy| API
-    ACARS["smartCARS 3<br/>(simulador)"] -->|posição / PIREP| API
+    ACARS["Litoral ACARS<br/>WPF + FSUIPC7"] -->|chave de ACARS<br/>posição / PIREP| API
+    SIM["MSFS 2020/2024"] -.-> ACARS
     API["Litoral.Api<br/>Controllers, Auth, Swagger"] --> APP["Litoral.Application<br/>Casos de uso"]
     API --> INFRA["Litoral.Infrastructure<br/>EF Core, Identity, Seed"]
     APP --> DOMAIN["Litoral.Domain<br/>Entidades e regras"]
@@ -779,6 +807,8 @@ flowchart LR
 | **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão, pontuação e estatísticas |
 | **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção, pagamento dos pilotos do mês, inatividade e retenção de dados) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
+| **Acars.Core** | Conversão dos offsets do FSUIPC, gravador do voo (fases, eventos e resumo), tabela de flaps e cliente da API |
+| **Acars** | App WPF: leitura do FSUIPC7, tela do voo e configurações |
 
 ---
 
@@ -790,7 +820,13 @@ litoral-linhas-aereas/
 │   ├── Litoral.Domain/          # Entidades, enums, staff e regras
 │   ├── Litoral.Application/     # Contratos e casos de uso
 │   ├── Litoral.Infrastructure/  # DbContext, configurações, migrations, seed, auth
-│   └── Litoral.Api/             # Controllers, Program.cs e Swagger
+│   ├── Litoral.Api/             # Controllers, Program.cs e Swagger
+│   ├── Litoral.Acars.Core/      # Lógica do ACARS: FSUIPC, gravador do voo e cliente da API
+│   └── Litoral.Acars/           # App WPF do Litoral ACARS (Windows)
+├── tests/
+│   ├── Litoral.Domain.Tests/          # Motor de pontuação e chaves de ACARS
+│   ├── Litoral.Acars.Tests/           # Conversões, gravador do voo e cliente do ACARS
+│   └── Litoral.Api.IntegrationTests/  # API com SQL Server no Testcontainers
 ├── litoral-web/                 # Front-end Angular
 │   ├── public/                  # favicon, insígnias das patentes e logos das networks
 │   └── src/app/
@@ -872,6 +908,27 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 > A porta da API pode variar. Confira em `src/Litoral.Api/Properties/launchSettings.json` e, se mudar, atualize `litoral-web/proxy.conf.json`.
 
+### Litoral ACARS
+
+Precisa de Windows, do **MSFS 2020 ou 2024** e do **FSUIPC7** abertos.
+
+1. No site, crie uma chave em **Settings › ACARS keys** e reserve um voo.
+2. Rode o app:
+   ```bash
+   dotnet run --project src/Litoral.Acars
+   ```
+3. Em **Connection**, informe o servidor (`https://localhost:7112` em desenvolvimento), cole a chave e clique em **Save**.
+4. Clique em **Load flight**, escolha a rede e clique em **Start flight** com a aeronave no portão.
+
+Sem simulador, com a API em `localhost`, o botão **Demo flight** grava um voo roteirizado para testar o fluxo inteiro. As configurações ficam em `%AppData%\Litoral ACARS\settings.json`, com a chave criptografada.
+
+### Testes
+
+```bash
+dotnet test
+```
+Os testes de integração sobem um SQL Server no **Docker** (Testcontainers), então o Docker Desktop precisa estar aberto. A primeira execução baixa a imagem e demora alguns minutos.
+
 ### Comandos úteis
 
 | Comando | O que faz |
@@ -880,6 +937,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 | `npm run api` | Sobe só a API (com hot reload) |
 | `npm run web` | Sobe só o front |
 | `dotnet build` | Compila a solução |
+| `dotnet test` | Roda os testes de Domain, ACARS e integração |
+| `dotnet run --project src/Litoral.Acars` | Abre o Litoral ACARS |
 | `dotnet ef migrations add Nome --project src/Litoral.Infrastructure --startup-project src/Litoral.Api --output-dir Persistence/Migrations` | Cria uma migration |
 
 ---
@@ -982,7 +1041,11 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Aeronave reservada enquanto a Special Flight estiver aberta
 
 ### 🔜 Fase 4: ACARS e PIREP
+- [x] Camada de ACARS neutra: voo reservado, início do voo, posições, eventos e conclusão
 - [x] Chave pessoal de ACARS (Settings), aceita só nos endpoints de ACARS
+- [x] **Litoral ACARS v0** (Windows, FSUIPC7, MSFS 2020/2024) com trilha, eventos e PIREP automático
+- [ ] Retomar um voo depois de fechar o Litoral ACARS
+- [ ] Porcentagem online (feed da VATSIM/IVAO) e checagem da frequência do COM1
 - [x] Trilha do voo e última posição gravadas por sessão
 - [x] Motor de pontuação com regras editáveis (Admin › Scoring) e % de conformidade
 - [x] PIREP automático ao final do voo e PIREP manual (sempre revisado)
@@ -996,7 +1059,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Callsign real usado na network gravado na sessão
 - [x] Aprovação automática de PIREPs com conformidade ≥ 98%
 - [x] Notificação ao piloto quando o PIREP for revisado
-- [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
+- [ ] Compatibilidade com X-Plane 11/12 e P3D
 
 ### 🔜 Fase 5: Estatísticas e comunidade
 - [x] Estatísticas do piloto e da VA
@@ -1024,8 +1087,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 ### 🔜 Fase 6: Produção
 - [x] Monitor do sistema para o CEO (saúde da API e do banco, tráfego, integrações, jobs, erros e armazenamento)
-- [x] Testes unitários do Domain (motor de pontuação e chaves de ACARS)
-- [x] Testes de integração da API com Testcontainers (fluxo de ACARS e chaves)
+- [x] Testes unitários do Domain (motor de pontuação e chaves de ACARS) e do ACARS (conversões do FSUIPC, gravador do voo e cliente da API)
+- [x] Testes de integração da API com Testcontainers (fluxo de ACARS, chaves e voo completo pelo cliente do Litoral ACARS)
 - [ ] CI com GitHub Actions (build e testes)
 - [ ] Configuração de ambiente de produção (segredos, connection strings, chave CARTO e chaves do Data Protection)
 - [ ] Trava que impede subir em produção com a chave JWT de desenvolvimento
@@ -1044,7 +1107,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 
 **Alexandre**, CEO & Founder da Litoral Linhas Aéreas
 
-[![GitHub](https://img.shields.io/badge/GitHub-alexandrefgs-181717?logo=github)](https://github.com/alexandrefgs)
+[![GitHub](https://img.shields.io/badge/GitHub-alexandrefgs/181717?logo=github)](https://github.com/alexandrefgs)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-alexandre--fgs-0A66C2?logo=linkedin)](https://www.linkedin.com/in/alexandre-fgs)
 
 ---

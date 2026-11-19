@@ -1,5 +1,18 @@
 namespace Litoral.Application.Flights;
 
+public sealed record AcarsBookingDto(
+    Guid BookingId,
+    string Callsign,
+    string DepartureIcao,
+    double DepartureLatitude,
+    double DepartureLongitude,
+    string ArrivalIcao,
+    double ArrivalLatitude,
+    double ArrivalLongitude,
+    string Registration,
+    string AircraftTypeIcao,
+    string AircraftTypeName);
+
 public sealed record StartFlightRequest(string Network, string? Simulator, string? Client);
 
 public sealed record PositionReport(
@@ -135,6 +148,7 @@ public sealed record SimulateFlightRequest(string Scenario);
 
 public interface IFlightTrackingService
 {
+    Task<AcarsBookingDto?> GetBookingAsync(string userId, CancellationToken ct);
     Task<FlightSessionDto?> GetActiveAsync(string userId, CancellationToken ct);
     Task<FlightSessionDto> StartAsync(string userId, StartFlightRequest request, CancellationToken ct);
     Task<int> ReportPositionsAsync(string userId, PositionBatchRequest request, CancellationToken ct);

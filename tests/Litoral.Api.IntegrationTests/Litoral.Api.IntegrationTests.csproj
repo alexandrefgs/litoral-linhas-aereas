@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Litoral.Acars.Core\Litoral.Acars.Core.csproj" />
     <ProjectReference Include="..\..\src\Litoral.Api\Litoral.Api.csproj" />
   </ItemGroup>
 
