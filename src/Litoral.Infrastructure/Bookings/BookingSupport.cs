@@ -79,13 +79,15 @@ public sealed class BookingSupport(LitoralDbContext db)
     public async Task<List<Aircraft>> AvailableAircraftAsync(Route route, CancellationToken ct)
     {
         var typeIds = route.AircraftTypes.Select(t => t.Id).ToList();
+        var now = DateTime.UtcNow;
 
         return await db.Aircraft
             .Include(a => a.AircraftType)
             .Where(a => a.CurrentAirportId == route.DepartureAirportId
                 && a.Status == AircraftStatus.Available
                 && typeIds.Contains(a.AircraftTypeId)
-                && !HeldAircraftIds().Contains(a.Id))
+                && !HeldAircraftIds().Contains(a.Id)
+                && !db.AircraftMelItems.Any(m => m.AircraftId == a.Id && m.ClosedAt == null && m.DueAt <= now))
             .OrderBy(a => a.Registration)
             .ToListAsync(ct);
     }

@@ -178,6 +178,38 @@ type Decision = 'approve' | 'reject';
           </div>
 
           <div class="flex flex-col gap-6">
+            @if (d.melChecks.length) {
+              <div class="panel flex flex-col gap-3 p-6">
+                <h2 class="flex items-center gap-2 text-lg font-bold text-ink"><i class="ti ti-tool text-xl text-highlight" aria-hidden="true"></i>MEL items on this flight</h2>
+                @for (m of d.melChecks; track m.id) {
+                  <div class="rounded-lg border p-3 text-sm"
+                    [class]="m.result === 'Pending' ? 'border-highlight/60 bg-highlight/10' : m.result === 'Complied' ? 'border-onda-500/40 bg-onda-500/5' : 'border-danger/40 bg-danger/5'">
+                    <p class="font-semibold text-ink"><span class="font-mono text-xs">MEL {{ m.code }}</span> · {{ m.title }}</p>
+                    <p class="mt-1 text-ink"><span class="font-semibold">Restriction:</span> {{ m.restriction }}</p>
+                    <p class="mt-1 text-ink-muted"><span class="font-semibold text-ink">Procedure:</span> {{ m.procedure }}</p>
+                    @if (m.detail) {
+                      <p class="mt-1 text-xs text-ink-muted">{{ m.detail }}</p>
+                    }
+                    <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <span class="text-xs font-semibold" [class]="m.result === 'Pending' ? 'text-ink' : m.result === 'Complied' ? 'text-onda-600' : 'text-danger'">
+                        {{ m.result === 'Pending' ? 'Waiting for your decision' : m.result === 'Complied' ? 'Procedure followed' : 'Procedure not followed' }}
+                      </span>
+                      @if (m.result === 'Pending' && pending()) {
+                        <div class="flex gap-2">
+                          <button type="button" class="btn-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs" [disabled]="busy()" (click)="decideMel(m.id, false)">
+                            <i class="ti ti-x" aria-hidden="true"></i>Not followed
+                          </button>
+                          <button type="button" class="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs" [disabled]="busy()" (click)="decideMel(m.id, true)">
+                            <i class="ti ti-check" aria-hidden="true"></i>Followed
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
             <div class="panel flex flex-col gap-3 p-6">
               <h2 class="text-lg font-bold text-ink">Events</h2>
               @if (p.events.length === 0) {
@@ -207,7 +239,7 @@ type Decision = 'approve' | 'reject';
                 <div class="rounded-lg border border-line px-4 py-3 text-sm">
                   <p class="text-ink">
                     <i class="ti ti-circle-check mr-1 text-onda-500" aria-hidden="true"></i>
-                    Approve: <span class="font-semibold">{{ s.hasRejection ? 'not possible while a rejection item is active' : signed(s.scorePoints) + ' pts' }}</span>
+                    Approve: <span class="font-semibold">{{ s.hasRejection ? 'not possible while a rejection item is active' : melPending() ? 'decide the MEL items first' : signed(s.scorePoints) + ' pts' }}</span>
                   </p>
                   <p class="mt-1 text-ink">
                     <i class="ti ti-circle-x mr-1 text-danger" aria-hidden="true"></i>
@@ -224,7 +256,7 @@ type Decision = 'approve' | 'reject';
                   <button type="button" class="rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger hover:text-white disabled:opacity-60"
                     [disabled]="busy()" (click)="askReject()">Reject</button>
                   <button type="button" class="rounded-md bg-onda-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-                    [disabled]="busy() || s.hasRejection" (click)="askApprove()">{{ busy() ? 'Loading...' : 'Approve' }}</button>
+                    [disabled]="busy() || s.hasRejection || melPending()" (click)="askApprove()">{{ busy() ? 'Loading...' : 'Approve' }}</button>
                 </div>
 
                 @if (actionError(); as message) {
@@ -259,6 +291,7 @@ export class AdminPirepReview implements OnInit {
   protected note = '';
 
   protected readonly pending = computed(() => this.data()?.pirep.summary.status === 'Pending');
+  protected readonly melPending = computed(() => (this.data()?.melChecks ?? []).some(m => m.result === 'Pending'));
 
   protected readonly conformityClass = computed(() => {
     const value = this.data()?.pirep.summary.conformity ?? 0;
@@ -292,6 +325,10 @@ export class AdminPirepReview implements OnInit {
       this.quantity = 1;
       return result;
     });
+  }
+
+  protected decideMel(checkId: string, complied: boolean): void {
+    this.run(() => this.api.decideMel(this.id, checkId, complied));
   }
 
   protected async askApprove(): Promise<void> {

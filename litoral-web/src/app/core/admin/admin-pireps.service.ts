@@ -30,6 +30,10 @@ export class AdminPirepsService {
     return firstValueFrom(this.http.post<AdminPirep>(`${BASE_URL}/${id}/approve`, { note }));
   }
 
+  decideMel(id: string, checkId: string, complied: boolean): Promise<AdminPirep> {
+    return firstValueFrom(this.http.post<AdminPirep>(`${BASE_URL}/${id}/mel/${checkId}`, { complied }));
+  }
+
   reject(id: string, note: string): Promise<AdminPirep> {
     return firstValueFrom(this.http.post<AdminPirep>(`${BASE_URL}/${id}/reject`, { note }));
   }

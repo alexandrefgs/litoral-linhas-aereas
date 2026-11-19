@@ -3,12 +3,13 @@ using Litoral.Domain.Common;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Fleet;
+using Litoral.Infrastructure.Mel;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Operations;
 
-public sealed class MaintenanceFerryPlanner(LitoralDbContext db, SpecialFlightSupport support)
+public sealed class MaintenanceFerryPlanner(LitoralDbContext db, SpecialFlightSupport support, MelTracker mel)
 {
     public static readonly TimeSpan FerryWindow = TimeSpan.FromDays(3);
 
@@ -67,6 +68,7 @@ public sealed class MaintenanceFerryPlanner(LitoralDbContext db, SpecialFlightSu
 
         public async Task AfterMaintenanceAsync(Aircraft aircraft, MaintenanceCheck? completed, CancellationToken ct)
     {
+        await mel.CloseAllAsync(aircraft, completed is { } done ? $"Fixed during the {done} check" : "Fixed during maintenance", ct);
         if (completed is not { } check || !MaintenancePolicy.IsHeavy(check) || !aircraft.IsAvailable) return;
 
         var here = await LocationAsync(aircraft, ct);

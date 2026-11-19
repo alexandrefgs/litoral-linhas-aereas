@@ -7,6 +7,7 @@ import { BookingService } from '../../core/booking/booking.service';
 import { BOOKING_TYPE_LABEL } from '../../core/flights/flight.models';
 import { NETWORK_LOGOS } from '../../core/pirep/pirep.models';
 import { CrewCard } from '../../shared/crew-card/crew-card';
+import { TechLog } from '../../shared/tech-log/tech-log';
 import { countryFlagUrl } from '../../shared/utils/country-flag';
 import { formatMinutes } from '../../shared/utils/flight';
 import { BriefingAirport } from './briefing-airport';
@@ -23,7 +24,7 @@ const WEATHER_RETRY_MS = 30 * 1000;
 
 @Component({
   selector: 'app-briefing',
-  imports: [DatePipe, NgTemplateOutlet, RouterLink, CrewCard, BriefingAirport, FlightActions, Loadsheet, OfpViewer],
+  imports: [DatePipe, NgTemplateOutlet, RouterLink, CrewCard, BriefingAirport, FlightActions, Loadsheet, OfpViewer, TechLog],
   template: `
     <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
       @if (loading()) {
@@ -145,6 +146,7 @@ const WEATHER_RETRY_MS = 30 * 1000;
                     <div><p class="text-[11px] text-ink-muted">Last flight</p><p class="font-semibold text-ink">{{ b.aircraft.lastFlightAt ? (b.aircraft.lastFlightAt | date: 'd MMM y') : '—' }}</p></div>
                   </div>
                 </div>
+                <app-tech-log [aircraftId]="b.aircraft.id" [typeIcao]="b.aircraft.typeIcao" />
               </div>
             </div>
           </aside>

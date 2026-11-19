@@ -22,7 +22,8 @@ public enum ScoringCategory
     Inactivity,
     PilotsOfTheMonth,
     AccountLoss,
-    RejectionPenalties
+    RejectionPenalties,
+    Mel
 }
 
 public enum ScoringOutcome
@@ -101,5 +102,7 @@ public enum ScoringCheck
     PilotOfTheMonth,
     AccountLoss,
     MonthlyRejection,
-    RejectionDeactivation
+    RejectionDeactivation,
+    MelCompliance,
+    MelViolation
 }

@@ -14,6 +14,7 @@ const MENU: AdminMenuItem[] = [
   { area: 'routes', label: 'Airports', icon: 'ti-building-airport', path: '/admin/airports' },
   { area: 'routes', label: 'Routes', icon: 'ti-route', path: '/admin/routes' },
   { area: 'fleet', label: 'Fleet', icon: 'ti-plane', path: '/admin/fleet' },
+  { area: 'fleet', label: 'MEL / CDL', icon: 'ti-tool', path: '/admin/mel' },
   { area: 'pilots', label: 'Pilots', icon: 'ti-users', path: '/admin/pilots' },
   { area: 'pilots', label: 'Applications', icon: 'ti-user-plus', path: '/admin/applications' },
   { area: 'pilots', label: 'Privacy', icon: 'ti-lock', path: '/admin/privacy' },

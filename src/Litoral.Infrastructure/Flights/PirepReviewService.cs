@@ -1,6 +1,8 @@
 using Litoral.Application.Admin;
 using Litoral.Application.Common;
 using Litoral.Application.Flights;
+using Litoral.Application.Mel;
+using Litoral.Infrastructure.Mel;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Scoring;
@@ -73,6 +75,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, 
     public async Task<AdminPirepDto> ApproveAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct)
     {
         var pirep = await FindAsync(id, ct);
+        if (await db.FlightMelChecks.AnyAsync(c => c.PirepId == pirep.Id && c.Result == MelCheckResult.Pending, ct))
+            throw new AppException(AppErrorKind.Validation, "Decide the MEL items of this flight before approving it.");
         await ApplyApprovalAsync(pirep, reviewerUserId, request.Note, ct);
         await db.SaveChangesAsync(ct);
         return await ToDtoAsync(pirep, ct);
@@ -86,7 +90,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, 
             || pirep.Source != PirepSource.Acars
             || pirep.HasRejection
             || pirep.Conformity < AutoApprovalConformity
-            || !pirep.Pilot.IsActive)
+            || !pirep.Pilot.IsActive
+            || await db.FlightMelChecks.AnyAsync(c => c.PirepId == pirep.Id && c.Result == MelCheckResult.Pending, ct))
             return false;
 
         await ApplyApprovalAsync(pirep, SystemReviewer, null, ct);
@@ -125,6 +130,29 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, 
             $"/flights/{pirep.Id}");
 
         await UpdateRankAsync(pilot, ct);
+    }
+
+    public async Task<AdminPirepDto> DecideMelAsync(Guid id, Guid checkId, string reviewerUserId, DecideMelRequest request, CancellationToken ct)
+    {
+        var pirep = await FindAsync(id, ct);
+        if (!pirep.IsPending)
+            throw new AppException(AppErrorKind.Conflict, "This PIREP was already reviewed.");
+
+        var check = await db.FlightMelChecks
+            .Include(c => c.AircraftMelItem).ThenInclude(a => a.MelItem)
+            .FirstOrDefaultAsync(c => c.Id == checkId && c.PirepId == pirep.Id, ct)
+            ?? throw new AppException(AppErrorKind.NotFound, "MEL item not found in this PIREP.");
+
+        var reviewer = await db.Pilots.Where(p => p.UserId == reviewerUserId).Select(p => p.FirstName + " " + p.LastName).FirstOrDefaultAsync(ct) ?? "Staff";
+        check.Decide(request.Complied, reviewer);
+
+        var rule = await db.ScoringRules.AsNoTracking().FirstOrDefaultAsync(r => r.IsActive
+            && r.Check == (request.Complied ? ScoringCheck.MelCompliance : ScoringCheck.MelViolation), ct);
+        if (rule is not null)
+            pirep.AddMelItem(rule, $"{MelSupport.Label(check.AircraftMelItem.MelItem)}: {(request.Complied ? "procedure followed" : "procedure not followed")}");
+
+        await db.SaveChangesAsync(ct);
+        return await ToDtoAsync(pirep, ct);
     }
 
     public async Task<AdminPirepDto> RejectAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct)
@@ -288,7 +316,30 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, 
                 .ToList(),
             pirep.IsPending
                 ? await RejectionPreviewAsync(pirep, ct)
-                : new RejectionPreviewDto(0, 0, false));
+                : new RejectionPreviewDto(0, 0, false),
+            await MelChecksAsync(pirep.Id, ct));
+    }
+
+    private async Task<IReadOnlyList<FlightMelCheckDto>> MelChecksAsync(Guid pirepId, CancellationToken ct)
+    {
+        var checks = await db.FlightMelChecks.AsNoTracking()
+            .Include(c => c.AircraftMelItem).ThenInclude(a => a.MelItem)
+            .Where(c => c.PirepId == pirepId)
+            .ToListAsync(ct);
+
+        return checks
+            .OrderBy(c => c.Result == MelCheckResult.Pending ? 0 : 1)
+            .ThenBy(c => c.AircraftMelItem.MelItem.Code)
+            .Select(c => new FlightMelCheckDto(
+                c.Id,
+                c.AircraftMelItem.MelItem.Code,
+                c.AircraftMelItem.MelItem.Title,
+                c.AircraftMelItem.MelItem.Restriction,
+                c.AircraftMelItem.MelItem.Procedure,
+                c.AircraftMelItem.MelItem.Verification.ToString(),
+                c.Result.ToString(),
+                c.Detail))
+            .ToList();
     }
 
     private static string Signed(int points) => points > 0 ? $"+{points}" : points.ToString();

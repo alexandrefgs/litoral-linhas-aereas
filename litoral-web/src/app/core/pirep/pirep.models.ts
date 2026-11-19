@@ -1,3 +1,4 @@
+import { FlightMelCheck } from '../mel/mel.models';
 export type PirepStatus = 'Pending' | 'Approved' | 'Rejected';
 export type FlightNetwork = 'Offline' | 'Vatsim' | 'Ivao';
 export type SimulationScenario = 'clean' | 'violations' | 'rejected';
@@ -148,4 +149,5 @@ export interface AdminPirep {
   reviewedByName: string | null;
   reviewRules: ReviewRule[];
   rejectionPreview: RejectionPreview;
+  melChecks: FlightMelCheck[];
 }

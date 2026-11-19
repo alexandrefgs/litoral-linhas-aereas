@@ -7,12 +7,12 @@ using Litoral.Domain.Flights;
 using Litoral.Domain.Scoring;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Litoral.Infrastructure.Audit;
+using Litoral.Infrastructure.Mel;
 using Litoral.Infrastructure.Operations;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner maintenance, IAuditLog auditLog)
+public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner maintenance, MelTracker mel, IAuditLog auditLog)
 {
     public const decimal KgPerPound = 0.45359237m;
     private const int MaxTrackPoints = 1500;
@@ -74,6 +74,7 @@ public sealed class PirepFiling(LitoralDbContext db, MaintenanceFerryPlanner mai
         specialLeg?.SpecialFlight.CompleteLeg(booking.Id, DateTime.UtcNow);
         
         await maintenance.AfterFlightAsync(booking.Aircraft, specialLeg?.SpecialFlight, ct);
+        await mel.AfterFlightAsync(booking, pirep, data, landedAt, ct);
 
         session?.Complete();
 

@@ -1,6 +1,7 @@
 using Litoral.Api.Extensions;
 using Litoral.Application.Common;
 using Litoral.Application.Flights;
+using Litoral.Application.Mel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,6 +31,10 @@ public class AdminPirepsController(IPirepReviewService reviews) : ControllerBase
     [HttpPost("{id:guid}/approve")]
     public async Task<ActionResult<AdminPirepDto>> Approve(Guid id, ReviewDecisionRequest request, CancellationToken ct) =>
         Ok(await reviews.ApproveAsync(id, User.GetUserId(), request, ct));
+
+    [HttpPost("{id:guid}/mel/{checkId:guid}")]
+    public async Task<ActionResult<AdminPirepDto>> DecideMel(Guid id, Guid checkId, DecideMelRequest request, CancellationToken ct) =>
+        Ok(await reviews.DecideMelAsync(id, checkId, User.GetUserId(), request, ct));
 
     [HttpPost("{id:guid}/reject")]
     public async Task<ActionResult<AdminPirepDto>> Reject(Guid id, ReviewDecisionRequest request, CancellationToken ct) =>

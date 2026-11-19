@@ -55,6 +55,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/fleet/admin-fleet').then(m => m.AdminFleet)
       },
       {
+        path: 'mel',
+        canActivate: [staffGuard('fleet')],
+        loadComponent: () => import('./pages/admin/mel/admin-mel').then(m => m.AdminMel)
+      },
+      {
         path: 'pireps',
         canActivate: [staffGuard('pireps')],
         loadComponent: () => import('./pages/admin/pireps/admin-pireps').then(m => m.AdminPireps)

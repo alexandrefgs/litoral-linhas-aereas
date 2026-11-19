@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AircraftOptions, BookingAircraft } from '../../core/booking/booking.models';
+import { PilotMelItem } from '../../core/mel/mel.models';
+import { MelService } from '../../core/mel/mel.service';
 
 @Component({
   selector: 'app-aircraft-picker-modal',
@@ -68,6 +70,13 @@ import { AircraftOptions, BookingAircraft } from '../../core/booking/booking.mod
                       </span>
                       <span class="px-4 pb-4 pt-3 text-center">
                         <span class="block font-semibold text-ink">{{ item.variant || item.typeIcao }}</span>
+                        @if (mel().get(item.id); as items) {
+                          <span class="mt-1 inline-flex items-center gap-1 rounded bg-highlight px-1.5 py-0.5 text-[11px] font-bold text-on-highlight"
+                            [title]="melTitle(items)">
+                            <i class="ti ti-tool" aria-hidden="true"></i>MEL ×{{ items.length }}
+                          </span>
+                          <span class="mt-1 block text-[11px] leading-snug text-ink-muted">{{ items[0].restriction }}</span>
+                        }
                         <span class="block text-xs text-ink-muted">
                           {{ item.lastFlightAt ? 'Last flight: ' + (item.lastFlightAt | date: 'd MMM y') : 'Never flown' }}
                         </span>
@@ -109,6 +118,8 @@ import { AircraftOptions, BookingAircraft } from '../../core/booking/booking.mod
   `
 })
 export class AircraftPickerModal {
+  private readonly melApi = inject(MelService);
+
   readonly title = input('');
   readonly options = input<AircraftOptions | null>(null);
   readonly cost = input(0);
@@ -119,6 +130,7 @@ export class AircraftPickerModal {
   readonly closed = output<void>();
 
   protected readonly selected = signal<string | null>(null);
+  protected readonly mel = signal(new Map<string, PilotMelItem[]>());
 
   protected readonly groups = computed(() => {
     const map = new Map<string, BookingAircraft[]>();
@@ -128,7 +140,27 @@ export class AircraftPickerModal {
     return [...map.entries()].map(([name, aircraft]) => ({ name, aircraft }));
   });
 
+  constructor() {
+    effect(() => {
+      const ids = (this.options()?.aircraft ?? []).map(a => a.id);
+      untracked(() => this.loadMel(ids));
+    });
+  }
+
+  protected melTitle(items: PilotMelItem[]): string {
+    return items.map(i => `${i.code} ${i.title}: ${i.restriction}`).join('\n');
+  }
+
   protected close(): void {
     if (!this.saving()) this.closed.emit();
+  }
+
+  private async loadMel(ids: string[]): Promise<void> {
+    try {
+      const list = await this.melApi.forAircraft(ids);
+      this.mel.set(new Map(list.map(a => [a.aircraftId, a.items])));
+    } catch {
+      this.mel.set(new Map());
+    }
   }
 }

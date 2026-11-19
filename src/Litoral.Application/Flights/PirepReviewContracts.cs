@@ -1,3 +1,4 @@
+using Litoral.Application.Mel;
 namespace Litoral.Application.Flights;
 
 public sealed record AdminPirepListItemDto(
@@ -18,7 +19,8 @@ public sealed record AdminPirepDto(
     bool PilotIsActive,
     string? ReviewedByName,
     IReadOnlyList<ReviewRuleDto> ReviewRules,
-    RejectionPreviewDto RejectionPreview);
+    RejectionPreviewDto RejectionPreview,
+    IReadOnlyList<FlightMelCheckDto> MelChecks);
 
 public sealed record AddReviewItemRequest(Guid RuleId, int Quantity);
 
@@ -33,4 +35,5 @@ public interface IPirepReviewService
     Task<AdminPirepDto> ApproveAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct);
     Task<AdminPirepDto> RejectAsync(Guid id, string reviewerUserId, ReviewDecisionRequest request, CancellationToken ct);
     Task<bool> TryAutoApproveAsync(Guid id, CancellationToken ct);
+    Task<AdminPirepDto> DecideMelAsync(Guid id, Guid checkId, string reviewerUserId, DecideMelRequest request, CancellationToken ct);
 }

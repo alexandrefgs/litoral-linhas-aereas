@@ -156,6 +156,16 @@ public sealed class Pirep : Entity
         Recalculate();
     }
 
+    public void AddMelItem(ScoringRule rule, string description)
+    {
+        EnsurePending();
+
+        var text = description.Length > 200 ? description[..200] : description;
+        var points = rule.Outcome == ScoringOutcome.Reject ? 0 : rule.Points;
+        _items.Add(new PirepScoreItem(rule.Id, rule.Category, rule.Check, text, rule.Outcome, points, 1, true));
+        Recalculate();
+    }
+
     public void RemoveItem(Guid ruleId)
     {
         EnsurePending();

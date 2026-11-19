@@ -47,6 +47,8 @@ using Litoral.Application.Tours;
 using Litoral.Infrastructure.Tours;
 using Litoral.Application.Events;
 using Litoral.Infrastructure.Events;
+using Litoral.Application.Mel;
+using Litoral.Infrastructure.Mel;
 
 namespace Litoral.Infrastructure;
 
@@ -150,6 +152,9 @@ public static class DependencyInjection
         services.AddScoped<EventBonus>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IEventAdminService, EventAdminService>();
+        services.AddScoped<MelTracker>();
+        services.AddScoped<IMelService, MelService>();
+        services.AddScoped<IMelAdminService, MelAdminService>();
         services.AddHostedService<MaintenanceReleaseService>();
         services.AddScoped<IStatisticsService, StatisticsService>();
         services.AddScoped<IPointsStatementService, PointsStatementService>();
