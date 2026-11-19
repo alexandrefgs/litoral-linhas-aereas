@@ -29,6 +29,8 @@
 - [Reserva de voos](#reserva-de-voos)
 - [Briefing](#briefing)
 - [Special Flights](#special-flights)
+- [Tours e eventos](#tours-e-eventos)
+- [Awards e Downloads](#awards-e-downloads)
 - [ACARS e PIREP](#acars-e-pirep)
 - [Pontos](#pontos)
 - [Estatísticas e ranking](#estatísticas-e-ranking)
@@ -55,6 +57,10 @@ O sistema reúne em um só lugar:
 - Frota com **localização real**: cada avião fica onde pousou pela última vez, com horas, ciclos e **manutenção A, C e D-check**
 - Página de **aeroportos** com aeronaves no solo, partidas e **jumpseat** cobrado pela distância
 - Reserva de voos aleatórios, personalizados, **escala mensal** e **Special Flights** (fretamentos, traslados, redeliveries, traslados de manutenção e voos de teste)
+- **Tours** de passageiros e cargueiros com award e bônus final, e **eventos** da companhia com bônus por voo
+- **MEL e CDL** com catálogo editável, itens abertos pelo staff ou pelo sistema, prazo por categoria e aeronave **AOG** quando o prazo vence
+- **Awards** no perfil do piloto e **Downloads** (liveries, documentos, software) mantidos pelo staff
+- Páginas públicas de **staff** e **carreira**
 - Tripulação virtual: todo voo tem um segundo piloto da VA escalado
 - **Briefing** com METAR/TAF, OFP e loadsheet do **SimBrief** na própria página
 - Acompanhamento do voo via **ACARS** (camada pronta para o **smartCARS 3**) e envio automático de **PIREP**
@@ -179,6 +185,36 @@ A manutenção segue os checks escalonados da aviação real. Os intervalos são
 - Se a aeronave vencer no meio de uma Special Flight de duas pernas, a perna 2 continua liberada e o check é tratado no fim.
 - O Fleet Manager ainda pode mandar uma aeronave para a manutenção manualmente, com um motivo, escolhendo o retorno **manual** ou **em uma data**, e liberá-la antes do prazo.
 
+#### MEL e CDL
+
+A Litoral tem uma **MEL** (itens inoperantes com que a aeronave pode voar) e uma **CDL** (peças externas faltando), com textos próprios da companhia. O catálogo fica no banco e é mantido pelo **Fleet Manager** em **Admin › MEL / CDL**: criar, editar, desativar e excluir itens. Só dá para excluir um item que **nunca foi aberto**; os outros são desativados.
+
+O catálogo inicial tem **40 itens de MEL** e **3 de CDL**. Cada item tem código (ATA), título, categoria, restrição, procedimento, forma de verificação, penalidade de combustível (CDL) e tipos de aeronave (nenhum = todos).
+
+| Categoria | Prazo |
+|---|---|
+| **A** | Definido no item (1 a 30 dias) |
+| **B** | 3 dias |
+| **C** | 10 dias |
+| **D** | 120 dias |
+
+- **Abertura pelo staff:** em **Open items**, o Fleet Manager escolhe a aeronave e o item, com uma nota opcional.
+- **Abertura pelo sistema:** depois de cada voo há **3%** de chance de abrir um item, subindo até **8%** nos últimos 10% antes do próximo check. Só itens de MEL **C ou D** marcados para isso (70% C e 30% D), no máximo **2 itens do sistema** por aeronave, e nunca depois de tours ou Special Flights.
+- **Prazo vencido:** a aeronave fica **AOG**. Ela some da reserva e aparece em vermelho em Open items até alguém fechar o item.
+- **Fechamento:** automático quando a aeronave **pousa num hub** ou sai de uma **manutenção ou check**, ou manual pelo Fleet Manager.
+- **Para o piloto:** o seletor de aeronave mostra o selo **MEL ×N** com a restrição. No Briefing, o card da aeronave tem as abas **Tech log** (itens abertos, com restrição e procedimento) e **Crew Docs** (documentos do tipo de aeronave).
+
+**Verificação no PIREP** (só itens de MEL abertos antes do voo):
+
+| Verificação | Como funciona |
+|---|---|
+| **ACARS** | **Altitude máxima** conferida automaticamente, com 300 ft de tolerância. As outras checagens (APU, autobrake, speedbrake, autothrottle, tanque central, luzes e remarks como `TCAS INOP`) já estão cadastradas e vão para o Safety até o ACARS enviar esses dados. |
+| **Safety review** | O revisor marca **Followed** ou **Not followed** na revisão do PIREP. |
+| **Informative** | Só informativo, sem checagem (itens D simples e toda a CDL). |
+
+- Procedimento cumprido: **+50 pontos**. Não cumprido: **−500 pontos**. Os valores ficam na categoria **MEL & CDL** em Admin › Scoring.
+- Enquanto houver item pendente, o PIREP **não é aprovado automaticamente** nem pode ser aprovado na mão.
+
 ### Numeração dos voos
 
 | Bloco | Uso |
@@ -186,9 +222,9 @@ A manutenção segue os checks escalonados da aviação real. Os intervalos são
 | `1000–4999` | Doméstico (Brasil) |
 | `5000–5999` | América do Sul |
 | `6000–6999` | América Central e do Norte |
-| `7000–7999` | Voos sazonais |
+| `7000–7999` | Tours de passageiros e voos sazonais |
 | `8000–8999` | Europa e demais destinos |
-| `9000–9999` | Translado, cargueiro, Special Flights e callsign alternativo |
+| `9000–9999` | Translado, cargueiro, tours cargueiros, Special Flights e callsign alternativo |
 
 **Sugestão de número:** no cadastro de rotas, o sistema sugere o próximo número livre do bloco, ímpar na ida e o par seguinte na volta (ex.: `LTL1003` / `LTL1004`). O bloco é escolhido pelo país e continente dos aeroportos, e rotas cargueiras sempre usam o `9xxx`.
 
@@ -261,7 +297,8 @@ Cada piloto tem um perfil público em `/profile/{número}`:
 - **Mapa de voos:** todas as rotas já voadas pelo piloto.
 - **Flights:** lista paginada de voos, com busca e ordenação. PIREPs rejeitados aparecem marcados, mantendo as horas e sem os pontos.
 - **Privacidade:** e-mail, data de nascimento e Discord aparecem **só para o próprio piloto e para o staff**. A idade aparece para todos.
-- **Awards** e **Downloads:** abas preparadas para medalhas e documentos da tripulação.
+- **Awards:** os awards do piloto, com imagem, descrição e data (veja [Awards e Downloads](#awards-e-downloads)).
+- **Downloads:** liveries, documentos e software da companhia, só para membros.
 
 Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
 
@@ -333,7 +370,7 @@ Com uma reserva aberta, o menu leva ao **Briefing**, uma página única com tudo
 - **Flight plan:** prefile na **VATSIM** e na **IVAO** (já preenchido quando o OFP está carregado) e o callsign alternativo para a network.
 - **Tripulação:** cards do Captain e do First Officer.
 - **Menu:** Briefing, Loadsheet e OFP, que levam à seção na página.
-- **Aeronave:** foto, matrícula, modelo e último voo.
+- **Aeronave:** foto, matrícula, modelo e último voo, com as abas **Tech log** (itens de MEL e CDL abertos) e **Crew Docs** (documentos do tipo de aeronave; o 800BCF usa os do B738).
 
 **Seções**
 - **Aeroportos:** foto, categoria do tempo (VFR, MVFR, IFR, LIFR), temperatura, vento, QNH, visibilidade (em km/m, ou SM nos EUA e no Canadá), pista e alternado do OFP, METAR, TAF e link para as cartas no ChartFox. O tempo se atualiza sozinho a cada 15 minutos.
@@ -369,6 +406,49 @@ Voos especiais criados pelo **Director of Operations** em **Admin › Operations
 
 ---
 
+## Tours e eventos
+
+Criados pelo **Director of Operations** em **Admin › Tours** e **Admin › Events**. Ficam como rascunho até serem **publicados**, e a publicação notifica os pilotos.
+
+### Tours
+
+Sequência de **2 a 30 pernas** que o piloto voa **em ordem**, na página **Tours**.
+
+- **Operação:** tour de **passageiros** (pernas no bloco `7xxx`) ou **cargueiro** (bloco `9xxx`). Os tipos de aeronave permitidos valem para todas as pernas.
+- Cada perna precisa partir de onde a anterior chegou. As rotas das pernas são criadas pelo próprio formulário e só servem ao tour.
+- Regras: janela de datas opcional (Start/End em UTC, com **Coming soon** antes do início), **patente mínima** e **PIREP aprovado** em cada perna.
+- Para reservar, o piloto precisa estar no aeroporto de partida da próxima perna (pode usar o jumpseat) e não ter outro voo aberto. A reserva usa a tela normal de escolha da aeronave.
+- Cada perna dá os **pontos normais do voo**. Se o piloto pousar em outro aeroporto, a perna não conta e precisa ser voada de novo.
+- Ao concluir todas as pernas, o piloto recebe o **bônus final** (*Tour bonus* no extrato) e o **award do tour**, criado junto com ele.
+- Depois que algum piloto reservar uma perna, as pernas e os tipos de aeronave do tour não podem mais mudar.
+
+### Eventos
+
+Eventos da companhia com **janela em UTC**, até **20 aeroportos** (nenhum = qualquer aeroporto) e um **bônus fixo** de até 10.000 pontos.
+
+- Todo voo **aprovado** que parte ou chega num aeroporto do evento dentro da janela recebe o bônus (*Event bonus* no extrato). Se o voo cair em mais de um evento, vale o de maior bônus, uma vez por PIREP.
+- Os eventos em andamento e os próximos aparecem num banner no dashboard.
+
+---
+
+## Awards e Downloads
+
+### Awards
+
+- Criados pelo **Director of Operations** em **Admin › Awards**, com nome, descrição e imagem.
+- Dois tipos: **manual**, concedido pelo staff a um piloto com um motivo, e **tour**, entregue automaticamente pelo sistema ao concluir o tour.
+- O staff vê quem tem cada award e pode **revogar** um award manual.
+- O piloto recebe uma notificação e o award aparece na aba **Awards** do perfil público.
+
+### Downloads
+
+- Mantidos pelo **Fleet Manager** e pelo **Director of Operations** em **Admin › Downloads**.
+- Categorias **Liveries**, **Documents**, **Software** e **Other**, com tipo de aeronave opcional e versão.
+- Cada item é um **arquivo** enviado (até 20 MB) ou um **link** `https://`. O site conta os downloads.
+- Os pilotos baixam na aba **Downloads** do perfil. Os documentos de cada tipo de aeronave também aparecem no **Crew Docs** do Briefing.
+
+---
+
 ## ACARS e PIREP
 
 A API tem uma camada de ACARS **neutra**: o smartCARS 3 (ou qualquer outro cliente) só precisa traduzir os dados dele para estes endpoints.
@@ -397,6 +477,7 @@ Todo PIREP é revisado por um **Safety Manager** em **Admin › PIREPs**:
 - Fila com abas **Pending**, **Approved**, **Rejected** e **All**, mostrando pontos e **% de conformidade**.
 - Tela de revisão com dados do voo, mapa da trilha, eventos e itens de pontuação.
 - O Safety pode **ignorar** um item automático (falso positivo) e **adicionar itens de revisão** (UNICOM, remarks, alternado sem justificativa, SOP...).
+- **MEL:** se a aeronave voou com itens de MEL abertos, o painel **MEL items on this flight** mostra cada um. Os itens de Safety precisam ser marcados como **Followed** ou **Not followed** antes da aprovação.
 - **Conformidade:** 100% menos 1% a cada 10 pontos de penalidade; qualquer item de reprovação dá 0%.
 - **Aprovação automática:** PIREPs do **ACARS** com conformidade de **98% ou mais**, sem item de reprovação e de piloto **ativo** são aprovados na hora pelo sistema (o revisor aparece como *System (auto-approved)*). PIREPs manuais e os demais vão para a fila.
 - O piloto recebe uma **notificação** quando o PIREP é aprovado ou rejeitado.
@@ -437,6 +518,7 @@ Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o res
 | Procedimentos | Ordem de partida dos motores, taxi-in, motores cortados no envio do log, taxi acima de 30 kt |
 | Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg, menos de 80% online... |
 | Voos especiais e eventos | Traslados e fretamentos (+300/+500), eventos IVAO/VATSIM (+500) e eventos da Litoral (+300/+500) |
+| MEL & CDL | Procedimento da MEL cumprido (+50) ou não cumprido (−500) |
 
 ### Extrato
 
@@ -456,6 +538,8 @@ Todo movimento de pontos fica registrado no **extrato do piloto**, na aba **My s
 | Bônus de escala mensal | 100 pontos por voo da escala concluída |
 | Piloto do mês | +800 / +600 / +400 para o pódio de horas e o de voos do mês anterior |
 | Special Flight | Bônus por perna de Special Flight aprovada |
+| Bônus de tour | Bônus final ao concluir todas as pernas de um tour |
+| Bônus de evento | Bônus fixo por voo aprovado dentro de um evento |
 | Penalidade | PIREP rejeitado, ou **−500 pontos** se uma Special Flight for cancelada ou vencer sem ser feita |
 | Ajuste manual | Correção feita pelo staff |
 
@@ -515,6 +599,9 @@ O **sininho** no topo do site mostra as notificações do piloto, com o contador
 | Promoção / rebaixamento | Mudança de patente |
 | Inatividade | Aviso aos 30 dias, início da penalidade e desativação da conta |
 | Special Flight | Nova Special Flight disponível para a patente do piloto |
+| Tour | Novo tour publicado, perna concluída ou perna que não contou |
+| Evento | Novo evento publicado |
+| Award | Award recebido (manual ou por tour) |
 | Reserva expirada | Reserva ou Special Flight que venceu |
 | Segurança | Reset da autenticação em dois fatores pelo staff |
 | Inscrição | Nova inscrição (para o RH) e inscrição aprovada (boas-vindas ao piloto) |
@@ -575,8 +662,8 @@ Toda ação que exige confirmação no site (aprovar ou rejeitar PIREP, desativa
 | Posição | Função | Vagas |
 |---|---|:---:|
 | Head of HR | Inscrições (aprovar, recusar, abrir e fechar), gestão de pilotos (inativar, reativar, excluir e resetar 2FA) e pedidos de privacidade | 1 |
-| Director of Operations | Special Flights, tours e eventos | 1 |
-| Fleet Manager | Tipos de aeronave (intervalos de manutenção e aeroporto de entrega), matrículas, fotos e manutenção | 1 |
+| Director of Operations | Special Flights, tours, eventos, awards e downloads | 1 |
+| Fleet Manager | Tipos de aeronave (intervalos de manutenção e aeroporto de entrega), matrículas, fotos, manutenção, MEL/CDL e downloads | 1 |
 | Route Manager | Rotas, aeroportos (operação, patente mínima, hub, IATA e foto) | 1 |
 
 ### Safety Team
@@ -610,7 +697,7 @@ Em **Admin › Logs**, fica registrado tudo o que é alterado em contas, staff e
 - As alterações feitas pelo Admin, pelo Settings do piloto e pelo cadastro são registradas automaticamente, com **valor antigo → novo**. Itens criados ou excluídos guardam todos os campos.
 - Troca de senha, posições do staff e exclusão de conta também são registradas. Nome, e-mail e números ficam salvos no log, então ele continua legível depois que a conta é excluída.
 - Cada log tem uma **cor pela gravidade**: 🔴 **Critical** (exclusões, contas excluídas ou desativadas, PIREP rejeitado, mudanças de staff e reset de 2FA), 🟡 **Important** (alterações, reativação, troca de senha, logins com erro, 2FA desativado e pedidos de privacidade) e 🟢 **Routine** (criações, aprovações e bônus).
-- Filtro **Critical only**, categorias (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations, Awards, Bookings, Logins e Privacy) e busca por ação, piloto, item ou detalhe.
+- Filtro **Critical only**, categorias (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations, Tours, Events, Awards, Downloads, Bookings, Logins e Privacy) e busca por ação, piloto, item ou detalhe.
 - **Bookings:** reservas, cancelamentos, expirações, jumpseat e traslados de aeronave. **Logins:** entradas e tentativas com senha ou código errado, com o método usado.
 - Os jobs (pilotos do mês, inatividade, aprovação automática e retenção) aparecem como feitos pelo **System**, e as ações sem login como **Visitor**.
 
@@ -800,7 +887,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Menu com NOTAMs e notícias
 - [x] Redirecionamento: piloto logado vai para o dashboard, visitante vê a home
 
-### 🔜 Fase 2: Regras de operação, staff e cadastros
+### ✅ Fase 2: Regras de operação, staff e cadastros
 - [x] Frota com matrícula, variante, foto e localização real
 - [x] Extrato de pontos (ledger)
 - [x] Patente mínima por aeroporto (FO ou CMD)
@@ -820,7 +907,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Centro de manutenção em SBCF com traslado automático de manutenção
 - [x] Voo de teste (check flight) após C e D-check
 - [x] **Route Manager:** IATA e foto com crédito nos aeroportos
-- [ ] Tag MEL/CDL nas aeronaves (a confirmar)
+- [x] **Fleet Manager:** MEL/CDL com catálogo editável, abertura pelo staff ou pelo sistema, AOG no vencimento e verificação no PIREP
 - [x] **Chairman:** gestão de staff, com vaga única por posição (exceto Safety Manager) e permissões aplicadas na hora
 - [x] **Head of HR:** listar, desativar, reativar e excluir pilotos
 - [x] Exclusão permanente de conta (pelo staff ou pelo próprio piloto) com dupla confirmação
@@ -830,7 +917,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Logs de ações dos pilotos (reservas, jumpseat, voos) e logins com IP
 - [x] Confirmações do site todo no estilo popup (componente `ConfirmDialog`)
 
-### Fase 2B: Páginas do piloto
+### ✅ Fase 2B: Páginas do piloto
 - [x] Aeroportos em cards, com aeronaves no solo, partidas e jumpseat (grátis para bases, 3 pontos por NM para os demais)
 - [x] Limite de um jumpseat e um traslado de aeronave até o próximo voo
 - [x] Frota, com localização e status de cada matrícula
@@ -840,7 +927,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Estatísticas do piloto
 - [x] Perfil do piloto: capa, foto, overview, gráfico de atividade, top 10 rotas, mapa de voos e lista de voos
 - [x] Settings: dados pessoais, VATSIM/IVAO/Discord, SimBrief, aeronaves do simulador, senha e formato do nome
-- [ ] Awards e documentos da tripulação (PDFs para download)
+- [x] Awards no perfil e downloads (liveries, documentos e software)
+- [x] Tech log e Crew Docs no card da aeronave do Briefing
 - [x] Regulamento e Política de Privacidade (inglês e português)
 
 ### ✅ Fase 3: Reserva de voos
@@ -888,8 +976,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Ranking de pilotos e pilotos do mês (+800/+600/+400) com pagamento automático
 - [x] Jobs de conta: aviso aos 30 dias, −50 por dia a partir do 41º e desativação aos 90
 - [x] Notificações no site (sininho)
-- [ ] Páginas públicas de staff e carreira
-- [ ] **Director of Operations:** tours e eventos
+- [x] Páginas públicas de staff e carreira
+- [x] **Director of Operations:** tours de passageiros e cargueiros (com award e bônus final) e eventos com bônus por voo
 - [x] Mapa de voos ao vivo no dashboard, com rota planejada, trilha voada e links para VATSIM Radar / Webeye
 - [ ] Galeria de liveries por matrícula
 - [ ] Notificações por e-mail (promoção, PIREP, inatividade)
@@ -906,7 +994,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Remoção dos dados opcionais pelo próprio piloto
 - [ ] Código do 2FA por e-mail (depende do SMTP)
 
-### Fase 6: Produção
+### 🔜 Fase 6: Produção
 - [ ] Monitor da API para o CEO (requisições, erros, jobs e saúde dos serviços)
 - [ ] Testes unitários do Domain
 - [ ] Testes de integração da API
@@ -920,7 +1008,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Aplicativo desktop para escolher e iniciar voos sem abrir o site
 - [ ] Integração com Discord
 - [ ] Estatísticas detalhadas por aeronave e por rota
-- [ ] Conquistas e medalhas
+- [ ] Checagens automáticas da MEL pelo ACARS (APU, autobrake, luzes, remarks...)
+- [ ] Boeing 777 (B77W e B77F)
 
 ---
 
