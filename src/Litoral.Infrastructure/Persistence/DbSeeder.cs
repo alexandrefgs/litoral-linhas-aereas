@@ -11,7 +11,7 @@ namespace Litoral.Infrastructure.Persistence;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(IServiceProvider services)
+    public static async Task SeedAsync(IServiceProvider services, bool importAirportCatalog = true)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<LitoralDbContext>();
@@ -30,6 +30,7 @@ public static class DbSeeder
         await SeedDeliveryAirportsAsync(db);
 
         await db.SaveChangesAsync();
+        if (importAirportCatalog)
         await scope.ServiceProvider.GetRequiredService<AirportCatalogImporter>().ImportIfEmptyAsync();
     }  
 

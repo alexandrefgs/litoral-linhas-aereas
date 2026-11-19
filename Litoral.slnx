@@ -6,6 +6,7 @@
     <Project Path="src/Litoral.Infrastructure/Litoral.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Litoral.Api.IntegrationTests/Litoral.Api.IntegrationTests.csproj" />
     <Project Path="tests/Litoral.Domain.Tests/Litoral.Domain.Tests.csproj" />
   </Folder>
 </Solution>
