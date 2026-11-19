@@ -25,3 +25,28 @@ export interface Airport {
   aircraftOnGround: number;
   departures: number;
 }
+
+export interface PublicStaffMember {
+  pilotNumber: number;
+  displayId: string;
+  name: string;
+  photoUrl: string | null;
+  rank: string;
+}
+
+export interface PublicStaffPosition {
+  code: string;
+  name: string;
+  team: 'Executive' | 'Operations' | 'Safety';
+  holders: PublicStaffMember[];
+}
+
+export interface CareerRank {
+  code: string;
+  name: string;
+  level: number;
+  minFlightHours: number;
+  minPoints: number;
+  pilots: number;
+  airports: number;
+}

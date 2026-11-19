@@ -17,6 +17,8 @@ export const routes: Routes = [
   { path: 'register', canActivate: [guestGuard], loadComponent: () => import('./pages/auth/register/register').then(m => m.Register) },
   { path: 'regulations', data: { kind: 'regulations' }, loadComponent: () => import('./pages/legal/legal-page').then(m => m.LegalPage) },
   { path: 'privacy', data: { kind: 'privacy' }, loadComponent: () => import('./pages/legal/legal-page').then(m => m.LegalPage) },
+  { path: 'staff', loadComponent: () => import('./pages/crew/staff').then(m => m.StaffPage) },
+  { path: 'career', loadComponent: () => import('./pages/crew/career').then(m => m.CareerPage) },
   { path: 'dashboard', canActivate: [authGuard], loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },
   { path: 'profile/:number', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then(m => m.Profile) },

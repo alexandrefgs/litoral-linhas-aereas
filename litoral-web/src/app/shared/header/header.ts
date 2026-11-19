@@ -50,6 +50,8 @@ interface NavItem {
             @for (link of publicLinks; track link.fragment) {
               <a routerLink="/" [fragment]="link.fragment" class="rounded-md px-3 py-2 text-sm font-medium text-ink hover:text-primary">{{ link.label }}</a>
             }
+            <a routerLink="/career" routerLinkActive="!text-primary" class="rounded-md px-3 py-2 text-sm font-medium text-ink hover:text-primary">Career</a>
+            <a routerLink="/staff" routerLinkActive="!text-primary" class="rounded-md px-3 py-2 text-sm font-medium text-ink hover:text-primary">Staff</a>
           </nav>
         }
 
@@ -191,6 +193,12 @@ interface NavItem {
                       </button>
                     </div>
                     <div class="border-t border-line p-2">
+                      <a routerLink="/career" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-chevrons-up text-xl" aria-hidden="true"></i>Career
+                      </a>
+                      <a routerLink="/staff" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-users text-xl" aria-hidden="true"></i>Staff
+                      </a>
                       <a routerLink="/regulations" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
                         <i class="ti ti-book text-xl" aria-hidden="true"></i>Regulations
                       </a>

@@ -76,9 +76,14 @@ import { FlipCounter } from './components/flip-counter';
           <p>Our pilots fly on the IVAO and VATSIM networks, using MSFS 2020, MSFS 2024, X-Plane and Prepar3D, with hubs in Guarulhos, Florianópolis, Brasília, Manaus and Fortaleza, plus a cargo operation out of Viracopos.</p>
           <p class="text-lg font-semibold text-ink">Our mission is to deliver a realistic, professional and fun airline experience.</p>
           <p>Here you build your career from First Officer to Captain, plan every flight with SimBrief and track your progress through hours and points. All in a welcoming environment where we learn together and share our passion for aviation.</p>
-          <a routerLink="/" fragment="operacao" class="inline-flex items-center gap-2 border-b-2 border-primary pb-1 font-medium text-ink hover:text-primary">
-            See our operation <i class="ti ti-arrow-right" aria-hidden="true"></i>
-          </a>
+          <div class="flex flex-wrap gap-6">
+            <a routerLink="/" fragment="operacao" class="inline-flex items-center gap-2 border-b-2 border-primary pb-1 font-medium text-ink hover:text-primary">
+              See our operation <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </a>
+            <a routerLink="/career" class="inline-flex items-center gap-2 border-b-2 border-primary pb-1 font-medium text-ink hover:text-primary">
+              See the career <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -192,6 +197,8 @@ import { FlipCounter } from './components/flip-counter';
           <div class="leading-tight">
             <div class="flex flex-col gap-2 md:items-end">
               <div class="flex gap-4 text-sm font-medium">
+                <a routerLink="/career" class="text-ink hover:text-primary">Career</a>
+                <a routerLink="/staff" class="text-ink hover:text-primary">Staff</a>
                 <a routerLink="/regulations" class="text-ink hover:text-primary">Regulations</a>
                 <a routerLink="/privacy" class="text-ink hover:text-primary">Privacy Policy</a>
               </div>
