@@ -1,15 +1,29 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApplicationStatus } from '../../../core/auth/auth.models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { apiErrorMessage, apiErrorStatus } from '../../../core/api/api-error';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink],
   template: `
     <section class="mx-auto flex max-w-md flex-col gap-6 px-6 py-16">
-      @if (challenge()) {
+      @if (application(); as app) {
+        <div class="card flex flex-col items-center gap-4 text-center">
+          <span class="flex h-14 w-14 items-center justify-center rounded-full bg-highlight/25 text-3xl text-ink">
+            <i class="ti ti-hourglass" aria-hidden="true"></i>
+          </span>
+          <h1 class="text-2xl font-bold text-ink">Application under review</h1>
+          <p class="text-ink-muted">
+            Hi {{ app.firstName }}, your application was sent on {{ app.submittedAt | date: 'd MMM y' }} and is waiting for our HR team.
+            When it is approved, you can sign in and fly with Litoral.
+          </p>
+          <button type="button" class="btn-secondary" (click)="application.set(null)">Back</button>
+        </div>
+      } @else if (challenge()) {
         <div class="text-center">
           <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-3xl text-primary">
             <i class="ti ti-shield-lock" aria-hidden="true"></i>
@@ -83,8 +97,8 @@ import { apiErrorMessage, apiErrorStatus } from '../../../core/api/api-error';
         </form>
 
         <p class="text-center text-sm text-ink-muted">
-          Don't have an account yet?
-          <a routerLink="/register" class="font-medium text-primary hover:underline">Create account</a>
+          Want to fly with us?
+          <a routerLink="/regulations" fragment="join" class="font-medium text-primary hover:underline">Read the Regulations and apply</a>
         </p>
       }
     </section>
@@ -101,6 +115,7 @@ export class Login {
   protected readonly submitted = signal(false);
   protected readonly challenge = signal<string | null>(null);
   protected readonly useRecovery = signal(false);
+  protected readonly application = signal<ApplicationStatus | null>(null);
 
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -125,8 +140,10 @@ export class Login {
     this.loading.set(true);
     try {
       const result = await this.auth.login(this.form.getRawValue());
-      if (result.done) {
+      if (result.kind === 'session') {
         await this.goToReturnUrl();
+      } else if (result.kind === 'application') {
+        this.application.set(result.application);
       } else {
         this.codeForm.reset();
         this.useRecovery.set(false);

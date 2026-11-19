@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApplicationsService } from '../../core/applications/applications.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { LEGAL_UPDATED_AT, LegalDocument, LegalLanguage } from './legal.models';
 import { PRIVACY } from './privacy.content';
 import { REGULATIONS } from './regulations.content';
@@ -98,6 +100,30 @@ const DOCUMENTS: Record<LegalKind, Record<LegalLanguage, LegalDocument>> = {
             </article>
           }
 
+          @if (kind() === 'regulations') {
+            <article id="join" class="panel scroll-mt-36 flex flex-col items-center gap-3 border-primary/40 p-8 text-center">
+              <span class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-2xl text-primary">
+                <i class="ti ti-plane-departure" aria-hidden="true"></i>
+              </span>
+              <h2 class="text-xl font-bold text-ink">{{ language() === 'pt' ? 'Quer voar com a Litoral?' : 'Want to fly with Litoral?' }}</h2>
+              <p class="max-w-xl text-ink-muted">
+                {{ language() === 'pt'
+                  ? 'Depois de ler o Regulamento, envie a sua inscrição. O nosso RH analisa cada pedido e confere o seu perfil na VATSIM ou na IVAO.'
+                  : 'After reading the Regulations, send your application. Our HR team reviews each one and checks your VATSIM or IVAO profile.' }}
+              </p>
+              @if (auth.isAuthenticated()) {
+                <p class="text-sm font-medium text-onda-600">{{ language() === 'pt' ? 'Você já faz parte da tripulação.' : 'You are already part of the crew.' }}</p>
+              } @else if (registrationOpen() === false) {
+                <button type="button" class="btn-primary px-6 py-2.5" disabled>{{ language() === 'pt' ? 'Inscrições fechadas' : 'Applications are closed' }}</button>
+                <p class="text-xs text-ink-muted">{{ language() === 'pt' ? 'No momento não estamos aceitando novos pilotos.' : 'We are not accepting new pilots right now.' }}</p>
+              } @else {
+                <a routerLink="/register" class="btn-primary px-6 py-2.5" [class.pointer-events-none]="registrationOpen() === null">
+                  {{ language() === 'pt' ? 'Enviar inscrição' : 'Apply to join' }}
+                </a>
+              }
+            </article>
+          }
+
           <p class="text-sm text-ink-muted">
             @if (kind() === 'regulations') {
               {{ language() === 'pt' ? 'Veja também a' : 'See also the' }}
@@ -115,6 +141,12 @@ const DOCUMENTS: Record<LegalKind, Record<LegalLanguage, LegalDocument>> = {
 export class LegalPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly applications = inject(ApplicationsService);
+  protected readonly auth = inject(AuthService);
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly registrationOpen = signal<boolean | null>(null);
 
   protected readonly updatedAt = LEGAL_UPDATED_AT;
   protected readonly languages: { value: LegalLanguage; label: string; flag: string }[] = [
@@ -126,6 +158,21 @@ export class LegalPage {
   protected readonly language = signal<LegalLanguage>(this.route.snapshot.queryParamMap.get('lang') === 'pt' ? 'pt' : 'en');
   protected readonly doc = computed(() => DOCUMENTS[this.kind()][this.language()]);
   protected readonly langParam = computed(() => (this.language() === 'pt' ? { lang: 'pt' } : {}));
+
+  constructor() {
+    if (this.kind() === 'regulations' && !this.auth.isAuthenticated()) {
+      this.applications.registrationStatus()
+        .then(status => this.registrationOpen.set(status.open))
+        .catch(() => this.registrationOpen.set(false));
+    }
+
+    afterNextRender(() => {
+      const subscription = this.route.fragment.subscribe(fragment => {
+        if (fragment) setTimeout(() => this.scrollTo(fragment));
+      });
+      this.destroyRef.onDestroy(() => subscription.unsubscribe());
+    });
+  }
 
   protected setLanguage(value: LegalLanguage): void {
     this.language.set(value);

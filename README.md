@@ -51,7 +51,7 @@ A **Litoral Linhas Aéreas** é uma companhia aérea virtual (VA) para pilotos d
 
 O sistema reúne em um só lugar:
 
-- Cadastro de pilotos, base, carreira (FO → CMD) e **perfil público** com estatísticas e mapa de voos
+- **Inscrição com aprovação do RH**, que pode abrir e fechar as inscrições, e pilotos com base, carreira (FO → CMD) e **perfil público** com estatísticas e mapa de voos
 - Frota com **localização real**: cada avião fica onde pousou pela última vez, com horas, ciclos e **manutenção A, C e D-check**
 - Página de **aeroportos** com aeronaves no solo, partidas e **jumpseat** cobrado pela distância
 - Reserva de voos aleatórios, personalizados, **escala mensal** e **Special Flights** (fretamentos, traslados, redeliveries, traslados de manutenção e voos de teste)
@@ -208,7 +208,17 @@ As rotas são cadastradas pelo Route Manager em **Admin › Routes**. Os pilotos
 
 ## Carreira do piloto
 
-Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O cadastro pega sempre o **menor número livre**: o número de uma conta **excluída** volta a ficar disponível, e o de uma conta **inativa** continua reservado para ela. O login é feito por **e-mail e senha**, com **autenticação em dois fatores** opcional (obrigatória para o staff). A idade mínima é de **16 anos**, e o cadastro exige aceitar o **Regulamento** e a **Política de Privacidade**.
+Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O cadastro pega sempre o **menor número livre**: o número de uma conta **excluída** volta a ficar disponível, e o de uma conta **inativa** continua reservado para ela. O login é feito por **e-mail e senha**, com **autenticação em dois fatores** opcional (obrigatória para o staff). A idade mínima é de **16 anos**, e a inscrição exige aceitar o **Regulamento** e a **Política de Privacidade**.
+
+### Inscrição
+
+- O botão **Apply to join** fica no fim do **Regulamento** (os links *Join Litoral* do site levam até lá). Quando as inscrições estão **fechadas**, o botão aparece desativado.
+- A inscrição pede nome, e-mail, senha, base, **VATSIM e/ou IVAO ID**, **simulador**, os **add-ons do 737** que o piloto tem e um texto sobre a **experiência e a motivação** (30 a 1000 caracteres).
+- Enquanto espera, a pessoa pode entrar com e-mail e senha, mas só vê a tela *Application under review*. Ela ainda não tem número de piloto.
+- O **Head of HR** (e o CEO) recebe uma notificação e analisa em **Admin › Applications**, com links para o perfil na VATSIM e na IVAO e o aviso quando o ID já é usado por outro piloto.
+- **Aprovar:** cria o piloto como FO na base escolhida, com o próximo número livre, e leva os IDs das networks para o perfil. O resto da inscrição é apagado e o piloto é notificado.
+- **Recusar:** pede um motivo (fica no log) e apaga a conta e a inscrição na hora. O e-mail fica bloqueado por **30 dias** (guardamos só um hash dele) e, se a pessoa tentar entrar, vê a data em que pode se inscrever de novo.
+- No mesmo painel, o RH **abre ou fecha as inscrições**. O primeiro usuário do sistema (CEO & Founder) não passa pela aprovação.
 
 | Patente | Requisitos |
 |---|---|
@@ -507,6 +517,7 @@ O **sininho** no topo do site mostra as notificações do piloto, com o contador
 | Special Flight | Nova Special Flight disponível para a patente do piloto |
 | Reserva expirada | Reserva ou Special Flight que venceu |
 | Segurança | Reset da autenticação em dois fatores pelo staff |
+| Inscrição | Nova inscrição (para o RH) e inscrição aprovada (boas-vindas ao piloto) |
 | Privacidade | Resposta a um pedido de privacidade |
 
 Por enquanto as notificações são só no site. Os e-mails entram junto com o SMTP, em produção.
@@ -563,7 +574,7 @@ Toda ação que exige confirmação no site (aprovar ou rejeitar PIREP, desativa
 
 | Posição | Função | Vagas |
 |---|---|:---:|
-| Head of HR | Gestão de pilotos (inativar, reativar, excluir e resetar 2FA) e pedidos de privacidade | 1 |
+| Head of HR | Inscrições (aprovar, recusar, abrir e fechar), gestão de pilotos (inativar, reativar, excluir e resetar 2FA) e pedidos de privacidade | 1 |
 | Director of Operations | Special Flights, tours e eventos | 1 |
 | Fleet Manager | Tipos de aeronave (intervalos de manutenção e aeroporto de entrega), matrículas, fotos e manutenção | 1 |
 | Route Manager | Rotas, aeroportos (operação, patente mínima, hub, IATA e foto) | 1 |
@@ -778,7 +789,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] API e front rodando juntos com `npm run dev`
 
 ### ✅ Fase 1: Autenticação, pilotos e site público
-- [x] Cadastro com nome, e-mail, senha e escolha da base
+- [x] Cadastro com nome, e-mail, senha e escolha da base (hoje, inscrição aprovada pelo RH)
 - [x] Número de piloto automático a partir de 1000
 - [x] Primeiro usuário cadastrado vira CEO & Founder
 - [x] Login com JWT e botão Authorize no Swagger
@@ -891,7 +902,8 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Download dos dados do piloto (LGPD)
 - [x] Pedidos de privacidade com prazo de 15 dias (Settings e Admin › Privacy)
 - [x] Retenção de 2 anos nos logs, com anonimização automática
-- [ ] Cadastro com aprovação do Head of HR e abertura/fechamento das inscrições
+- [x] Inscrição com aprovação do Head of HR e abertura/fechamento das inscrições
+- [x] Remoção dos dados opcionais pelo próprio piloto
 - [ ] Código do 2FA por e-mail (depende do SMTP)
 
 ### Fase 6: Produção

@@ -24,8 +24,10 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         title: '2. Membership',
         items: [
           'You must be at least 16 years old to join. Accounts created with false information are deleted.',
-          'Registration is free and there is no entrance exam.',
-          'Every new pilot starts as First Officer (FO) at the base chosen during registration.',
+          'Registration is free and there is no entrance exam. Every application is reviewed by the HR team, who checks your VATSIM or IVAO profile before approving it.',
+          'To apply you need a VATSIM or IVAO account and a quality Boeing 737 add-on.',
+          'Applications may be closed when Litoral is not accepting new pilots. If an application is rejected, its data is deleted and the same e-mail can apply again after 30 days.',
+          'Every new pilot starts as First Officer (FO) at the base chosen in the application.',
           'You may be a member of other virtual airlines, but the same flight can never be logged in Litoral and in another virtual airline.',
           'Your account is personal and non-transferable. Do not share your login with anyone.'
         ]
@@ -158,8 +160,10 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         title: '2. Cadastro',
         items: [
           'É preciso ter no mínimo 16 anos para entrar. Contas criadas com informações falsas são excluídas.',
-          'O cadastro é gratuito e não há prova de admissão.',
-          'Todo piloto novo começa como First Officer (FO) na base escolhida no cadastro.',
+          'O cadastro é gratuito e não há prova de admissão. Toda inscrição é analisada pelo RH, que confere o seu perfil na VATSIM ou na IVAO antes de aprovar.',
+          'Para se inscrever é preciso ter conta na VATSIM ou na IVAO e um add-on de qualidade do Boeing 737.',
+          'As inscrições podem ser fechadas quando a Litoral não estiver aceitando novos pilotos. Se uma inscrição for recusada, os dados são apagados e o mesmo e-mail pode se inscrever de novo depois de 30 dias.',
+          'Todo piloto novo começa como First Officer (FO) na base escolhida na inscrição.',
           'Você pode fazer parte de outras companhias virtuais, mas o mesmo voo nunca pode ser registrado na Litoral e em outra companhia virtual.',
           'A conta é pessoal e intransferível. Não compartilhe o seu login com ninguém.'
         ]

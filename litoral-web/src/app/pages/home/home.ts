@@ -43,7 +43,7 @@ import { FlipCounter } from './components/flip-counter';
           @if (auth.isAuthenticated()) {
             <a routerLink="/dashboard" class="rounded-lg bg-sol-300 px-6 py-3 font-semibold text-atlantico-900 hover:bg-sol-200">Go to dashboard</a>
           } @else {
-            <a routerLink="/register" class="rounded-lg bg-sol-300 px-6 py-3 font-semibold text-atlantico-900 hover:bg-sol-200">Join the crew</a>
+            <a routerLink="/regulations" fragment="join" class="rounded-lg bg-sol-300 px-6 py-3 font-semibold text-atlantico-900 hover:bg-sol-200">Join the crew</a>
             <a routerLink="/login" class="rounded-lg border border-white/30 px-6 py-3 font-semibold text-white hover:bg-white/10">Sign in</a>
           }
         </div>
@@ -179,7 +179,7 @@ import { FlipCounter } from './components/flip-counter';
           <h2 class="text-3xl font-semibold text-on-primary">Ready for takeoff?</h2>
           <p class="mt-2 text-on-primary/80">Create your account, pick your hub and fly your first Litoral flight.</p>
         </div>
-        <a [routerLink]="auth.isAuthenticated() ? '/dashboard' : '/register'" class="rounded-lg bg-sol-300 px-6 py-3 font-semibold text-atlantico-900 hover:bg-sol-200">
+        <a [routerLink]="auth.isAuthenticated() ? '/dashboard' : '/regulations'" [fragment]="auth.isAuthenticated() ? undefined : 'join'" class="rounded-lg bg-sol-300 px-6 py-3 font-semibold text-atlantico-900 hover:bg-sol-200">
           {{ auth.isAuthenticated() ? 'Go to dashboard' : 'Join the crew' }}
         </a>
       </div>

@@ -30,12 +30,28 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ApplicationStatus {
+  firstName: string;
+  submittedAt: string;
+}
+
 export interface LoginResponse {
   session: AuthResponse | null;
   challengeToken: string | null;
+  application: ApplicationStatus | null;
 }
 
-export type LoginResult = { done: true } | { done: false; challengeToken: string };
+export interface RegisterResponse {
+  session: AuthResponse | null;
+  application: ApplicationStatus | null;
+}
+
+export type LoginResult =
+  | { kind: 'session' }
+  | { kind: 'two-factor'; challengeToken: string }
+  | { kind: 'application'; application: ApplicationStatus };
+
+export type RegisterResult = { kind: 'session' } | { kind: 'application'; application: ApplicationStatus };
 
 export interface RegisterRequest {
   firstName: string;
@@ -44,6 +60,11 @@ export interface RegisterRequest {
   password: string;
   hubIcao: string | null;
   acceptedTerms: boolean;
+  vatsimId: string | null;
+  ivaoId: string | null;
+  simulator: string;
+  addOns: string[];
+  motivation: string;
 }
 
 export interface TwoFactorStatus {

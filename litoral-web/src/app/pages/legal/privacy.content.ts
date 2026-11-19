@@ -20,7 +20,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         table: {
           head: ['Type', 'Data', 'When'],
           rows: [
-            ['Account', 'First and last name, e-mail, password (stored only as a secure hash) and base', 'When you register'],
+            ['Account', 'First and last name, e-mail, password (stored only as a secure hash) and base', 'When you apply'],
+            ['Application', 'VATSIM and/or IVAO ID, simulator, 737 add-ons and a short text about your experience', 'When you apply'],
             ['Profile (optional)', 'Date of birth, country, state and city, VATSIM, IVAO and Discord IDs, SimBrief username, simulator aircraft, profile photo and cover', 'When you fill in Settings'],
             ['Flights', 'Bookings, flight reports (PIREPs), aircraft position and track during the flight, simulator events, scores, hours and points', 'When you book and fly'],
             ['Security', 'IP address, date and time of logins, failed logins, important actions and your two-factor authentication settings (authenticator key and recovery codes)', 'When you sign in, use the site or enable two-factor authentication']
@@ -32,6 +33,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'use',
         title: '3. How we use your data',
         items: [
+          'To review your application to join the airline.',
           'To create and keep your pilot account and identify you on the site.',
           'To run the airline: bookings, flight tracking, scoring, career, rankings, statistics and the live map.',
           'To send you notifications about your flights, points and account.',
@@ -76,7 +78,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'retention',
         title: '7. How long we keep your data',
         items: [
-          'Your data is kept while your account exists, including when it is deactivated.',
+          'Applications are kept only until they are reviewed. When approved, the network IDs move to your profile and the rest of the application is deleted. When rejected, everything is deleted and we keep only a coded (hashed) copy of the e-mail for 30 days, to block a new application in that period, plus the audit log.',
           'When you delete your account in Settings (or when the staff deletes it), your profile, photos, flights, PIREPs, hours, points, bookings, notifications, login and e-mail are permanently deleted.',
           'Audit logs are kept to protect the airline and its members. They store the name, pilot ID and e-mail related to the action, and stay after the account is deleted. After 2 years, names, e-mails, IP addresses and details about pilots are removed from them automatically.',
           'Privacy requests are kept for 2 years after they are answered, as a record that we followed the law.',
@@ -146,7 +148,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         table: {
           head: ['Tipo', 'Dados', 'Quando'],
           rows: [
-            ['Conta', 'Nome e sobrenome, e-mail, senha (guardada apenas como hash seguro) e base', 'No cadastro'],
+            ['Conta', 'Nome e sobrenome, e-mail, senha (guardada apenas como hash seguro) e base', 'Na inscrição'],
+            ['Inscrição', 'ID da VATSIM e/ou da IVAO, simulador, add-ons do 737 e um texto curto sobre a sua experiência', 'Na inscrição'],
             ['Perfil (opcional)', 'Data de nascimento, país, estado e cidade, IDs da VATSIM, IVAO e Discord, usuário do SimBrief, aeronaves do simulador, foto de perfil e capa', 'Quando você preenche o Settings'],
             ['Voos', 'Reservas, PIREPs, posição e trilha da aeronave durante o voo, eventos do simulador, pontuação, horas e pontos', 'Quando você reserva e voa'],
             ['Segurança', 'Endereço IP, data e hora dos logins, tentativas de login com erro, ações importantes e as configurações da autenticação em dois fatores (chave do autenticador e códigos de recuperação)', 'Quando você entra, usa o site ou ativa a autenticação em dois fatores']
@@ -158,6 +161,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'use',
         title: '3. Como usamos os seus dados',
         items: [
+          'Para analisar a sua inscrição na companhia.',
           'Para criar e manter a sua conta de piloto e identificar você no site.',
           'Para operar a companhia: reservas, acompanhamento dos voos, pontuação, carreira, rankings, estatísticas e mapa ao vivo.',
           'Para enviar notificações sobre os seus voos, pontos e conta.',
@@ -202,6 +206,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'retention',
         title: '7. Por quanto tempo guardamos os dados',
         items: [
+          'As inscrições são guardadas só até serem analisadas. Se aprovada, os IDs das networks vão para o seu perfil e o resto da inscrição é apagado. Se recusada, tudo é apagado e guardamos apenas uma cópia codificada (hash) do e-mail por 30 dias, para bloquear uma nova inscrição nesse período, além do log de auditoria.',
           'Os seus dados são mantidos enquanto a conta existir, inclusive quando ela estiver desativada.',
           'Quando você exclui a conta em Settings (ou quando o staff a exclui), o seu perfil, fotos, voos, PIREPs, horas, pontos, reservas, notificações, login e e-mail são apagados de forma permanente.',
           'Os logs de auditoria são mantidos para proteger a companhia e os seus membros. Eles guardam o nome, o ID de piloto e o e-mail ligados à ação, e continuam existindo depois da exclusão da conta. Depois de 2 anos, nomes, e-mails, endereços IP e detalhes sobre pilotos são removidos deles automaticamente.',

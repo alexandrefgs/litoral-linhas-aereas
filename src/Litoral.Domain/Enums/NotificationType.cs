@@ -13,5 +13,6 @@ public enum NotificationType
     SpecialFlight,
     BookingExpired,
     Security,
-    Privacy
+    Privacy,
+    Application
 }

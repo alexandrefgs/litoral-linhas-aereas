@@ -21,7 +21,8 @@ const NOTIFICATION_STYLE: Record<string, { icon: string; tone: string }> = {
   SpecialFlight: { icon: 'ti-calendar-star', tone: 'bg-primary/15 text-primary' },
   BookingExpired: { icon: 'ti-hourglass-empty', tone: 'bg-surface-alt text-ink-muted' },
   Security: { icon: 'ti-shield-lock', tone: 'bg-danger/10 text-danger' },
-  Privacy: { icon: 'ti-lock', tone: 'bg-primary/15 text-primary' }
+  Privacy: { icon: 'ti-lock', tone: 'bg-primary/15 text-primary' },
+  Application: { icon: 'ti-user-plus', tone: 'bg-onda-500/15 text-onda-600' }
 };
 
 interface NavItem {
@@ -203,7 +204,7 @@ interface NavItem {
             }
           } @else {
             <a routerLink="/login" class="btn-secondary ml-1">Sign in</a>
-            <a routerLink="/register" class="btn-primary">Create account</a>
+            <a routerLink="/regulations" fragment="join" class="btn-primary">Join Litoral</a>
           }
         </div>
       </div>

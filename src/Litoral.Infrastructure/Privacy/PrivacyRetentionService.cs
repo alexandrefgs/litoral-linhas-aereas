@@ -65,6 +65,9 @@ public sealed class PrivacyRetentionService(
             .Where(r => r.Status != PrivacyRequestStatus.Open && r.ResolvedAt < cutoff)
             .ExecuteDeleteAsync(ct);
 
+        var now = DateTime.UtcNow;
+        await db.RegistrationBlocks.Where(b => b.BlockedUntil < now).ExecuteDeleteAsync(ct);
+
         if (logs == 0 && requests == 0) return;
 
         logger.LogInformation("Data retention: {Logs} audit logs anonymized and {Requests} privacy requests deleted.", logs, requests);

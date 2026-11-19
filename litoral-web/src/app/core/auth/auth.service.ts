@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { AuthResponse, LoginRequest, LoginResponse, LoginResult, PilotSummary, RegisterRequest } from './auth.models';
+import { AuthResponse, LoginRequest, LoginResponse, LoginResult, PilotSummary, RegisterRequest, RegisterResponse, RegisterResult } from './auth.models';
 
 const TOKEN_KEY = 'litoral.token';
 const EXPIRES_KEY = 'litoral.tokenExpiresAt';
@@ -39,11 +39,13 @@ export class AuthService {
 
     if (response.session) {
       this.store(response.session);
-      return { done: true };
+      return { kind: 'session' };
     }
 
+    if (response.application) return { kind: 'application', application: response.application };
+
     if (trustedDevice) this.setTrustedDevice(email, null);
-    return { done: false, challengeToken: response.challengeToken! };
+    return { kind: 'two-factor', challengeToken: response.challengeToken! };
   }
 
   async loginWithTwoFactor(email: string, challengeToken: string, code: string, rememberDevice: boolean): Promise<void> {
@@ -55,9 +57,13 @@ export class AuthService {
     this.store(response);
   }
 
-  async register(request: RegisterRequest): Promise<void> {
-    const response = await firstValueFrom(this.http.post<AuthResponse>('/api/auth/register', request));
-    this.store(response);
+  async register(request: RegisterRequest): Promise<RegisterResult> {
+    const response = await firstValueFrom(this.http.post<RegisterResponse>('/api/auth/register', request));
+    if (response.session) {
+      this.store(response.session);
+      return { kind: 'session' };
+    }
+    return { kind: 'application', application: response.application! };
   }
 
   async refreshProfile(): Promise<void> {

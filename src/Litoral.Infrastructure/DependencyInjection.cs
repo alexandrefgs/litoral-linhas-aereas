@@ -1,5 +1,6 @@
 using System.Text;
 using Litoral.Application.Admin;
+using Litoral.Application.Applications;
 using Litoral.Application.Auth;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
@@ -12,6 +13,7 @@ using Litoral.Application.Scoring;
 using Litoral.Application.Statistics;
 using Litoral.Domain.Staff;
 using Litoral.Infrastructure.Admin;
+using Litoral.Infrastructure.Applications;
 using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Auth;
 using Litoral.Infrastructure.Bookings;
@@ -114,6 +116,9 @@ public static class DependencyInjection
         services.Configure<PrivacyOptions>(configuration.GetSection(PrivacyOptions.SectionName));
         services.AddScoped<IPrivacyService, PrivacyService>();
         services.AddHostedService<PrivacyRetentionService>();
+        services.AddScoped<RegistrationGate>();
+        services.AddScoped<PilotRegistrar>();
+        services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<IPilotSettingsService, PilotSettingsService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAirportDirectoryService, AirportDirectoryService>();

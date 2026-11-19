@@ -9,7 +9,7 @@ namespace Litoral.Api.Controllers;
 public class AuthController(IAuthService auth) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request, CancellationToken ct) =>
+    public async Task<ActionResult<RegisterResponse>> Register(RegisterRequest request, CancellationToken ct) =>
         Ok(await auth.RegisterAsync(request, ct));
 
     [HttpPost("login")]

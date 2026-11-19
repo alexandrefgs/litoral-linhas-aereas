@@ -6,8 +6,11 @@ using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Legal;
 using Litoral.Domain.Staff;
+using Litoral.Infrastructure.Admin;
+using Litoral.Infrastructure.Applications;
 using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
+using Litoral.Infrastructure.Notifications;
 using Litoral.Infrastructure.Pilots;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -21,36 +24,43 @@ public sealed class AuthService(
     UserManager<ApplicationUser> userManager,
     JwtTokenGenerator tokenGenerator,
     TwoFactorTokens twoFactorTokens,
+    PilotRegistrar registrar,
+    RegistrationGate gate,
+    StaffRoles staffRoles,
+    Notifier notifier,
     IAuditLog auditLog,
     IOptions<TwoFactorOptions> twoFactorOptions) : IAuthService
 {
-    private const string DefaultHubIcao = "SBGR";
-
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         if (!request.AcceptedTerms)
             throw new AppException(AppErrorKind.Validation, "You must accept the Regulations and the Privacy Policy.");
+
         var email = request.Email.Trim();
 
         if (await userManager.FindByEmailAsync(email) is not null)
             throw new AppException(AppErrorKind.Conflict, "This email is already registered.");
 
         var hubIcao = string.IsNullOrWhiteSpace(request.HubIcao)
-            ? DefaultHubIcao
+            ? PilotRegistrar.DefaultHubIcao
             : request.HubIcao.Trim().ToUpperInvariant();
 
-        var isPassengerHub = await db.Hubs.AnyAsync(
-            h => h.Airport.Icao == hubIcao && (h.Airport.Operations & OperationType.Passenger) == OperationType.Passenger, ct);
-
-        if (!isPassengerHub)
+        if (!await registrar.IsPassengerHubAsync(hubIcao, ct))
             throw new AppException(AppErrorKind.Validation, $"{hubIcao} is not a Litoral passenger hub.");
-
-        var initialRank = await db.Ranks.OrderBy(r => r.Level).FirstAsync(ct);
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
         var isFirstPilot = !await db.Pilots.AnyAsync(ct);
-        var pilotNumber = await NextPilotNumberAsync(ct);
+
+        if (!isFirstPilot)
+        {
+            if (!await gate.IsOpenAsync(ct))
+                throw new AppException(AppErrorKind.Conflict, "Litoral is not accepting new pilots right now.");
+            if (await gate.BlockedUntilAsync(email, ct) is DateTime until)
+                throw new AppException(AppErrorKind.Conflict, $"Your last application was not accepted. You can apply again on {until:d MMM yyyy}.");
+            if (await registrar.NetworkConflictAsync(Clean(request.VatsimId), Clean(request.IvaoId), ct) is string conflict)
+                throw new AppException(AppErrorKind.Conflict, conflict);
+        }
 
         var user = new ApplicationUser { UserName = email, Email = email };
         var created = await userManager.CreateAsync(user, request.Password);
@@ -58,31 +68,54 @@ public sealed class AuthService(
         if (!created.Succeeded)
             throw new AppException(AppErrorKind.Validation, string.Join(" ", created.Errors.Select(e => e.Description)));
 
-        var pilot = new Pilot(user.Id, pilotNumber, request.FirstName.Trim(), request.LastName.Trim(), initialRank, hubIcao);
-        pilot.AcceptTerms(LegalTerms.CurrentVersion);
-        db.Pilots.Add(pilot);
-        await db.SaveChangesAsync(ct);
-
         if (isFirstPilot)
         {
+            var pilot = await registrar.CreateAsync(user, request.FirstName, request.LastName, hubIcao, LegalTerms.CurrentVersion, ct);
+            pilot.SetNetworkIds(request.VatsimId, request.IvaoId, null);
+            await db.SaveChangesAsync(ct);
+
             var roleResult = await userManager.AddToRoleAsync(user, StaffPositions.CeoFounder);
             if (!roleResult.Succeeded)
                 throw new InvalidOperationException("Could not assign the CEO & Founder position.");
+
+            await transaction.CommitAsync(ct);
+            return new RegisterResponse(await BuildResponseAsync(user, pilot), null);
         }
 
+        var application = new PilotApplication(user.Id, request.FirstName, request.LastName, hubIcao, request.VatsimId, request.IvaoId,
+            request.Simulator, request.AddOns, request.Motivation, LegalTerms.CurrentVersion);
+        db.PilotApplications.Add(application);
+        await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
-        return await BuildResponseAsync(user, pilot);
+        var name = $"{application.FirstName} {application.LastName}";
+        var reviewers = await ReviewerPilotIdsAsync(ct);
+        notifier.SendMany(reviewers, NotificationType.Application, "New application",
+            $"{name} applied to join Litoral. Check the profile and approve or reject the application.", "/admin/applications");
+
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Pilots, "Application submitted", "Application", application.Id.ToString(), name,
+            $"Email: {email}\nVATSIM: {application.VatsimId ?? "-"}\nIVAO: {application.IvaoId ?? "-"}\nSimulator: {application.Simulator}",
+            ActorName: name), ct);
+
+        return new RegisterResponse(null, new ApplicationStatusDto(application.FirstName, application.CreatedAt));
     }
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        var user = await userManager.FindByEmailAsync(request.Email.Trim());
+        var email = request.Email.Trim();
+        var user = await userManager.FindByEmailAsync(email);
 
         if (user is null)
+        {
+            if (await gate.BlockedUntilAsync(email, ct) is DateTime until)
+                throw new AppException(AppErrorKind.Unauthorized, $"Your application was not accepted. You can apply again on {until:d MMM yyyy}.");
             throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
+        }
 
-        var pilot = await LoadPilotAsync(user.Id, ct);
+        var pilot = await db.Pilots.Include(p => p.Rank).FirstOrDefaultAsync(p => p.UserId == user.Id, ct);
+        if (pilot is null)
+            return await ApplicationLoginAsync(user, request.Password, ct);
+
         var label = AuditContext.PilotLabel(pilot);
 
         if (await userManager.IsLockedOutAsync(user))
@@ -148,19 +181,35 @@ public sealed class AuthService(
         return PilotSummaryMapper.ToSummary(user, pilot, roles.ToList(), twoFactorOptions.Value.RequiredForStaff);
     }
 
-    private async Task<int> NextPilotNumberAsync(CancellationToken ct)
+    private async Task<LoginResponse> ApplicationLoginAsync(ApplicationUser user, string password, CancellationToken ct)
     {
-        var numbers = await db.Pilots.OrderBy(p => p.PilotNumber).Select(p => p.PilotNumber).ToListAsync(ct);
+        var application = await db.PilotApplications.AsNoTracking().FirstOrDefaultAsync(a => a.UserId == user.Id, ct)
+            ?? throw new AppException(AppErrorKind.NotFound, "Pilot not found.");
 
-        var next = Pilot.FirstPilotNumber;
-        foreach (var number in numbers)
+        if (await userManager.IsLockedOutAsync(user))
+            throw new AppException(AppErrorKind.Unauthorized, TwoFactorService.LockedOutMessage);
+
+        if (!await userManager.CheckPasswordAsync(user, password))
         {
-            if (number != next) break;
-            next++;
+            await userManager.AccessFailedAsync(user);
+            throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
         }
 
-        return next;
+        await userManager.ResetAccessFailedCountAsync(user);
+        return new LoginResponse(null, null, new ApplicationStatusDto(application.FirstName, application.CreatedAt));
     }
+
+    private async Task<List<Guid>> ReviewerPilotIdsAsync(CancellationToken ct)
+    {
+        var reviewers = (await staffRoles.ByUserAsync(ct))
+            .Where(r => r.Value.Contains(StaffPositions.HeadOfHr) || r.Value.Contains(StaffPositions.CeoFounder))
+            .Select(r => r.Key)
+            .ToList();
+
+        return await db.Pilots.Where(p => reviewers.Contains(p.UserId)).Select(p => p.Id).ToListAsync(ct);
+    }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string? LoginDetails(Pilot pilot, string? method)
     {
