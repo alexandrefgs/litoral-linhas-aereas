@@ -6,13 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure.Privacy;
 
-public sealed class PrivacyRetentionService(
-    IServiceScopeFactory scopes,
-    IOptions<PrivacyOptions> options,
-    ILogger<PrivacyRetentionService> logger) : BackgroundService
+public sealed class PrivacyRetentionService(IServiceScopeFactory scopes, SystemMonitor monitor, IOptions<PrivacyOptions> options, ILogger<PrivacyRetentionService> logger) : BackgroundService
 {
     public const string AnonymizedName = "Anonymized";
 
@@ -26,7 +24,7 @@ public sealed class PrivacyRetentionService(
         {
             try
             {
-                await ApplyRetentionAsync(stoppingToken);
+                await monitor.TrackJobAsync("Data retention", Interval, () => ApplyRetentionAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

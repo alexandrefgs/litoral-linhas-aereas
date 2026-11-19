@@ -1,4 +1,5 @@
 using Litoral.Api.Errors;
+using Litoral.Api.Monitoring;
 using Litoral.Api.OpenApi;
 using Litoral.Infrastructure;
 using Litoral.Infrastructure.Persistence;
@@ -11,10 +12,12 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddExceptionHandler<UnhandledExceptionRecorder>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseMiddleware<RequestMetricsMiddleware>();
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())

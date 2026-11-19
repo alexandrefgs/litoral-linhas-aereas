@@ -49,6 +49,7 @@ using Litoral.Application.Events;
 using Litoral.Infrastructure.Events;
 using Litoral.Application.Mel;
 using Litoral.Infrastructure.Mel;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure;
 
@@ -113,7 +114,9 @@ public static class DependencyInjection
             foreach (var (policy, positions) in StaffPolicies.Positions)
                 options.AddPolicy(policy, p => p.RequireRole(positions.Prepend(StaffPositions.CeoFounder)));
         });
-
+        
+        services.AddSingleton<SystemMonitor>();
+        services.AddScoped<ISystemMonitorService, SystemMonitorService>();
         services.AddScoped<StaffRoles>();
         services.AddScoped<IClaimsTransformation, StaffClaimsTransformation>();
         services.AddScoped<PilotEraser>();
@@ -135,7 +138,8 @@ public static class DependencyInjection
         services.AddScoped<IReferenceService, ReferenceService>();
         services.AddScoped<IAirportAdminService, AirportAdminService>();
         services.AddScoped<IAirportLookupService, AirportLookupService>();
-        services.AddHttpClient<AirportCatalogImporter>(client => client.Timeout = TimeSpan.FromMinutes(2));
+        services.AddHttpClient<AirportCatalogImporter>(client => client.Timeout = TimeSpan.FromMinutes(2))
+            .AddHttpMessageHandler(sp => new MonitoredHttpHandler(sp.GetRequiredService<SystemMonitor>(), SystemMonitor.AirportCatalog));
         services.AddScoped<IRouteAdminService, RouteAdminService>();
         services.AddScoped<IFleetAdminService, FleetAdminService>();
         services.AddScoped<IScoringRuleService, ScoringRuleService>();
@@ -167,9 +171,11 @@ public static class DependencyInjection
         services.AddScoped<IRosterService, RosterService>();
         services.AddScoped<IPilotFleetService, PilotFleetService>();
         services.AddScoped<IBriefingService, BriefingService>();
-        services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddHttpClient<IMetarProvider, MetarProvider>(client => client.Timeout = TimeSpan.FromSeconds(15))
+            .AddHttpMessageHandler(sp => new MonitoredHttpHandler(sp.GetRequiredService<SystemMonitor>(), SystemMonitor.Metar));
         services.Configure<SimBriefOptions>(configuration.GetSection(SimBriefOptions.SectionName));
-        services.AddHttpClient<ISimBriefProvider, SimBriefProvider>(client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddHttpClient<ISimBriefProvider, SimBriefProvider>(client => client.Timeout = TimeSpan.FromSeconds(15))
+            .AddHttpMessageHandler(sp => new MonitoredHttpHandler(sp.GetRequiredService<SystemMonitor>(), SystemMonitor.SimBrief));
         services.AddHostedService<BookingExpiryService>();
         services.AddScoped<PirepFiling>();
         services.AddScoped<IFlightTrackingService, FlightTrackingService>();

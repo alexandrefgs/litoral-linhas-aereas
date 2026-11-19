@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure.Bookings;
 
-public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<BookingExpiryService> logger) : BackgroundService
+public sealed class BookingExpiryService(IServiceScopeFactory scopes, SystemMonitor monitor, ILogger<BookingExpiryService> logger) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(1);
 
@@ -23,7 +24,7 @@ public sealed class BookingExpiryService(IServiceScopeFactory scopes, ILogger<Bo
         {
             try
             {
-                await ExpireAsync(stoppingToken);
+                await monitor.TrackJobAsync("Booking expiry and maintenance planning", Interval, () => ExpireAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

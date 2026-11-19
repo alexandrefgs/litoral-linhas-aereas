@@ -9,10 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure.Pilots;
 
-public sealed class InactivityService(IServiceScopeFactory scopes, ILogger<InactivityService> logger) : BackgroundService
+public sealed class InactivityService(IServiceScopeFactory scopes, SystemMonitor monitor, ILogger<InactivityService> logger) : BackgroundService
 {
     public const int WarningDay = 30;
     public const int PenaltyStartDay = 41;
@@ -29,7 +30,7 @@ public sealed class InactivityService(IServiceScopeFactory scopes, ILogger<Inact
         {
             try
             {
-                await CheckAsync(stoppingToken);
+                await monitor.TrackJobAsync("Pilot inactivity", Interval, () => CheckAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

@@ -8,10 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure.Statistics;
 
-public sealed class MonthlyAwardService(IServiceScopeFactory scopes, ILogger<MonthlyAwardService> logger) : BackgroundService
+public sealed class MonthlyAwardService(IServiceScopeFactory scopes, SystemMonitor monitor, ILogger<MonthlyAwardService> logger) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
     private static readonly TimeSpan ReviewGrace = TimeSpan.FromDays(2);
@@ -24,7 +25,7 @@ public sealed class MonthlyAwardService(IServiceScopeFactory scopes, ILogger<Mon
         {
             try
             {
-                await AwardPreviousMonthAsync(stoppingToken);
+                await monitor.TrackJobAsync("Pilots of the month", Interval, () => AwardPreviousMonthAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

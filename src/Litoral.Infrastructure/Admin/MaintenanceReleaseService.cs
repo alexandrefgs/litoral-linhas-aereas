@@ -5,10 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Litoral.Infrastructure.Operations;
+using Litoral.Infrastructure.Monitoring;
 
 namespace Litoral.Infrastructure.Admin;
 
-public sealed class MaintenanceReleaseService(IServiceScopeFactory scopes, ILogger<MaintenanceReleaseService> logger) : BackgroundService
+public sealed class MaintenanceReleaseService(IServiceScopeFactory scopes, SystemMonitor monitor, ILogger<MaintenanceReleaseService> logger) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
 
@@ -20,7 +21,7 @@ public sealed class MaintenanceReleaseService(IServiceScopeFactory scopes, ILogg
         {
             try
             {
-                await ReleaseDueAsync(stoppingToken);
+                await monitor.TrackJobAsync("Maintenance release", Interval, () => ReleaseDueAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

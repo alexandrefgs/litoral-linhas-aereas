@@ -12,6 +12,7 @@ public static class StaffPolicies
     public const string ManageRoutes = "ManageRoutes";
     public const string ReviewPireps = "ReviewPireps";
     public const string ManageDownloads = "ManageDownloads";
+    public const string ViewSystem = "ViewSystem";
 
     public static readonly IReadOnlyDictionary<string, string[]> Positions = new Dictionary<string, string[]>
     {
@@ -22,6 +23,7 @@ public static class StaffPolicies
         [ManageFleet] = [StaffPositions.FleetManager],
         [ManageRoutes] = [StaffPositions.RouteManager],
         [ReviewPireps] = [StaffPositions.SafetyManager],
-        [ManageDownloads] = [StaffPositions.FleetManager, StaffPositions.DirectorOfOperations]
+        [ManageDownloads] = [StaffPositions.FleetManager, StaffPositions.DirectorOfOperations],
+        [ViewSystem] = []
     };
 }

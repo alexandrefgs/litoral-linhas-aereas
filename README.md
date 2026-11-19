@@ -701,6 +701,21 @@ Em **Admin › Logs**, fica registrado tudo o que é alterado em contas, staff e
 - **Bookings:** reservas, cancelamentos, expirações, jumpseat e traslados de aeronave. **Logins:** entradas e tentativas com senha ou código errado, com o método usado.
 - Os jobs (pilotos do mês, inatividade, aprovação automática e retenção) aparecem como feitos pelo **System**, e as ações sem login como **Visitor**.
 
+
+### Monitor do sistema (CEO)
+
+Em **Admin › System**, só para o CEO & Founder, atualizado a cada 30 segundos:
+
+- **API:** versão, ambiente, runtime, uptime e memória. **Banco:** conexão, latência, tamanho e migrations pendentes.
+- **Tráfego:** requisições e erros 5xx por minuto na última hora, tempo médio de resposta e totais desde o início.
+- **Integrações:** METAR, SimBrief e OurAirports, com chamadas, falhas, latência, último sucesso e último erro.
+- **Jobs:** cada job em background com intervalo, última execução, duração, próxima execução e estado (**Ok**, **Running**, **Late** ou **Failing**).
+- **Números da operação:** voos em andamento, sessões de ACARS ao vivo, reservas, PIREPs pendentes, aeronaves em manutenção e AOG, pilotos ativos, inscrições e pedidos de privacidade.
+- **Erros recentes:** os últimos 50 erros 500, com rota, horário, tipo, mensagem e trace id (sem stack trace).
+- **Armazenamento:** espaço e arquivos das pastas de uploads e downloads.
+
+As métricas ficam em memória e recomeçam quando a API reinicia.
+
 ---
 
 ## Stack
@@ -995,7 +1010,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] Código do 2FA por e-mail (depende do SMTP)
 
 ### 🔜 Fase 6: Produção
-- [ ] Monitor da API para o CEO (requisições, erros, jobs e saúde dos serviços)
+- [x] Monitor do sistema para o CEO (saúde da API e do banco, tráfego, integrações, jobs, erros e armazenamento)
 - [ ] Testes unitários do Domain
 - [ ] Testes de integração da API
 - [ ] CI com GitHub Actions (build e testes)

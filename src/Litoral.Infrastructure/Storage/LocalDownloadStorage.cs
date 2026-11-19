@@ -16,7 +16,7 @@ public sealed class LocalDownloadStorage(IHostEnvironment environment, IConfigur
 
     private readonly string _root = ResolveRoot(environment, configuration);
 
-    private static string ResolveRoot(IHostEnvironment environment, IConfiguration configuration)
+        public static string ResolveRoot(IHostEnvironment environment, IConfiguration configuration)
     {
         var configured = configuration["Storage:DownloadsPath"];
         var path = string.IsNullOrWhiteSpace(configured)

@@ -125,6 +125,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/downloads/admin-downloads').then(m => m.AdminDownloads)
       },
       {
+        path: 'system',
+        canActivate: [staffGuard('system')],
+        loadComponent: () => import('./pages/admin/system/admin-system').then(m => m.AdminSystem)
+      },
+      {
         path: 'scoring',
         canActivate: [staffGuard('pireps')],
         loadComponent: () => import('./pages/admin/scoring/admin-scoring').then(m => m.AdminScoring)
