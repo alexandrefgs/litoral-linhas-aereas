@@ -5,5 +5,6 @@ public enum BookingType
     Random,
     Custom,
     Monthly,
-    Special
+    Special,
+    Tour
 }

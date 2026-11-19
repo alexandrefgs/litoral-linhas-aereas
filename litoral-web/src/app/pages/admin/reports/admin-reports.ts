@@ -10,7 +10,7 @@ import { formatMinutes } from '../../../shared/utils/flight';
 
 type Preset = 'month' | 'lastMonth' | '90days' | 'year' | 'custom';
 
-const BOOKING_LABELS: Record<string, string> = { Random: 'Random', Custom: 'Custom', Monthly: 'Monthly roster', Special: 'Special flight' };
+const BOOKING_LABELS: Record<string, string> = { Random: 'Random', Custom: 'Custom', Monthly: 'Monthly roster', Special: 'Special flight', Tour: 'Tour leg' };
 
 @Component({
   selector: 'app-admin-reports',

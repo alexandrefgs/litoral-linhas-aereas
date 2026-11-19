@@ -5,13 +5,15 @@ using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
 using Litoral.Domain.Scoring;
 using Litoral.Infrastructure.Audit;
+using Litoral.Infrastructure.Events;
+using Litoral.Infrastructure.Tours;
 using Litoral.Infrastructure.Notifications;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Litoral.Infrastructure.Flights;
 
-public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, Notifier notifier, IAuditLog auditLog) : IPirepReviewService
+public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, Notifier notifier, IAuditLog auditLog, TourProgressTracker tours, EventBonus events) : IPirepReviewService
 {
     public const string SystemReviewer = "SYSTEM";
     public const int AutoApprovalConformity = 98;
@@ -113,6 +115,8 @@ public sealed class PirepReviewService(LitoralDbContext db, PirepFiling filing, 
         await PayCrewAsync(pirep, ct);
         await PayRosterBonusAsync(pirep, ct);
         await PaySpecialFlightAsync(pirep, ct);
+        await tours.OnApprovedAsync(pirep, ct);
+        await events.OnApprovedAsync(pirep, ct);
 
         var auto = reviewerUserId == SystemReviewer;
         notifier.Send(pilot.Id, NotificationType.PirepApproved,

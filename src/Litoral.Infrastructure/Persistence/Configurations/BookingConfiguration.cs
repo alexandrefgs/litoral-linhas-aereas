@@ -22,5 +22,6 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasOne(b => b.CrewPilot).WithMany().HasForeignKey(b => b.CrewPilotId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(b => b.Route).WithMany().HasForeignKey(b => b.RouteId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(b => b.Aircraft).WithMany().HasForeignKey(b => b.AircraftId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(b => b.TourLeg).WithMany().HasForeignKey(b => b.TourLegId).OnDelete(DeleteBehavior.Restrict);
     }
 }

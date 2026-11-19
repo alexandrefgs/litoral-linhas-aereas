@@ -18,7 +18,8 @@ public sealed class BookingSupport(LitoralDbContext db)
         [BookingType.Random] = "Random flight",
         [BookingType.Custom] = "Custom flight",
         [BookingType.Monthly] = "Monthly roster",
-        [BookingType.Special] = "Special flight"
+        [BookingType.Special] = "Special flight",
+        [BookingType.Tour] = "Tour leg"
     };
 
     public static AuditEntry AuditEntryFor(Booking booking, string action, string? extra = null) =>

@@ -19,6 +19,8 @@ const MENU: AdminMenuItem[] = [
   { area: 'pilots', label: 'Privacy', icon: 'ti-lock', path: '/admin/privacy' },
   { area: 'staff', label: 'Staff', icon: 'ti-shield-lock', path: '/admin/staff' },
   { area: 'operations', label: 'Operations', icon: 'ti-calendar-event', path: '/admin/operations' },
+  { area: 'operations', label: 'Tours', icon: 'ti-route', path: '/admin/tours' },
+  { area: 'operations', label: 'Events', icon: 'ti-flag', path: '/admin/events' },
   { area: 'operations', label: 'Awards', icon: 'ti-award', path: '/admin/awards' },
   { area: 'downloads', label: 'Downloads', icon: 'ti-download', path: '/admin/downloads' },
   { area: 'pireps', label: 'PIREPs', icon: 'ti-clipboard-check', path: '/admin/pireps' },

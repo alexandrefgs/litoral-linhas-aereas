@@ -32,7 +32,9 @@ export const POINT_TYPE_LABELS: Record<string, string> = {
   Jumpseat: 'Jumpseat',
   AircraftTransfer: 'Aircraft transfer',
   Penalty: 'Penalty',
-  ManualAdjustment: 'Adjustment'
+  ManualAdjustment: 'Adjustment',
+  TourBonus: 'Tour completed',
+  EventBonus: 'Event flight'
 };
 
 export const POINT_TYPE_ICONS: Record<string, string> = {
@@ -45,7 +47,9 @@ export const POINT_TYPE_ICONS: Record<string, string> = {
   Jumpseat: 'ti-armchair',
   AircraftTransfer: 'ti-truck-delivery',
   Penalty: 'ti-alert-triangle',
-  ManualAdjustment: 'ti-adjustments'
+  ManualAdjustment: 'ti-adjustments',
+  TourBonus: 'ti-route',
+  EventBonus: 'ti-flag'
 };
 
 @Injectable({ providedIn: 'root' })

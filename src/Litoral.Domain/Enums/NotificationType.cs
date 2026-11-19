@@ -15,5 +15,7 @@ public enum NotificationType
     Security,
     Privacy,
     Application,
-    Award
+    Award,
+    Tour,
+    Event
 }

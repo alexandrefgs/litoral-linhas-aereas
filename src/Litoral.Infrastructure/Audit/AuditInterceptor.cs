@@ -99,6 +99,8 @@ public sealed partial class AuditInterceptor(AuditContext audit) : SaveChangesIn
         ScoringRule r => new(AuditCategory.Scoring, "Scoring rule", r.Description),
         SpecialFlight f => new(AuditCategory.Operations, "Special flight", f.Title),
         Award a => new(AuditCategory.Awards, "Award", a.Name),
+        Tour t => new(AuditCategory.Tours, "Tour", t.Title),
+        AirlineEvent e => new(AuditCategory.Events, "Event", e.Title),
         DownloadItem d => new(AuditCategory.Downloads, "Download", d.Title, DownloadProperties),
         Pirep p => new(AuditCategory.Pireps, "PIREP", p.Callsign, PirepProperties),
         Pilot p => new(AuditCategory.Pilots, "Pilot", AuditContext.PilotLabel(p), PilotProperties),

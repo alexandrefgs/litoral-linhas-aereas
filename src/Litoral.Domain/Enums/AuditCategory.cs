@@ -15,5 +15,7 @@ public enum AuditCategory
     Bookings,
     Logins,
     Privacy,
-    Downloads
+    Downloads,
+    Tours,
+    Events
 }

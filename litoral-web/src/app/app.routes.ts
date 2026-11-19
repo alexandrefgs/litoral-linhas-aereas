@@ -30,6 +30,7 @@ export const routes: Routes = [
   { path: 'pireps', redirectTo: () => inject(Router).parseUrl('/profile?tab=flights') },
   { path: 'special-flights', canActivate: [authGuard], loadComponent: () => import('./pages/special-flights/special-flights').then(m => m.SpecialFlights) },
   { path: 'airports', canActivate: [authGuard], loadComponent: () => import('./pages/airports/airports').then(m => m.Airports) },
+  { path: 'tours', canActivate: [authGuard], loadComponent: () => import('./pages/tours/tours').then(m => m.Tours) },
   { path: 'points', canActivate: [authGuard], loadComponent: () => import('./pages/points/points').then(m => m.Points) },
   { path: 'statistics', canActivate: [authGuard], loadComponent: () => import('./pages/statistics/statistics').then(m => m.Statistics) },
   {
@@ -97,6 +98,16 @@ export const routes: Routes = [
         path: 'operations',
         canActivate: [staffGuard('operations')],
         loadComponent: () => import('./pages/admin/operations/admin-operations').then(m => m.AdminOperations)
+      },
+      {
+        path: 'tours',
+        canActivate: [staffGuard('operations')],
+        loadComponent: () => import('./pages/admin/tours/admin-tours').then(m => m.AdminTours)
+      },
+      {
+        path: 'events',
+        canActivate: [staffGuard('operations')],
+        loadComponent: () => import('./pages/admin/events/admin-events').then(m => m.AdminEvents)
       },
       {
         path: 'awards',

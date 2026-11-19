@@ -43,6 +43,10 @@ using Litoral.Application.Awards;
 using Litoral.Infrastructure.Awards;
 using Litoral.Application.Downloads;
 using Litoral.Infrastructure.Downloads;
+using Litoral.Application.Tours;
+using Litoral.Infrastructure.Tours;
+using Litoral.Application.Events;
+using Litoral.Infrastructure.Events;
 
 namespace Litoral.Infrastructure;
 
@@ -139,6 +143,13 @@ public static class DependencyInjection
         services.AddScoped<IAwardAdminService, AwardAdminService>();
         services.AddScoped<IDownloadService, DownloadService>();
         services.AddScoped<IDownloadAdminService, DownloadAdminService>();
+        services.AddScoped<TourSupport>();
+        services.AddScoped<TourProgressTracker>();
+        services.AddScoped<ITourService, TourService>();
+        services.AddScoped<ITourAdminService, TourAdminService>();
+        services.AddScoped<EventBonus>();
+        services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IEventAdminService, EventAdminService>();
         services.AddHostedService<MaintenanceReleaseService>();
         services.AddScoped<IStatisticsService, StatisticsService>();
         services.AddScoped<IPointsStatementService, PointsStatementService>();

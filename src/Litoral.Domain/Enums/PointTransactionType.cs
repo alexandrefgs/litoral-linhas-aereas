@@ -12,5 +12,7 @@ public enum PointTransactionType
     CrewDuty,
     AircraftTransfer,
     PilotOfTheMonth,
-    Inactivity
+    Inactivity,
+    TourBonus,
+    EventBonus
 }

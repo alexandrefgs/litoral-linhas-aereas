@@ -10,7 +10,8 @@ const TYPE_LABELS: Record<Booking['type'], string> = {
   Random: 'Random flight',
   Custom: 'Custom flight',
   Monthly: 'Monthly roster',
-  Special: 'Special schedule'
+  Special: 'Special schedule',
+  Tour: 'Tour leg'
 };
 
 @Component({

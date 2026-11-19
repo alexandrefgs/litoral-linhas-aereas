@@ -35,7 +35,7 @@ export interface Booking {
   callsign: string;
   networkCallsign: string;
   flightNumber: number;
-  type: 'Random' | 'Custom' | 'Monthly' | 'Special';
+  type: 'Random' | 'Custom' | 'Monthly' | 'Special' | 'Tour';
   status: 'Booked' | 'InProgress' | 'Completed' | 'Cancelled' | 'Expired';
   departure: BookingAirport;
   arrival: BookingAirport;

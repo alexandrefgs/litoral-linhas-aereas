@@ -38,6 +38,11 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<Award> Awards => Set<Award>();
     public DbSet<PilotAward> PilotAwards => Set<PilotAward>();
     public DbSet<DownloadItem> DownloadItems => Set<DownloadItem>();
+    public DbSet<Tour> Tours => Set<Tour>();
+    public DbSet<TourLeg> TourLegs => Set<TourLeg>();
+    public DbSet<TourProgress> TourProgresses => Set<TourProgress>();
+    public DbSet<AirlineEvent> AirlineEvents => Set<AirlineEvent>();
+    public DbSet<AirlineEventFlight> AirlineEventFlights => Set<AirlineEventFlight>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

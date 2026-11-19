@@ -96,6 +96,17 @@ public sealed class Route : Entity
         route._aircraftTypes.Add(aircraftType);
         return route;
     }
+    public static Route CreateTour(int flightNumber, Airport departure, Airport arrival, IEnumerable<AircraftType> aircraftTypes)
+    {
+        var block = FlightBlockRules.FromNumber(flightNumber);
+        if (block is not (FlightBlock.Seasonal or FlightBlock.FerryAndCargo))
+            throw new DomainException("Tour legs must use the 7XXX block, or 9XXX for cargo tours.");
+
+        var route = new Route();
+        route.Update(flightNumber, departure, arrival, aircraftTypes);
+        route.IsSpecial = true;
+        return route;
+    }
 
         public static Route CreateCheckFlight(int flightNumber, Airport airport, AircraftType aircraftType)
     {

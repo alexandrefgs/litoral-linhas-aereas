@@ -20,6 +20,8 @@ public sealed class Booking : Entity
     public Guid AircraftId { get; private set; }
     public Aircraft Aircraft { get; private set; } = null!;
     public BookingType Type { get; private set; }
+    public Guid? TourLegId { get; private set; }
+    public TourLeg? TourLeg { get; private set; }
     public int PointsCost { get; private set; }
     public string Callsign { get; private set; } = null!;
     public BookingStatus Status { get; private set; } = BookingStatus.Booked;
@@ -67,6 +69,14 @@ public sealed class Booking : Entity
         PointsCost = pointsCost;
         Callsign = finalCallsign;
         ExpiresAt = expiresAt ?? CreatedAt + (type == BookingType.Special ? SpecialValidity : DefaultValidity);
+    }
+    public void LinkTourLeg(TourLeg leg)
+    {
+        if (Type != BookingType.Tour)
+            throw new DomainException("Only tour bookings can be linked to a tour leg.");
+
+        TourLeg = leg;
+        TourLegId = leg.Id;
     }
 
     public void AssignCrew(Pilot crew)

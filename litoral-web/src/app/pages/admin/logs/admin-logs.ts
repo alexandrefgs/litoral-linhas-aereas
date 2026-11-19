@@ -18,7 +18,9 @@ const CATEGORIES: { value: AuditCategory; label: string; icon: string }[] = [
   { value: 'Bookings', label: 'Bookings', icon: 'ti-ticket' },
   { value: 'Logins', label: 'Logins', icon: 'ti-login' },
   { value: 'Privacy', label: 'Privacy', icon: 'ti-lock' },
-  { value: 'Downloads', label: 'Downloads', icon: 'ti-download' }
+  { value: 'Downloads', label: 'Downloads', icon: 'ti-download' },
+  { value: 'Tours', label: 'Tours', icon: 'ti-route' },
+  { value: 'Events', label: 'Events', icon: 'ti-flag' }
 ];
 
 const SEVERITY: Record<AuditSeverity, { label: string; bar: string; dot: string; text: string }> = {

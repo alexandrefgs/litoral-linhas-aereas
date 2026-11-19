@@ -9,11 +9,12 @@ import { LiveFlights } from '../../shared/live-flights/live-flights';
 import { FlightTimePipe } from '../../shared/pipes/flight-time.pipe';
 import { LocaleNumberPipe } from '../../shared/pipes/locale-number.pipe';
 import { RecentFlights } from '../../shared/recent-flights/recent-flights';
+import { EventsBanner } from './events-banner';
 import { MyLastFlights } from './my-last-flights';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap, LiveFlights, RecentFlights, MyLastFlights],
+  imports: [RouterLink, FlightTimePipe, LocaleNumberPipe, AirportMap, LiveFlights, RecentFlights, MyLastFlights, EventsBanner],
   template: `
     @if (auth.pilot(); as pilot) {
       <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
@@ -25,6 +26,8 @@ import { MyLastFlights } from './my-last-flights';
             <a routerLink="/profile" class="rounded-md bg-surface px-4 py-2 text-sm font-medium text-ink hover:bg-surface-alt">Go to profile</a>
           </div>
         }
+        
+        <app-events-banner />
 
         <div class="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside class="panel card-hover overflow-hidden">

@@ -13,7 +13,7 @@ public sealed class PointsStatementService(LitoralDbContext db) : IPointsStateme
     private static readonly Dictionary<string, PointTransactionType[]> Groups = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Flights"] = [PointTransactionType.FlightScore, PointTransactionType.CrewDuty, PointTransactionType.SpecialSchedule],
-        ["Bonuses"] = [PointTransactionType.MonthlyBonus, PointTransactionType.PilotOfTheMonth],
+        ["Bonuses"] = [PointTransactionType.MonthlyBonus, PointTransactionType.PilotOfTheMonth, PointTransactionType.TourBonus, PointTransactionType.EventBonus],
         ["Spending"] = [PointTransactionType.BookingCost, PointTransactionType.Jumpseat, PointTransactionType.AircraftTransfer],
         ["Penalties"] = [PointTransactionType.Penalty],
         ["Adjustments"] = [PointTransactionType.ManualAdjustment]

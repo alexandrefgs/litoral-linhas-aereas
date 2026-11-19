@@ -1,6 +1,6 @@
 import { FlightNetwork, PirepEvent, PirepScoreItem, PirepStatus, TrackPoint } from '../pirep/pirep.models';
 
-export type BookingType = 'Random' | 'Custom' | 'Monthly' | 'Special';
+export type BookingType = 'Random' | 'Custom' | 'Monthly' | 'Special' | 'Tour';
 
 export interface FlightCrewMember {
   pilotNumber: number | null;
@@ -106,7 +106,8 @@ export const BOOKING_TYPE_LABEL: Record<BookingType, string> = {
   Random: 'Random flight',
   Custom: 'Custom flight',
   Monthly: 'Monthly roster',
-  Special: 'Special flight'
+  Special: 'Special flight',
+  Tour: 'Tour leg'
 };
 
 export interface LandingGrade {

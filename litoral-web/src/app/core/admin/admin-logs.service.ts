@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-export type AuditCategory = 'Account' | 'Pilots' | 'Staff' | 'Pireps' | 'Scoring' | 'Fleet' | 'Routes' | 'Airports' | 'Operations' | 'Awards' | 'Bookings' | 'Logins' | 'Privacy' | 'Downloads';
+export type AuditCategory = 'Account' | 'Pilots' | 'Staff' | 'Pireps' | 'Scoring' | 'Fleet' | 'Routes' | 'Airports' | 'Operations' | 'Awards' | 'Bookings' | 'Logins' | 'Privacy' | 'Downloads' | 'Tours' | 'Events';
 
 export type AuditSeverity = 'Critical' | 'Warning' | 'Info';
 

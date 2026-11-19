@@ -23,7 +23,9 @@ const NOTIFICATION_STYLE: Record<string, { icon: string; tone: string }> = {
   Security: { icon: 'ti-shield-lock', tone: 'bg-danger/10 text-danger' },
   Privacy: { icon: 'ti-lock', tone: 'bg-primary/15 text-primary' },
   Application: { icon: 'ti-user-plus', tone: 'bg-onda-500/15 text-onda-600' },
-  Award: { icon: 'ti-award', tone: 'bg-sol-400/25 text-ink' }
+  Award: { icon: 'ti-award', tone: 'bg-sol-400/25 text-ink' },
+  Tour: { icon: 'ti-route', tone: 'bg-primary/15 text-primary' },
+  Event: { icon: 'ti-flag', tone: 'bg-danger/10 text-danger' }
 };
 
 interface NavItem {
@@ -243,6 +245,7 @@ export class Header {
     { path: '/dashboard', icon: 'ti-home', label: 'Dashboard' },
     { path: '/book', icon: 'ti-world-search', label: 'Book flight' },
     { path: '/special-flights', icon: 'ti-calendar-star', label: 'Special Flights' },
+    { path: '/tours', icon: 'ti-route', label: 'Tours & Events' },
     { path: '/airports', icon: 'ti-building-airport', label: 'Airports' },
     { path: '/fleet', icon: 'ti-plane', label: 'Fleet' },
     { path: '/points', icon: 'ti-star', label: 'Points' },
