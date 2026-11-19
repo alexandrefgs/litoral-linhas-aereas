@@ -14,7 +14,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
   return password && confirm && password !== confirm ? { passwordMismatch: true } : null;
 }
 
-type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword';
+type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'acceptTerms';
 
 @Component({
   selector: 'app-register',
@@ -57,7 +57,7 @@ type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword'
           <input id="password" type="password" formControlName="password" autocomplete="new-password" class="field-input" />
           <p class="mt-1 text-xs text-ink-muted">At least 8 characters, with uppercase, lowercase and a number.</p>
           @if (showError('password')) {
-            <p class="field-error">{{ form.controls.password.hasError('required') ? 'Required field.' : 'The password doesn\'t meet the requirements.' }}</p>
+            <p class="field-error">{{ form.controls.password.hasError('required') ? 'Required field.' : 'The password does not meet the requirements.' }}</p>
           }
         </div>
 
@@ -78,6 +78,21 @@ type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword'
               <option [value]="hub.icao">{{ hub.icao }} · {{ hub.city }}</option>
             }
           </select>
+        </div>
+
+        <div>
+          <label class="flex cursor-pointer items-start gap-3 text-sm text-ink">
+            <input type="checkbox" formControlName="acceptTerms" class="mt-0.5 h-4 w-4 shrink-0 accent-primary" />
+            <span>
+              I am at least 16 years old and I agree to the
+              <a routerLink="/regulations" target="_blank" class="font-medium text-primary hover:underline">Regulations</a>
+              and the
+              <a routerLink="/privacy" target="_blank" class="font-medium text-primary hover:underline">Privacy Policy</a>.
+            </span>
+          </label>
+          @if (showError('acceptTerms')) {
+            <p class="field-error">You must accept the Regulations and the Privacy Policy.</p>
+          }
         </div>
 
         @if (errorMessage(); as text) {
@@ -113,7 +128,8 @@ export class Register implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
       confirmPassword: ['', Validators.required],
-      hubIcao: ['SBGR']
+      hubIcao: ['SBGR'],
+      acceptTerms: [false, Validators.requiredTrue]
     },
     { validators: passwordsMatch }
   );
@@ -137,7 +153,8 @@ export class Register implements OnInit {
     this.errorMessage.set(null);
     if (this.form.invalid) return;
 
-    const { confirmPassword: _, ...request } = this.form.getRawValue();
+    const { confirmPassword: _, acceptTerms, ...data } = this.form.getRawValue();
+    const request = { ...data, acceptedTerms: acceptTerms };
 
     this.loading.set(true);
     try {

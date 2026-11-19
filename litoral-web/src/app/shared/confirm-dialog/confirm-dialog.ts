@@ -29,7 +29,7 @@ const TONES: Record<ConfirmTone, { icon: string; badge: string; button: string }
             <div class="px-6 py-2">
               <ul class="flex flex-col gap-1.5 rounded-lg bg-surface-alt px-4 py-3 text-sm text-ink">
                 @for (item of r.details; track item) {
-                  <li class="flex items-start gap-2"><i class="ti ti-point-filled mt-0.5 text-ink-muted" aria-hidden="true"></i>{{ item }}</li>
+                  <li class="flex items-start gap-2"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-muted" aria-hidden="true"></span>{{ item }}</li>
                 }
               </ul>
             </div>

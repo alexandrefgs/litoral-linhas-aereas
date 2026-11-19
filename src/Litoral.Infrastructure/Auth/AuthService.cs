@@ -22,7 +22,9 @@ public sealed class AuthService(
     private const string DefaultHubIcao = "SBGR";
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
-    {
+    {   
+        if (!request.AcceptedTerms)
+            throw new AppException(AppErrorKind.Validation, "You must accept the Regulations and the Privacy Policy.");
         var email = request.Email.Trim();
 
         if (await userManager.FindByEmailAsync(email) is not null)

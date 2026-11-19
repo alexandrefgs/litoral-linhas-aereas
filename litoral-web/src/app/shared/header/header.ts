@@ -187,6 +187,14 @@ interface NavItem {
                         Sign out <i class="ti ti-logout" aria-hidden="true"></i>
                       </button>
                     </div>
+                    <div class="border-t border-line p-2">
+                      <a routerLink="/regulations" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-book text-xl" aria-hidden="true"></i>Regulations
+                      </a>
+                      <a routerLink="/privacy" (click)="openMenu.set(null)" class="flex items-center gap-3 rounded-lg px-3 py-2 text-ink hover:bg-surface-alt">
+                        <i class="ti ti-lock text-xl" aria-hidden="true"></i>Privacy Policy
+                      </a>
+                    </div>
                   </div>
                 }
               </div>

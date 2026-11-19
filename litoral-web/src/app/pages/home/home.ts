@@ -190,8 +190,13 @@ import { FlipCounter } from './components/flip-counter';
         <div class="flex items-center gap-3">
           <img src="favicon.svg" alt="" class="h-9 w-9" />
           <div class="leading-tight">
-            <p class="font-extrabold tracking-wide text-primary">LITORAL</p>
-            <p class="text-xs text-ink-muted">© {{ year }} Litoral Linhas Aéreas</p>
+            <div class="flex flex-col gap-2 md:items-end">
+              <div class="flex gap-4 text-sm font-medium">
+                <a routerLink="/regulations" class="text-ink hover:text-primary">Regulations</a>
+                <a routerLink="/privacy" class="text-ink hover:text-primary">Privacy Policy</a>
+              </div>
+              <p class="max-w-xl text-xs text-ink-muted md:text-right">Litoral Linhas Aéreas is a virtual airline for flight simulation, not affiliated with any real airline.</p>
+            </div>
           </div>
         </div>
         <p class="max-w-xl text-xs text-ink-muted md:text-right">Litoral Linhas Aéreas is a virtual airline for flight simulation, not affiliated with any real airline.</p>

@@ -32,4 +32,5 @@ export interface RegisterRequest {
   email: string;
   password: string;
   hubIcao: string | null;
+  acceptedTerms: boolean;
 }

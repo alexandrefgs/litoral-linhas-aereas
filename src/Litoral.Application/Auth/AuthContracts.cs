@@ -7,7 +7,8 @@ public sealed record RegisterRequest(
     [Required, MaxLength(60)] string LastName,
     [Required, EmailAddress] string Email,
     [Required, MinLength(8)] string Password,
-    [StringLength(4, MinimumLength = 4)] string? HubIcao);
+    [StringLength(4, MinimumLength = 4)] string? HubIcao,
+    bool AcceptedTerms = false);
 
 public sealed record LoginRequest(
     [Required, EmailAddress] string Email,
