@@ -31,7 +31,8 @@ public sealed record PilotSummary(
     string DisplayName,
     string? PhotoUrl,
     bool TwoFactorEnabled,
-    bool TwoFactorRequired);
+    bool TwoFactorRequired,
+    bool TermsAccepted);
 
 public sealed record AuthResponse(string Token, DateTime ExpiresAt, PilotSummary Pilot, string? TrustedDevice = null);
 

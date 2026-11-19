@@ -1,5 +1,6 @@
 using Litoral.Application.Auth;
 using Litoral.Domain.Entities;
+using Litoral.Domain.Legal;
 using Litoral.Infrastructure.Identity;
 
 namespace Litoral.Infrastructure.Pilots;
@@ -22,5 +23,6 @@ internal static class PilotSummaryMapper
         pilot.PublicName,
         pilot.PhotoUrl,
         user.TwoFactorEnabled,
-        requireStaffTwoFactor && roles.Count > 0);
+        requireStaffTwoFactor && roles.Count > 0,
+        pilot.AcceptedTermsVersion == LegalTerms.CurrentVersion);
 }

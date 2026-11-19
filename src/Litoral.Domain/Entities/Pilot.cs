@@ -40,6 +40,8 @@ public sealed class Pilot : Entity
     public NameFormat NameFormat { get; private set; } = NameFormat.FirstInitialAndLast;
     public bool CanJumpseat { get; private set; } = true;
     public bool CanTransferAircraft { get; private set; } = true;
+    public string? AcceptedTermsVersion { get; private set; }
+    public DateTime? AcceptedTermsAt { get; private set; }
 
     public IReadOnlyCollection<PointTransaction> PointTransactions => _pointTransactions;
 
@@ -64,6 +66,12 @@ public sealed class Pilot : Entity
         RankId = rank.Id;
         BaseIcao = baseIcao.ToUpperInvariant();
         CurrentLocationIcao = BaseIcao;
+    }
+
+    public void AcceptTerms(string version)
+    {
+        AcceptedTermsVersion = version;
+        AcceptedTermsAt = DateTime.UtcNow;
     }
 
     public void SetSimBriefUsername(string? username) =>

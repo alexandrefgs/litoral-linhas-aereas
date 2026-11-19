@@ -4,6 +4,7 @@ using Litoral.Application.Auth;
 using Litoral.Application.Common;
 using Litoral.Domain.Entities;
 using Litoral.Domain.Enums;
+using Litoral.Domain.Legal;
 using Litoral.Domain.Staff;
 using Litoral.Infrastructure.Audit;
 using Litoral.Infrastructure.Identity;
@@ -58,6 +59,7 @@ public sealed class AuthService(
             throw new AppException(AppErrorKind.Validation, string.Join(" ", created.Errors.Select(e => e.Description)));
 
         var pilot = new Pilot(user.Id, pilotNumber, request.FirstName.Trim(), request.LastName.Trim(), initialRank, hubIcao);
+        pilot.AcceptTerms(LegalTerms.CurrentVersion);
         db.Pilots.Add(pilot);
         await db.SaveChangesAsync(ct);
 

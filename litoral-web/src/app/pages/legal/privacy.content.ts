@@ -1,4 +1,4 @@
-import { LEGAL_CONTACT_EMAIL, LegalDocument, LegalLanguage } from './legal.models';
+import { LEGAL_CONTACT_EMAIL, LEGAL_DPO_ROLE, LegalDocument, LegalLanguage } from './legal.models';
 
 export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
   en: {
@@ -78,7 +78,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         items: [
           'Your data is kept while your account exists, including when it is deactivated.',
           'When you delete your account in Settings (or when the staff deletes it), your profile, photos, flights, PIREPs, hours, points, bookings, notifications, login and e-mail are permanently deleted.',
-          'Audit logs are kept to protect the airline and its members. They store the name, pilot ID and e-mail related to the action, and stay after the account is deleted.',
+          'Audit logs are kept to protect the airline and its members. They store the name, pilot ID and e-mail related to the action, and stay after the account is deleted. After 2 years, names, e-mails, IP addresses and details about pilots are removed from them automatically.',
+          'Privacy requests are kept for 2 years after they are answered, as a record that we followed the law.',
           'Hours and cycles flown stay in the aircraft history, without your name.'
         ]
       },
@@ -90,11 +91,11 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
           'Confirm that we process your data and access it.',
           'Correct incomplete, wrong or outdated data. Most of it can be edited directly in Settings.',
           'Ask for the deletion of your data, which you can do yourself by deleting your account.',
-          'Ask for a copy of your data in a readable format.',
+          'Get a copy of your data in a readable format. You can download it yourself in Settings.',
           'Withdraw your consent for the optional profile data.',
           'Ask which services your data is shared with.'
         ],
-        note: `To exercise these rights, contact us at ${LEGAL_CONTACT_EMAIL}. You can also file a complaint with the ANPD (Brazilian Data Protection Authority).`
+        note: `To exercise these rights, send a privacy request in Settings or write to ${LEGAL_CONTACT_EMAIL}. We answer within 15 days. You can also file a complaint with the ANPD (Brazilian Data Protection Authority).`
       },
       {
         id: 'security',
@@ -120,8 +121,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'changes',
         title: '12. Changes and contact',
         items: [
-          'This policy may be updated. The date at the top shows the last change, and important changes are announced on the site.',
-          `Questions about privacy: ${LEGAL_CONTACT_EMAIL}.`
+          'This policy may be updated. The date at the top shows the last change. When it changes, you are asked to accept the new version the next time you sign in.',
+          `Our Data Protection Officer (encarregado) is the ${LEGAL_DPO_ROLE}. Questions about privacy: ${LEGAL_CONTACT_EMAIL}.`
         ]
       }
     ]
@@ -203,7 +204,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         items: [
           'Os seus dados são mantidos enquanto a conta existir, inclusive quando ela estiver desativada.',
           'Quando você exclui a conta em Settings (ou quando o staff a exclui), o seu perfil, fotos, voos, PIREPs, horas, pontos, reservas, notificações, login e e-mail são apagados de forma permanente.',
-          'Os logs de auditoria são mantidos para proteger a companhia e os seus membros. Eles guardam o nome, o ID de piloto e o e-mail ligados à ação, e continuam existindo depois da exclusão da conta.',
+          'Os logs de auditoria são mantidos para proteger a companhia e os seus membros. Eles guardam o nome, o ID de piloto e o e-mail ligados à ação, e continuam existindo depois da exclusão da conta. Depois de 2 anos, nomes, e-mails, endereços IP e detalhes sobre pilotos são removidos deles automaticamente.',
+          'Os pedidos de privacidade são guardados por 2 anos depois de respondidos, como registro de que cumprimos a lei.',
           'As horas e ciclos voados continuam no histórico da aeronave, sem o seu nome.'
         ]
       },
@@ -215,11 +217,11 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
           'Confirmar que tratamos os seus dados e ter acesso a eles.',
           'Corrigir dados incompletos, errados ou desatualizados. A maior parte pode ser editada direto em Settings.',
           'Pedir a exclusão dos seus dados, o que você mesmo pode fazer excluindo a conta.',
-          'Pedir uma cópia dos seus dados em formato legível.',
+          'Receber uma cópia dos seus dados em formato legível. Você mesmo pode baixá-la em Settings.',
           'Revogar o consentimento dos dados opcionais do perfil.',
           'Saber com quais serviços os seus dados são compartilhados.'
         ],
-        note: `Para exercer esses direitos, fale com a gente em ${LEGAL_CONTACT_EMAIL}. Você também pode reclamar na ANPD (Autoridade Nacional de Proteção de Dados).`
+        note: `Para exercer esses direitos, faça um pedido de privacidade em Settings ou escreva para ${LEGAL_CONTACT_EMAIL}. Respondemos em até 15 dias. Você também pode reclamar na ANPD (Autoridade Nacional de Proteção de Dados).`
       },
       {
         id: 'security',
@@ -245,8 +247,8 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'changes',
         title: '12. Alterações e contato',
         items: [
-          'Esta política pode ser atualizada. A data no topo mostra a última alteração, e as mudanças importantes são avisadas no site.',
-          `Dúvidas sobre privacidade: ${LEGAL_CONTACT_EMAIL}.`
+          'Esta política pode ser atualizada. A data no topo mostra a última alteração. Quando ela mudar, você vai ter que aceitar a nova versão na próxima vez que entrar.',
+          `O nosso encarregado de proteção de dados é o ${LEGAL_DPO_ROLE}. Dúvidas sobre privacidade: ${LEGAL_CONTACT_EMAIL}.`
         ]
       }
     ]

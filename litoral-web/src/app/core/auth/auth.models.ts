@@ -15,6 +15,7 @@ export interface PilotSummary {
   photoUrl: string | null;
   twoFactorEnabled: boolean;
   twoFactorRequired: boolean;
+  termsAccepted: boolean;
 }
 
 export interface AuthResponse {

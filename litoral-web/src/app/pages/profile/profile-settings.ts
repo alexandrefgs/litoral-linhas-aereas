@@ -7,6 +7,7 @@ import { COUNTRIES, PASSWORD_RULES, PilotSettings } from '../../core/profile/set
 import { SettingsService } from '../../core/profile/settings.service';
 import { DeleteAccountDialog } from '../../shared/delete-account-dialog/delete-account-dialog';
 import { PilotAvatar } from './pilot-avatar';
+import { PrivacyPanel } from './privacy-panel';
 import { TwoFactorPanel } from './two-factor-panel';
 
 type Section = 'media' | 'personal' | 'config' | 'password';
@@ -21,7 +22,7 @@ const DIGITS = Validators.pattern(/^\d*$/);
 
 @Component({
   selector: 'app-profile-settings',
-  imports: [ReactiveFormsModule, PilotAvatar, DeleteAccountDialog, TwoFactorPanel],
+    imports: [ReactiveFormsModule, PilotAvatar, DeleteAccountDialog, TwoFactorPanel, PrivacyPanel],
   template: `
     @if (settings(); as s) {
       <div class="flex flex-col gap-6">
@@ -252,6 +253,8 @@ const DIGITS = Validators.pattern(/^\d*$/);
         </div>
 
         <app-two-factor-panel />
+        
+        <app-privacy-panel />
 
         <div class="panel flex flex-wrap items-center justify-between gap-4 border-danger/40 px-6 py-5">
           <div>

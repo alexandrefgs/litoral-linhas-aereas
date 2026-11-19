@@ -33,6 +33,8 @@
 - [Pontos](#pontos)
 - [Estatísticas e ranking](#estatísticas-e-ranking)
 - [Mapa ao vivo](#mapa-ao-vivo)
+- [Notificações](#notificações)
+- [Segurança e privacidade](#segurança-e-privacidade)
 - [Estrutura de staff](#estrutura-de-staff)
 - [Stack](#stack)
 - [Arquitetura](#arquitetura)
@@ -59,7 +61,11 @@ O sistema reúne em um só lugar:
 - Pontuação por desempenho com **regras editáveis pelo staff**, revisão do Safety, promoção automática e **extrato de pontos** do piloto
 - **Estatísticas** da VA e do piloto, ranking geral e **pilotos do mês** com bônus automático
 - **Mapa ao vivo** no dashboard, com rota planejada, trilha voada e link para VATSIM Radar / Webeye
-- Painel administrativo com permissões por posição de staff, gestão de pilotos e staff, **relatórios** por período e **logs de auditoria** de tudo o que é alterado, com cores por gravidade
+- **Notificações** no site (sininho) para PIREPs, bônus, promoções, inatividade, Special Flights e segurança
+- **Aprovação automática** de PIREPs do ACARS com conformidade de 98% ou mais e **controle de inatividade** dos pilotos
+- **Regulamento** e **Política de Privacidade** em inglês e português, com aceite registrado por versão
+- **Autenticação em dois fatores** (app autenticador), obrigatória para o staff, e recursos da **LGPD**: download dos dados, pedidos de privacidade e retenção dos logs
+- Painel administrativo com permissões por posição de staff, gestão de pilotos e staff, **relatórios** por período e **logs de auditoria** de tudo o que é alterado e das ações dos pilotos, com cores por gravidade
 
 Compatibilidade planejada com **MSFS 2020, MSFS 2024, X-Plane 11/12 e Prepar3D**, voando nas networks **IVAO** e **VATSIM**.
 
@@ -202,7 +208,7 @@ As rotas são cadastradas pelo Route Manager em **Admin › Routes**. Os pilotos
 
 ## Carreira do piloto
 
-Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O cadastro pega sempre o **menor número livre**: o número de uma conta **excluída** volta a ficar disponível, e o de uma conta **inativa** continua reservado para ela. O login é feito por **e-mail e senha**. A idade mínima é de **13 anos**.
+Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente atual (ex.: `FO1001`, `CMD1002`). O cadastro pega sempre o **menor número livre**: o número de uma conta **excluída** volta a ficar disponível, e o de uma conta **inativa** continua reservado para ela. O login é feito por **e-mail e senha**, com **autenticação em dois fatores** opcional (obrigatória para o staff). A idade mínima é de **16 anos**, e o cadastro exige aceitar o **Regulamento** e a **Política de Privacidade**.
 
 | Patente | Requisitos |
 |---|---|
@@ -220,6 +226,19 @@ Cada piloto recebe um **número** a partir de **1000**, exibido junto da patente
 - **Limite:** o piloto pode fazer **um jumpseat** e **um traslado de aeronave**. Depois disso, precisa **voar pelo menos uma vez** (qualquer PIREP) para liberar os dois de novo.
 - **Rebaixamento:** se o piloto estiver em um aeroporto só de CMD quando voltar a ser FO, ele é **movido automaticamente para a base**.
 
+### Inatividade
+
+O piloto precisa voar pelo menos uma vez a cada 40 dias. Um job diário conta os dias desde a **referência mais recente** entre o último PIREP, o cadastro e a última reativação da conta.
+
+| Dias sem voar | O que acontece |
+|---|---|
+| **30** | Notificação de aviso |
+| **41 a 89** | **−50 pontos por dia** até o próximo voo (lançado no extrato como *Inactivity*) |
+| **90** | Conta **desativada** (notificação e log) |
+
+- Membros do **staff** e pilotos com **voo em andamento** não são afetados.
+- A conta desativada volta pelo Head of HR, e a contagem recomeça na reativação.
+
 ---
 
 ## Perfil do piloto
@@ -234,7 +253,7 @@ Cada piloto tem um perfil público em `/profile/{número}`:
 - **Privacidade:** e-mail, data de nascimento e Discord aparecem **só para o próprio piloto e para o staff**. A idade aparece para todos.
 - **Awards** e **Downloads:** abas preparadas para medalhas e documentos da tripulação.
 
-Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa.
+Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
 
 **Excluir conta:** também em Settings, o piloto pode excluir a própria conta. São duas confirmações: a primeira lista tudo o que será apagado, e a segunda (*Are you sure?*) pede a senha. A exclusão é **permanente** e apaga perfil, fotos, voos, PIREPs, flight logs, horas, pontos, escala, reservas, login e e-mail. Não é possível excluir com um voo aberto ou uma Special Flight em andamento, nem sendo do staff.
 
@@ -368,7 +387,9 @@ Todo PIREP é revisado por um **Safety Manager** em **Admin › PIREPs**:
 - Fila com abas **Pending**, **Approved**, **Rejected** e **All**, mostrando pontos e **% de conformidade**.
 - Tela de revisão com dados do voo, mapa da trilha, eventos e itens de pontuação.
 - O Safety pode **ignorar** um item automático (falso positivo) e **adicionar itens de revisão** (UNICOM, remarks, alternado sem justificativa, SOP...).
-- **Conformidade:** 100% menos 1% a cada 10 pontos de penalidade; qualquer item de reprovação dá 0%. No futuro, PIREPs com 98% ou mais poderão ser aprovados automaticamente.
+- **Conformidade:** 100% menos 1% a cada 10 pontos de penalidade; qualquer item de reprovação dá 0%.
+- **Aprovação automática:** PIREPs do **ACARS** com conformidade de **98% ou mais**, sem item de reprovação e de piloto **ativo** são aprovados na hora pelo sistema (o revisor aparece como *System (auto-approved)*). PIREPs manuais e os demais vão para a fila.
+- O piloto recebe uma **notificação** quando o PIREP é aprovado ou rejeitado.
 
 | Decisão | Efeito |
 |---|---|
@@ -473,11 +494,58 @@ O dashboard mostra os voos da Litoral em andamento (sessões de ACARS com posiç
 
 ---
 
+## Notificações
+
+O **sininho** no topo do site mostra as notificações do piloto, com o contador de não lidas (atualizado a cada 60 segundos), as 30 mais recentes e **Mark all as read**. Cada notificação pode levar à página relacionada.
+
+| Tipo | Quando |
+|---|---|
+| PIREP aprovado / rejeitado | Na revisão do Safety ou na aprovação automática |
+| Bônus | Pilotos do mês, escala mensal e Special Flights |
+| Promoção / rebaixamento | Mudança de patente |
+| Inatividade | Aviso aos 30 dias, início da penalidade e desativação da conta |
+| Special Flight | Nova Special Flight disponível para a patente do piloto |
+| Reserva expirada | Reserva ou Special Flight que venceu |
+| Segurança | Reset da autenticação em dois fatores pelo staff |
+| Privacidade | Resposta a um pedido de privacidade |
+
+Por enquanto as notificações são só no site. Os e-mails entram junto com o SMTP, em produção.
+
+---
+
+## Segurança e privacidade
+
+### Autenticação em dois fatores (2FA)
+
+- **App autenticador** (Google Authenticator, Microsoft Authenticator, Authy...), ativado em **Settings** com QR code ou chave manual.
+- **10 códigos de recuperação** de uso único, para copiar ou baixar. Podem ser gerados de novo a qualquer momento (com senha e código).
+- **Trust this device for 30 days:** o navegador guarda um marcador e não pede o código nesse período. Trocar a senha ou desativar o 2FA invalida todos os dispositivos confiáveis.
+- Desativar o 2FA exige **senha e código**.
+- **Obrigatório para o staff:** sem 2FA, as posições de staff não valem na API e o Admin redireciona para Settings. Pode ser desligado em desenvolvimento com `TwoFactor:RequiredForStaff = false`.
+- O **Head of HR** pode **resetar** o 2FA de um piloto que perdeu o celular e os códigos (o piloto é notificado).
+- **Bloqueio:** 5 erros seguidos de senha ou de código bloqueiam a conta por 5 minutos.
+- Tudo fica nos logs: ativação, desativação, novos códigos, reset e o método de cada login (código, código de recuperação ou dispositivo confiável).
+
+### Regulamento e Política de Privacidade
+
+- Páginas públicas `/regulations` e `/privacy`, em **inglês e português** (`?lang=pt`), com índice e data da última atualização. Os links ficam no rodapé da home e no menu do usuário.
+- A Política de Privacidade segue a **LGPD** (Lei 13.709/2018): dados coletados, bases legais, compartilhamento, armazenamento no navegador, retenção, direitos do titular e encarregado (DPO, hoje o CEO & Founder).
+- **Aceite por versão:** o cadastro registra a versão aceita. Quando os textos mudam, o piloto precisa aceitar a nova versão no próximo acesso, num aviso que só fecha aceitando (ou saindo).
+- Para publicar uma nova versão, atualize `LegalTerms.CurrentVersion` (`Litoral.Domain/Legal`) e `LEGAL_UPDATED_AT` (`pages/legal/legal.models.ts`) com a mesma data.
+
+### LGPD na prática
+
+- **Download my data:** em Settings, o piloto baixa um JSON com conta, perfil, reservas, voos, extrato de pontos, prêmios, notificações, pedidos de privacidade e o seu log de atividade.
+- **Pedidos de privacidade:** acesso, correção, exclusão, portabilidade, revogação de consentimento ou outro assunto, com prazo de resposta de **15 dias** (no máximo 3 abertos por piloto). O staff responde em **Admin › Privacy**, que destaca os atrasados, e o piloto é notificado.
+- **Retenção:** um job diário anonimiza os logs com mais de **2 anos** (nome, e-mail, IP e detalhes de pilotos) e apaga os pedidos de privacidade respondidos há mais de 2 anos. O prazo fica em `Privacy:AuditLogRetentionDays`.
+
+---
+
 ## Estrutura de staff
 
 Todo staff também é piloto. Cada posição tem **uma única função** no sistema. Uma pessoa pode acumular mais de uma posição.
 
-As permissões são aplicadas por **policies** na API. O **CEO & Founder** acessa todas as áreas, e o menu **Admin** do site mostra a cada pessoa só as áreas das suas posições.
+As permissões são aplicadas por **policies** na API. O **CEO & Founder** acessa todas as áreas, e o menu **Admin** do site mostra a cada pessoa só as áreas das suas posições. Para usar o Admin, o staff precisa ter a **autenticação em dois fatores** ativada.
 
 Toda ação que exige confirmação no site (aprovar ou rejeitar PIREP, desativar piloto, excluir itens, cancelar voo...) abre um **popup de confirmação** padrão.
 
@@ -494,7 +562,7 @@ Toda ação que exige confirmação no site (aprovar ou rejeitar PIREP, desativa
 
 | Posição | Função | Vagas |
 |---|---|:---:|
-| Head of HR | Gestão de pilotos: inativar, reativar e excluir | 1 |
+| Head of HR | Gestão de pilotos (inativar, reativar, excluir e resetar 2FA) e pedidos de privacidade | 1 |
 | Director of Operations | Special Flights, tours e eventos | 1 |
 | Fleet Manager | Tipos de aeronave (intervalos de manutenção e aeroporto de entrega), matrículas, fotos e manutenção | 1 |
 | Route Manager | Rotas, aeroportos (operação, patente mínima, hub, IATA e foto) | 1 |
@@ -511,7 +579,9 @@ Em **Admin › Pilots**: lista com busca por nome, ID ou e-mail, abas **Active /
 
 - **Desativar / reativar:** o piloto inativo não consegue reservar voos e mantém o número.
 - **Excluir:** apaga a conta e todos os registros de forma permanente, com duas confirmações. Nos voos em que ele foi tripulação, passa a aparecer o "Severino". Horas e ciclos das aeronaves continuam, porque pertencem ao avião.
+- **Reset do 2FA:** o selo **2FA** mostra quem tem a autenticação ativada, e o escudo vermelho faz o reset (também para o staff, menos o CEO e a própria conta).
 - A própria conta, a do CEO e as de quem é do staff não podem ser desativadas nem excluídas por aqui.
+- Em **Admin › Privacy**, o Head of HR responde os pedidos de privacidade dos pilotos.
 
 ### Gestão do staff (Chairman)
 
@@ -523,14 +593,14 @@ Em **Admin › Staff**, as posições aparecem por time, com quem ocupa cada uma
 
 ### Logs (General Director)
 
-Em **Admin › Logs**, fica registrado para sempre tudo o que é alterado em contas, staff e telas de administração, com **data e hora em UTC**, categoria, ação, **quem fez**, **em quem ou em quê**, os detalhes e o **IP**.
+Em **Admin › Logs**, fica registrado tudo o que é alterado em contas, staff e telas de administração, além das ações dos pilotos e dos logins, com **data e hora em UTC**, categoria, ação, **quem fez**, **em quem ou em quê**, os detalhes e o **IP**. Depois de **2 anos**, os dados pessoais dos logs são anonimizados.
 
 - As alterações feitas pelo Admin, pelo Settings do piloto e pelo cadastro são registradas automaticamente, com **valor antigo → novo**. Itens criados ou excluídos guardam todos os campos.
 - Troca de senha, posições do staff e exclusão de conta também são registradas. Nome, e-mail e números ficam salvos no log, então ele continua legível depois que a conta é excluída.
-- Cada log tem uma **cor pela gravidade**: 🔴 **Critical** (exclusões, contas excluídas ou desativadas, PIREP rejeitado e mudanças de staff), 🟡 **Important** (alterações, reativação e troca de senha) e 🟢 **Routine** (criações, aprovações e bônus).
-- Filtro **Critical only**, categorias (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations, Awards) e busca por ação, piloto, item ou detalhe.
-- O pagamento dos pilotos do mês aparece como feito pelo **System**.
-- Ainda não entram as ações dos pilotos (reservas, jumpseat, voos) nem os logins.
+- Cada log tem uma **cor pela gravidade**: 🔴 **Critical** (exclusões, contas excluídas ou desativadas, PIREP rejeitado, mudanças de staff e reset de 2FA), 🟡 **Important** (alterações, reativação, troca de senha, logins com erro, 2FA desativado e pedidos de privacidade) e 🟢 **Routine** (criações, aprovações e bônus).
+- Filtro **Critical only**, categorias (Accounts, Pilots, Staff, PIREPs, Scoring, Fleet, Routes, Airports, Operations, Awards, Bookings, Logins e Privacy) e busca por ação, piloto, item ou detalhe.
+- **Bookings:** reservas, cancelamentos, expirações, jumpseat e traslados de aeronave. **Logins:** entradas e tentativas com senha ou código errado, com o método usado.
+- Os jobs (pilotos do mês, inatividade, aprovação automática e retenção) aparecem como feitos pelo **System**, e as ações sem login como **Visitor**.
 
 ---
 
@@ -539,7 +609,7 @@ Em **Admin › Logs**, fica registrado para sempre tudo o que é alterado em con
 **Back-end**
 - .NET 10 (LTS) / ASP.NET Core Web API
 - Entity Framework Core 10 + SQL Server
-- ASP.NET Core Identity + JWT
+- ASP.NET Core Identity + JWT, com 2FA (TOTP) e Data Protection
 - OpenAPI + Swagger UI
 - Clean Architecture
 
@@ -548,6 +618,7 @@ Em **Admin › Logs**, fica registrado para sempre tudo o que é alterado em con
 - Tailwind CSS 4
 - Leaflet + mapas CARTO
 - Tabler Icons
+- qrcode (QR do app autenticador)
 - Tema claro, escuro e automático
 
 **Integrações**
@@ -580,7 +651,7 @@ flowchart LR
 |---|---|
 | **Domain** | Entidades e regras de negócio: blocos de voo, callsign, alcance, patentes, base, localização, frota, checks de manutenção, Special Flights, pontos e staff |
 | **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão, pontuação e estatísticas |
-| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção e pagamento dos pilotos do mês) |
+| **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção, pagamento dos pilotos do mês, inatividade e retenção de dados) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
 
 ---
@@ -599,7 +670,7 @@ litoral-linhas-aereas/
 │   └── src/app/
 │       ├── core/                # auth, api, admin, staff, tema, dados de referência, config
 │       ├── shared/              # header, mapas, gráficos, popup de confirmação, seletor de data, pipes e utilitários
-│       └── pages/               # home, login, cadastro, dashboard, perfil, aeroportos, reserva, special flights, briefing, voo, frota, pontos, estatísticas e admin
+│       └── pages/               # home, login, cadastro, regulamento e privacidade, dashboard, perfil, aeroportos, reserva, special flights, briefing, voo, frota, pontos, estatísticas e admin
 ├── uploads/                     # fotos enviadas (pilotos, aeronaves, aeroportos, special flights), fora do Git
 ├── Litoral.slnx
 └── package.json                 # script para rodar API + front juntos
@@ -665,7 +736,7 @@ npm run dev
 
 As fotos enviadas ficam na pasta `uploads/` na raiz do repositório (configurável em `Storage:UploadsPath`), fora do projeto da API, para o `dotnet watch` não reiniciar a cada upload. Ela é servida em `/uploads` e não vai para o Git.
 
-Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs e posições de staff. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder.
+Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automaticamente** ao iniciar: patentes, tipos de aeronave com prefixo de matrícula, aeroportos, hubs e posições de staff. Na primeira execução, ela também importa o catálogo de aeroportos do OurAirports, o que leva alguns segundos. O **primeiro usuário cadastrado** vira CEO & Founder. Para abrir o Admin, ative antes a **autenticação em dois fatores** em Settings.
 
 | Serviço | Endereço |
 |---|---|
@@ -700,7 +771,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Regra de promoção e rebaixamento automáticos (horas + pontos)
 - [x] Swagger
 - [x] Front-end Angular 22 + Tailwind CSS 4
-- [x] Site em inglês (Regulamento e Privacidade terão versão em português)
+- [x] Site em inglês (Regulamento e Privacidade também em português)
 - [x] Tema claro, escuro e automático
 - [x] Identidade visual: paleta, favicon e conceito de livery
 - [x] API e front rodando juntos com `npm run dev`
@@ -744,7 +815,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Reaproveitamento do número de piloto de contas excluídas
 - [x] **General Director:** logs de auditoria de contas, staff e ações do staff, com antes → depois e IP
 - [x] Cores por gravidade nos logs e filtro Critical only
-- [ ] Logs de ações dos pilotos (reservas, jumpseat, voos) e logins com IP
+- [x] Logs de ações dos pilotos (reservas, jumpseat, voos) e logins com IP
 - [x] Confirmações do site todo no estilo popup (componente `ConfirmDialog`)
 
 ### Fase 2B: Páginas do piloto
@@ -758,7 +829,7 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [x] Perfil do piloto: capa, foto, overview, gráfico de atividade, top 10 rotas, mapa de voos e lista de voos
 - [x] Settings: dados pessoais, VATSIM/IVAO/Discord, SimBrief, aeronaves do simulador, senha e formato do nome
 - [ ] Awards e documentos da tripulação (PDFs para download)
-- [ ] Regulamento e Política de Privacidade (inglês e português)
+- [x] Regulamento e Política de Privacidade (inglês e português)
 
 ### ✅ Fase 3: Reserva de voos
 - [x] Voo aleatório com filtro de duração
@@ -795,27 +866,40 @@ Em ambiente de desenvolvimento, a API **aplica as migrations e o seed automatica
 - [ ] API compatível com o **smartCARS 3** (`api/smartcars`) usando a camada de ACARS
 - [ ] Cadastro da comunidade no smartCARS Central
 - [ ] Callsign real usado na network gravado na sessão
-- [ ] Aprovação automática de PIREPs com conformidade ≥ 98%
-- [ ] Notificação ao piloto quando o PIREP for revisado
+- [x] Aprovação automática de PIREPs com conformidade ≥ 98%
+- [x] Notificação ao piloto quando o PIREP for revisado
 - [ ] Compatibilidade com MSFS 2020/2024, X-Plane 11/12 e P3D
 
 ### 🔜 Fase 5: Estatísticas e comunidade
 - [x] Estatísticas do piloto e da VA
 - [x] **General Director:** relatórios por período (Reports)
 - [x] Ranking de pilotos e pilotos do mês (+800/+600/+400) com pagamento automático
-- [ ] Jobs de conta: inatividade (−50 por dia após 40 dias) e perda de conta
-- [ ] Páginas públicas de staff, carreira e regulamento
+- [x] Jobs de conta: aviso aos 30 dias, −50 por dia a partir do 41º e desativação aos 90
+- [x] Notificações no site (sininho)
+- [ ] Páginas públicas de staff e carreira
 - [ ] **Director of Operations:** tours e eventos
 - [x] Mapa de voos ao vivo no dashboard, com rota planejada, trilha voada e links para VATSIM Radar / Webeye
 - [ ] Galeria de liveries por matrícula
 - [ ] Notificações por e-mail (promoção, PIREP, inatividade)
+
+### ✅ Fase 5B: Segurança e privacidade
+- [x] Autenticação em dois fatores (app autenticador), códigos de recuperação e dispositivo confiável por 30 dias
+- [x] 2FA obrigatório para o staff e reset pelo Head of HR
+- [x] Bloqueio após 5 tentativas erradas
+- [x] Aceite do Regulamento e da Privacidade por versão, com novo aceite quando mudarem
+- [x] Download dos dados do piloto (LGPD)
+- [x] Pedidos de privacidade com prazo de 15 dias (Settings e Admin › Privacy)
+- [x] Retenção de 2 anos nos logs, com anonimização automática
+- [ ] Cadastro com aprovação do Head of HR e abertura/fechamento das inscrições
+- [ ] Código do 2FA por e-mail (depende do SMTP)
 
 ### Fase 6: Produção
 - [ ] Monitor da API para o CEO (requisições, erros, jobs e saúde dos serviços)
 - [ ] Testes unitários do Domain
 - [ ] Testes de integração da API
 - [ ] CI com GitHub Actions (build e testes)
-- [ ] Configuração de ambiente de produção (segredos, connection strings e chave CARTO)
+- [ ] Configuração de ambiente de produção (segredos, connection strings, chave CARTO e chaves do Data Protection)
+- [ ] Trava que impede subir em produção com a chave JWT de desenvolvimento
 - [ ] Deploy da API, do front e do banco
 - [ ] Domínio próprio e HTTPS
 

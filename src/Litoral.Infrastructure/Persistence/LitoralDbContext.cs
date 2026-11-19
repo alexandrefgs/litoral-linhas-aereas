@@ -31,6 +31,7 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<MonthlyAward> MonthlyAwards => Set<MonthlyAward>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<PrivacyRequest> PrivacyRequests => Set<PrivacyRequest>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

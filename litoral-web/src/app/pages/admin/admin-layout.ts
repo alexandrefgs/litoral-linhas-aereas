@@ -15,6 +15,7 @@ const MENU: AdminMenuItem[] = [
   { area: 'routes', label: 'Routes', icon: 'ti-route', path: '/admin/routes' },
   { area: 'fleet', label: 'Fleet', icon: 'ti-plane', path: '/admin/fleet' },
   { area: 'pilots', label: 'Pilots', icon: 'ti-users', path: '/admin/pilots' },
+  { area: 'pilots', label: 'Privacy', icon: 'ti-lock', path: '/admin/privacy' },
   { area: 'staff', label: 'Staff', icon: 'ti-shield-lock', path: '/admin/staff' },
   { area: 'operations', label: 'Operations', icon: 'ti-calendar-event', path: '/admin/operations' },
   { area: 'pireps', label: 'PIREPs', icon: 'ti-clipboard-check', path: '/admin/pireps' },

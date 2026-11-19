@@ -12,5 +12,6 @@ public enum NotificationType
     AccountDeactivated,
     SpecialFlight,
     BookingExpired,
-    Security
+    Security,
+    Privacy
 }

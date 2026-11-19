@@ -119,6 +119,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         items: [
           'You can delete your account at any time in Settings. The deletion is permanent and removes your profile, flights, hours, points and login.',
           'The number of a deleted account becomes available to new pilots. The number of a deactivated account stays reserved for it.',
+          'You can download a copy of your data and make privacy requests in Settings.',
           'How your data is handled is described in the Privacy Policy.'
         ]
       },
@@ -127,7 +128,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         title: '10. Final provisions',
         items: [
           'By creating an account you confirm that you have read and agree to these Regulations and to the Privacy Policy.',
-          'These Regulations may change at any time. Changes are announced through NOTAMs and site notifications, and apply from the date they are published.',
+          'These Regulations may change at any time. Changes are announced through NOTAMs and site notifications, apply from the date they are published, and must be accepted the next time you sign in.',
           'Cases not covered here are decided by the staff.',
           'Breaking these rules may lead to warnings, penalties, deactivation or the deletion of the account, depending on how serious it is.'
         ]
@@ -252,6 +253,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         items: [
           'Você pode excluir a sua conta a qualquer momento em Settings. A exclusão é permanente e apaga perfil, voos, horas, pontos e login.',
           'O número de uma conta excluída fica disponível para novos pilotos. O número de uma conta desativada continua reservado para ela.',
+          'Você pode baixar uma cópia dos seus dados e fazer pedidos de privacidade em Settings.',
           'Como os seus dados são tratados está descrito na Política de Privacidade.'
         ]
       },
@@ -260,7 +262,7 @@ export const REGULATIONS: Record<LegalLanguage, LegalDocument> = {
         title: '10. Disposições finais',
         items: [
           'Ao criar a conta, você confirma que leu e concorda com este Regulamento e com a Política de Privacidade.',
-          'Este Regulamento pode mudar a qualquer momento. As mudanças são avisadas por NOTAM e pelas notificações do site, e valem a partir da data de publicação.',
+          'Este Regulamento pode mudar a qualquer momento. As mudanças são avisadas por NOTAM e pelas notificações do site, valem a partir da data de publicação e precisam ser aceitas na próxima vez que você entrar.',
           'Os casos que não estiverem previstos aqui são decididos pelo staff.',
           'Descumprir estas regras pode levar a advertência, penalidade, desativação ou exclusão da conta, conforme a gravidade.'
         ]

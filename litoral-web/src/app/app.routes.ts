@@ -67,6 +67,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/pilots/admin-pilots').then(m => m.AdminPilots)
       },
       {
+        path: 'privacy',
+        canActivate: [staffGuard('pilots')],
+        loadComponent: () => import('./pages/admin/privacy/admin-privacy').then(m => m.AdminPrivacy)
+      },
+      {
         path: 'staff',
         canActivate: [staffGuard('staff')],
         loadComponent: () => import('./pages/admin/staff/admin-staff').then(m => m.AdminStaff)

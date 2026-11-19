@@ -612,6 +612,12 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("AcceptedTermsAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AcceptedTermsVersion")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BaseIcao")
                         .IsRequired()
                         .HasMaxLength(4)
@@ -910,6 +916,60 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                     b.HasIndex("PilotId", "CreatedAt");
 
                     b.ToTable("PointTransactions");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.PrivacyRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DueAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("PilotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PilotLabel")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResolvedBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Response")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PilotId");
+
+                    b.HasIndex("Status", "DueAt");
+
+                    b.ToTable("PrivacyRequests");
                 });
 
             modelBuilder.Entity("Litoral.Domain.Entities.Rank", b =>
@@ -1726,6 +1786,16 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasForeignKey("PilotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Pilot");
+                });
+
+            modelBuilder.Entity("Litoral.Domain.Entities.PrivacyRequest", b =>
+                {
+                    b.HasOne("Litoral.Domain.Entities.Pilot", "Pilot")
+                        .WithMany()
+                        .HasForeignKey("PilotId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Pilot");
                 });

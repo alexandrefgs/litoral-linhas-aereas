@@ -13,5 +13,6 @@ public enum AuditCategory
     Operations,
     Awards,
     Bookings,
-    Logins
+    Logins,
+    Privacy
 }
