@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Litoral.Acars.Settings;
 
-public sealed record AcarsSettings(string ServerUrl, string? Key);
+public sealed record AcarsSettings(string ServerUrl, string? Key, bool Dark = false);
 
 public static class SettingsStore
 {
@@ -15,7 +15,7 @@ public static class SettingsStore
     private static readonly string Folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Litoral ACARS");
     private static readonly string FilePath = Path.Combine(Folder, "settings.json");
 
-    private sealed record StoredSettings(string? ServerUrl, string? ProtectedKey);
+    private sealed record StoredSettings(string? ServerUrl, string? ProtectedKey, bool Dark);
 
     public static AcarsSettings Load()
     {
@@ -27,7 +27,7 @@ public static class SettingsStore
             var key = stored?.ProtectedKey is { Length: > 0 } protectedKey
                 ? Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(protectedKey), Entropy, DataProtectionScope.CurrentUser))
                 : null;
-            return new AcarsSettings(stored?.ServerUrl ?? DefaultServerUrl, key);
+            return new AcarsSettings(stored?.ServerUrl ?? DefaultServerUrl, key, stored?.Dark ?? false);
         }
         catch (Exception ex) when (ex is IOException or JsonException or CryptographicException or FormatException)
         {
@@ -43,6 +43,6 @@ public static class SettingsStore
             ? null
             : Convert.ToBase64String(ProtectedData.Protect(Encoding.UTF8.GetBytes(settings.Key.Trim()), Entropy, DataProtectionScope.CurrentUser));
 
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(new StoredSettings(settings.ServerUrl, protectedKey)));
+        File.WriteAllText(FilePath, JsonSerializer.Serialize(new StoredSettings(settings.ServerUrl, protectedKey, settings.Dark)));
     }
 }

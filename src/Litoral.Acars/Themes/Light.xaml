@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="Page" Color="#FDFCF7" />
+    <SolidColorBrush x:Key="Surface" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceAlt" Color="#EEF5FE" />
+    <SolidColorBrush x:Key="SurfaceHover" Color="#D9E8FC" />
+    <SolidColorBrush x:Key="Line" Color="#D9E3F0" />
+    <SolidColorBrush x:Key="Ink" Color="#0A1F3C" />
+    <SolidColorBrush x:Key="Muted" Color="#4B5B73" />
+    <SolidColorBrush x:Key="Primary" Color="#1D6FD8" />
+    <SolidColorBrush x:Key="PrimaryHover" Color="#1659B3" />
+    <SolidColorBrush x:Key="OnPrimary" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="Accent" Color="#2EC4B6" />
+    <SolidColorBrush x:Key="AccentSoft" Color="#C9F4EF" />
+    <SolidColorBrush x:Key="OnAccent" Color="#063B36" />
+    <SolidColorBrush x:Key="HighlightSoft" Color="#FFFBEB" />
+    <SolidColorBrush x:Key="HighlightLine" Color="#FFE69A" />
+    <SolidColorBrush x:Key="OnHighlight" Color="#4A300C" />
+    <SolidColorBrush x:Key="Danger" Color="#DC2626" />
+    <SolidColorBrush x:Key="DangerSoft" Color="#FEECEC" />
+    <SolidColorBrush x:Key="Header" Color="#0A1F3C" />
+    <SolidColorBrush x:Key="HeaderSoft" Color="#14355F" />
+    <SolidColorBrush x:Key="HeaderMuted" Color="#A9B8CF" />
+    <SolidColorBrush x:Key="Code" Color="#F5F8FC" />
+</ResourceDictionary>

@@ -1,4 +1,5 @@
 using Litoral.Api.Extensions;
+using Litoral.Application.Bookings;
 using Litoral.Application.Flights;
 using Litoral.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,7 @@ namespace Litoral.Api.Controllers;
 [ApiController]
 [Authorize(AuthenticationSchemes = AcarsKeyDefaults.AcarsSchemes)]
 [Route("api/acars")]
-public class AcarsController(IFlightTrackingService tracking) : ControllerBase
+public class AcarsController(IFlightTrackingService tracking, IBriefingService briefing) : ControllerBase
 {
     [HttpGet("live")]
     public async Task<ActionResult<IReadOnlyList<LiveFlightDto>>> Live(CancellationToken ct) =>
@@ -18,10 +19,18 @@ public class AcarsController(IFlightTrackingService tracking) : ControllerBase
     [HttpGet("live/{sessionId:guid}/track")]
     public async Task<ActionResult<IReadOnlyList<TrackPointDto>>> LiveTrack(Guid sessionId, CancellationToken ct) =>
         Ok(await tracking.LiveTrackAsync(sessionId, ct));
-    
+
     [HttpGet("booking")]
     public async Task<ActionResult<AcarsBookingDto?>> Booking(CancellationToken ct) =>
         Ok(await tracking.GetBookingAsync(User.GetUserId(), ct));
+
+    [HttpGet("briefing")]
+    public async Task<ActionResult<BriefingDto>> Briefing(CancellationToken ct) =>
+        Ok(await briefing.GetAsync(User.GetUserId(), ct));
+
+    [HttpGet("briefing/ofp")]
+    public async Task<ActionResult<SimBriefOfpDto>> Ofp(CancellationToken ct) =>
+        Ok(await briefing.GetSimBriefAsync(User.GetUserId(), ct));
 
     [HttpGet("flight")]
     public async Task<ActionResult<FlightSessionDto?>> Active(CancellationToken ct) =>

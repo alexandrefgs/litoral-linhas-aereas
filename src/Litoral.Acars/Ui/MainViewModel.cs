@@ -51,6 +51,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private string _departure = "";
     private string _arrival = "";
     private string _aircraftText = "";
+    private string _page = "Flight";
+    private bool _isDark;
+    private string _savedServerUrl;
 
     public MainViewModel()
     {
@@ -58,6 +61,14 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _serverUrl = settings.ServerUrl;
         _key = settings.Key;
         _hasKey = !string.IsNullOrWhiteSpace(_key);
+        _savedServerUrl = settings.ServerUrl;
+        _isDark = settings.Dark;
+        ThemeManager.Apply(_isDark);
+
+        Briefing = new BriefingViewModel(Api);
+        LiveMap = new LiveMapViewModel(Api, () => _flight?.Booking.Callsign);
+        NavigateCommand = new AsyncCommand(p => NavigateAsync(p as string));
+        ToggleThemeCommand = new AsyncCommand(_ => ToggleTheme());
 
         SaveSettingsCommand = new AsyncCommand(p => Guard(() => SaveSettings(p as string)));
         LoadBookingCommand = new AsyncCommand(_ => Guard(LoadBookingAsync), () => HasKey && !FlightStarted);
@@ -76,6 +87,24 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public AsyncCommand StartFlightCommand { get; }
     public AsyncCommand FilePirepCommand { get; }
     public AsyncCommand DemoFlightCommand { get; }
+    public AsyncCommand NavigateCommand { get; }
+    public AsyncCommand ToggleThemeCommand { get; }
+
+    public BriefingViewModel Briefing { get; }
+    public LiveMapViewModel LiveMap { get; }
+
+    public event Action<string>? PageChanged;
+
+    public string Page
+    {
+        get => _page;
+        private set
+        {
+            if (Set(ref _page, value)) PageChanged?.Invoke(value);
+        }
+    }
+
+    public bool IsDark { get => _isDark; private set => Set(ref _isDark, value); }
 
     public IReadOnlyList<string> Networks => AcarsFlight.Networks;
 
@@ -149,11 +178,35 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         }
 
         ServerUrl = address.ToString();
-        SettingsStore.Save(new AcarsSettings(ServerUrl, _key));
+        _savedServerUrl = ServerUrl;
+        SettingsStore.Save(new AcarsSettings(ServerUrl, _key, IsDark));
         _api = null;
         HasKey = true;
         Raise(nameof(IsLocalServer));
         ShowInfo("Settings saved. The key is stored encrypted for your Windows user.");
+        return Task.CompletedTask;
+    }
+
+    private async Task NavigateAsync(string? page)
+    {
+        Page = page is "Briefing" or "LiveMap" ? page : "Flight";
+
+        if (Page == "Briefing" && !Briefing.Loaded && HasKey) await Briefing.LoadAsync();
+        if (Page == "LiveMap" && HasKey) await LiveMap.RefreshAsync();
+    }
+
+    private Task ToggleTheme()
+    {
+        IsDark = !IsDark;
+        ThemeManager.Apply(IsDark);
+        LiveMap.SetTheme(IsDark);
+        try
+        {
+            SettingsStore.Save(new AcarsSettings(_savedServerUrl, _key, IsDark));
+        }
+        catch (System.IO.IOException)
+        {
+        }
         return Task.CompletedTask;
     }
 
@@ -177,6 +230,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         AircraftText = $"{b.Registration} · {b.AircraftTypeName}";
         ArrivalIcao = b.ArrivalIcao;
         PirepText = "";
+
+        if (Briefing.Loaded) await Briefing.LoadAsync();
 
         var active = await api.GetActiveFlightAsync();
         ShowInfo(active is null
@@ -215,7 +270,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         var b = _flight.Booking;
         var options = new ScriptedFlightOptions(b.AircraftTypeIcao, b.DepartureLatitude, b.DepartureLongitude, b.ArrivalLatitude, b.ArrivalLongitude);
-        foreach (var snapshot in ScriptedFlight.Generate(DateTime.UtcNow.AddMinutes(-40), options))
+        foreach (var snapshot in ScriptedFlight.Generate(DateTime.UtcNow.AddMinutes(-25), options))
             _flight.OnSnapshot(snapshot);
 
         await _flight.FlushAsync();
@@ -336,6 +391,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         _readTimer.Stop();
         _sendTimer.Stop();
+        LiveMap.Stop();
         _sim.Dispose();
     }
 }

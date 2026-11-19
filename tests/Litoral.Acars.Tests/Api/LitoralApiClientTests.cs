@@ -136,3 +136,90 @@ public class LitoralApiClientTests
         throw new InvalidOperationException($"Expected {typeof(T).Name}.");
     }
 }
+
+public class LitoralApiClientBriefingTests
+{
+    private const string BriefingJson = """
+        {"booking":{"id":"7d3c1a0e-0000-0000-0000-000000000001","callsign":"LTL1007","networkCallsign":"LTL9000","flightNumber":1007,
+         "departure":{"icao":"SBPA","name":"Salgado Filho","city":"Porto Alegre","country":"Brazil","latitude":-29.99,"longitude":-51.17},
+         "arrival":{"icao":"SBGR","name":"Guarulhos","city":"São Paulo","country":"Brazil","latitude":-23.43,"longitude":-46.47},
+         "distanceNm":452,"estimatedMinutes":85,"aircraft":{"registration":"PS-LAB","typeIcao":"B738","typeName":"Boeing 737-800"},
+         "expiresAt":"2026-11-20T12:00:00Z"},
+         "simBriefUsername":"alexandre",
+         "metars":[{"icao":"SBGR","raw":"SBGR 191800Z 12008KT CAVOK","category":"VFR","windDirection":"120","windSpeedKt":8,"taf":"TAF SBGR"}],
+         "captain":{"displayId":"CMD1001","name":"J. Silva","rankCode":"CMD"},
+         "firstOfficer":{"displayId":"FO1000","name":"A. Fagundes","rankCode":"FO"},
+         "flightPlanRemarks":"OPR/LITORAL PIC/FO1000 CS/LITORAL"}
+        """;
+
+    [Fact]
+    public async Task The_briefing_is_read_with_the_acars_key()
+    {
+        var handler = new FakeHandler(_ => FakeHandler.Json(BriefingJson));
+
+        var briefing = await handler.Client().GetBriefingAsync();
+
+        Assert.Equal("/api/acars/briefing", handler.Requests[0].Request.RequestUri!.AbsolutePath);
+        Assert.Equal("LTL1007", briefing.Booking.Callsign);
+        Assert.Equal("Porto Alegre", briefing.Booking.Departure.City);
+        Assert.Equal(85, briefing.Booking.EstimatedMinutes);
+        Assert.Equal("CMD1001", briefing.Captain.DisplayId);
+        Assert.Equal("TAF SBGR", Assert.Single(briefing.Metars).Taf);
+        Assert.Equal("OPR/LITORAL PIC/FO1000 CS/LITORAL", briefing.FlightPlanRemarks);
+    }
+
+    [Fact]
+    public async Task Without_an_open_flight_the_briefing_is_not_found()
+    {
+        var handler = new FakeHandler(_ => FakeHandler.Json("""{"title":"You don't have an open flight."}""", HttpStatusCode.NotFound));
+
+        var ex = await LitoralApiClientTests.AssertThrowsAsync<LitoralApiException>(() => handler.Client().GetBriefingAsync());
+
+        Assert.Equal(HttpStatusCode.NotFound, ex.Status);
+        Assert.Equal("You don't have an open flight.", ex.Message);
+    }
+
+    [Fact]
+    public async Task The_ofp_is_read_with_its_loadsheet()
+    {
+        var handler = new FakeHandler(_ => FakeHandler.Json("""
+            {"origin":"SBPA","destination":"SBGR","matchesBooking":true,"route":"ARTIL UZ104 SAVLU","cruiseAltitude":39000,"alternate":"SBKP",
+             "blockFuel":6240,"fuelUnits":"kgs","enrouteMinutes":85,"vatsimPrefileUrl":"https://my.vatsim.net/pilots/flightplan?raw=x",
+             "ivaoPrefileUrl":null,"departureRunway":"11","arrivalRunway":"10L","costIndex":30,"airac":"2611",
+             "loadsheet":{"passengers":160,"cargo":2100,"zeroFuelWeight":60100,"takeoffWeight":66100,"landingWeight":62200,"tripFuel":3900,"blockFuel":6240}}
+            """));
+
+        var ofp = await handler.Client().GetOfpAsync();
+
+        Assert.Equal("/api/acars/briefing/ofp", handler.Requests[0].Request.RequestUri!.AbsolutePath);
+        Assert.True(ofp.MatchesBooking);
+        Assert.Equal(39000, ofp.CruiseAltitude);
+        Assert.Equal("10L", ofp.ArrivalRunway);
+        Assert.Equal(160, ofp.Loadsheet.Passengers);
+        Assert.Null(ofp.IvaoPrefileUrl);
+    }
+
+    [Fact]
+    public async Task Live_flights_are_read_and_an_empty_answer_is_an_empty_list()
+    {
+        var handler = new FakeHandler(_ => FakeHandler.Json("""
+            [{"id":"7d3c1a0e-0000-0000-0000-000000000009","callsign":"LTL1007","pilotId":"FO1000","pilotName":"A. Fagundes","registration":"PS-LAB",
+              "aircraftTypeIcao":"B738","aircraftTypeName":"Boeing 737-800","isCargo":false,
+              "departure":{"icao":"SBPA","city":"Porto Alegre","country":"Brazil","latitude":-29.99,"longitude":-51.17},
+              "arrival":{"icao":"SBGR","city":"São Paulo","country":"Brazil","latitude":-23.43,"longitude":-46.47},
+              "network":"Ivao","latitude":-27.1,"longitude":-49.2,"altitudeFt":37000,"groundSpeedKt":450,"heading":30,"phase":"Cruise",
+              "progress":40,"minutesToArrival":42}]
+            """));
+
+        var flights = await handler.Client().GetLiveFlightsAsync();
+
+        Assert.Equal("/api/acars/live", handler.Requests[0].Request.RequestUri!.AbsolutePath);
+        var flight = Assert.Single(flights);
+        Assert.Equal("LTL1007", flight.Callsign);
+        Assert.Equal("SBGR", flight.Arrival.Icao);
+        Assert.Equal(37000, flight.AltitudeFt);
+
+        var empty = new FakeHandler(_ => FakeHandler.Json("[]"));
+        Assert.Empty(await empty.Client().GetLiveFlightsAsync());
+    }
+}

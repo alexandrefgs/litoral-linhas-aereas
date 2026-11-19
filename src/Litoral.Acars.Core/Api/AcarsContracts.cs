@@ -75,3 +75,84 @@ public sealed record PirepSummary(
     bool HasRejection);
 
 public sealed record PirepResult(PirepSummary Summary);
+
+
+public sealed record BriefingAirport(string Icao, string Name, string City, string Country, double Latitude, double Longitude);
+
+public sealed record BriefingAircraft(string Registration, string TypeIcao, string TypeName);
+
+public sealed record BriefingBooking(
+    Guid Id,
+    string Callsign,
+    string NetworkCallsign,
+    BriefingAirport Departure,
+    BriefingAirport Arrival,
+    int DistanceNm,
+    int EstimatedMinutes,
+    BriefingAircraft Aircraft,
+    DateTime ExpiresAt);
+
+public sealed record CrewMember(string? DisplayId, string Name, string RankCode);
+
+public sealed record AirportWeather(
+    string Icao,
+    string? Raw,
+    string? Category,
+    int? TemperatureC,
+    string? WindDirection,
+    int? WindSpeedKt,
+    int? WindGustKt,
+    string? Visibility,
+    int? QnhHpa,
+    string? Taf);
+
+public sealed record AcarsBriefing(
+    BriefingBooking Booking,
+    string? SimBriefUsername,
+    IReadOnlyList<AirportWeather> Metars,
+    CrewMember Captain,
+    CrewMember FirstOfficer,
+    string FlightPlanRemarks);
+
+public sealed record OfpLoadsheet(int? Passengers, int? Cargo, int? ZeroFuelWeight, int? TakeoffWeight, int? LandingWeight, int? TripFuel, int? BlockFuel);
+
+public sealed record AcarsOfp(
+    string Origin,
+    string Destination,
+    bool MatchesBooking,
+    string? Route,
+    int? CruiseAltitude,
+    string? Alternate,
+    int? BlockFuel,
+    string? FuelUnits,
+    int? EnrouteMinutes,
+    string? VatsimPrefileUrl,
+    string? IvaoPrefileUrl,
+    string? DepartureRunway,
+    string? ArrivalRunway,
+    int? CostIndex,
+    string? Airac,
+    OfpLoadsheet Loadsheet);
+
+public sealed record LiveAirport(string Icao, string City, double Latitude, double Longitude);
+
+public sealed record LiveFlight(
+    Guid Id,
+    string Callsign,
+    string PilotId,
+    string PilotName,
+    string Registration,
+    string AircraftTypeIcao,
+    string AircraftTypeName,
+    bool IsCargo,
+    LiveAirport Departure,
+    LiveAirport Arrival,
+    string Network,
+    double Latitude,
+    double Longitude,
+    int AltitudeFt,
+    int GroundSpeedKt,
+    int Heading,
+    string? Phase,
+    int Progress,
+    int? MinutesToArrival);

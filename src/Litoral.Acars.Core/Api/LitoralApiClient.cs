@@ -27,6 +27,15 @@ public sealed class LitoralApiClient(HttpClient http)
 
     public Task<AcarsBooking?> GetBookingAsync(CancellationToken ct = default) =>
         GetAsync<AcarsBooking>("api/acars/booking", ct);
+    
+    public async Task<AcarsBriefing> GetBriefingAsync(CancellationToken ct = default) =>
+        (await GetAsync<AcarsBriefing>("api/acars/briefing", ct))!;
+
+    public async Task<AcarsOfp> GetOfpAsync(CancellationToken ct = default) =>
+        (await GetAsync<AcarsOfp>("api/acars/briefing/ofp", ct))!;
+
+    public async Task<IReadOnlyList<LiveFlight>> GetLiveFlightsAsync(CancellationToken ct = default) =>
+        await GetAsync<List<LiveFlight>>("api/acars/live", ct) ?? [];
 
     public Task<FlightSession?> GetActiveFlightAsync(CancellationToken ct = default) =>
         GetAsync<FlightSession>("api/acars/flight", ct);

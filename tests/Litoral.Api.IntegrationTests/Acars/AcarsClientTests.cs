@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Litoral.Acars.Core.Api;
 using Litoral.Acars.Core.Flight;
+using Litoral.Acars.Core.Map;
 using Litoral.Acars.Core.Sim;
 using Litoral.Api.IntegrationTests.Infrastructure;
 using Litoral.Application.Bookings;
@@ -114,6 +115,47 @@ public class AcarsClientTests(LitoralApiFactory api)
 
         var saved = await api.WithDbAsync(db => db.Pireps.Include(p => p.Events).SingleAsync(p => p.Id == pirep.Summary.Id));
         Assert.Contains(saved.Events, e => e.Type == FlightEventType.Pause && e.DurationSeconds == 90);
+    }
+
+        [Fact]
+    public async Task The_briefing_through_the_acars_key_needs_an_open_flight()
+    {
+        var pilot = await api.CreatePilotAsync();
+        var client = await AcarsClientAsync(pilot);
+
+        var ex = await Assert.ThrowsAsync<LitoralApiException>(() => client.GetBriefingAsync());
+
+        Assert.Equal(HttpStatusCode.NotFound, ex.Status);
+    }
+
+    [Fact]
+    public async Task The_ofp_through_the_acars_key_needs_a_simbrief_username()
+    {
+        var pilot = await BookAsync();
+        var client = await AcarsClientAsync(pilot);
+
+        var ex = await Assert.ThrowsAsync<LitoralApiException>(() => client.GetOfpAsync());
+
+        Assert.Equal(HttpStatusCode.BadRequest, ex.Status);
+        Assert.Contains("SimBrief", ex.Message);
+    }
+
+    [Fact]
+    public async Task A_started_flight_shows_on_the_live_map_through_the_acars_key()
+    {
+        var pilot = await BookAsync();
+        var client = await AcarsClientAsync(pilot);
+        var flight = (await AcarsFlight.LoadAsync(client))!;
+        await flight.StartAsync("Ivao", "MSFS 2024");
+        await client.SendPositionsAsync(
+            [new PositionReport(DateTime.UtcNow, -25.0, -48.0, 35000, 34900, 280, 450, 30, 0, 0, false, false, "Cruise")]);
+
+        var live = await client.GetLiveFlightsAsync();
+
+        var mine = Assert.Single(live, f => f.Id == flight.Session!.Id);
+        Assert.Equal(35000, mine.AltitudeFt);
+        Assert.Equal(LitoralApiFactory.Arrival, mine.Arrival.Icao);
+        Assert.Contains(flight.Booking.Callsign, LiveMapMessages.Flights(live, flight.Booking.Callsign));
     }
 
     private static List<SimSnapshot> Script(AcarsBooking booking, int takeoffFlaps = 5)
