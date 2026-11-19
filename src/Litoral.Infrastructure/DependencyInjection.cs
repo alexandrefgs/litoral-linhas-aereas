@@ -58,9 +58,15 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<LitoralDbContext>();
+            .AddEntityFrameworkStores<LitoralDbContext>()
+            .AddTokenProvider<AuthenticatorTokenProvider<ApplicationUser>>(TokenOptions.DefaultAuthenticatorProvider);
+
+        services.AddDataProtection();
+        services.Configure<TwoFactorOptions>(configuration.GetSection(TwoFactorOptions.SectionName));
 
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
         var jwt = jwtSection.Get<JwtOptions>()
@@ -101,6 +107,8 @@ public static class DependencyInjection
         services.AddScoped<IStaffAdminService, StaffAdminService>();
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<TwoFactorTokens>();
+        services.AddScoped<ITwoFactorService, TwoFactorService>();
         services.AddScoped<IPilotSettingsService, PilotSettingsService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAirportDirectoryService, AirportDirectoryService>();

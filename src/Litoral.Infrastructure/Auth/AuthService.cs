@@ -11,18 +11,22 @@ using Litoral.Infrastructure.Pilots;
 using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
 namespace Litoral.Infrastructure.Auth;
 
 public sealed class AuthService(
     LitoralDbContext db,
     UserManager<ApplicationUser> userManager,
     JwtTokenGenerator tokenGenerator,
-    IAuditLog auditLog) : IAuthService
+    TwoFactorTokens twoFactorTokens,
+    IAuditLog auditLog,
+    IOptions<TwoFactorOptions> twoFactorOptions) : IAuthService
 {
     private const string DefaultHubIcao = "SBGR";
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
-    {   
+    {
         if (!request.AcceptedTerms)
             throw new AppException(AppErrorKind.Validation, "You must accept the Regulations and the Privacy Policy.");
         var email = request.Email.Trim();
@@ -69,7 +73,7 @@ public sealed class AuthService(
         return await BuildResponseAsync(user, pilot);
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct)
+    public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
 
@@ -79,17 +83,56 @@ public sealed class AuthService(
         var pilot = await LoadPilotAsync(user.Id, ct);
         var label = AuditContext.PilotLabel(pilot);
 
+        if (await userManager.IsLockedOutAsync(user))
+            throw new AppException(AppErrorKind.Unauthorized, TwoFactorService.LockedOutMessage);
+
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
+            await userManager.AccessFailedAsync(user);
             await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login failed", "Pilot", pilot.Id.ToString(), label,
                 "Wrong password", ActorName: "Visitor"), ct);
             throw new AppException(AppErrorKind.Unauthorized, "Invalid email or password.");
         }
 
-        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login", "Pilot", pilot.Id.ToString(), label,
-            pilot.IsActive ? null : "Account is inactive", user.Id, label), ct);
+        var trustedDevice = user.TwoFactorEnabled && twoFactorTokens.IsTrustedDevice(user, request.TrustedDevice);
 
-        return await BuildResponseAsync(user, pilot);
+        if (user.TwoFactorEnabled && !trustedDevice)
+            return new LoginResponse(null, twoFactorTokens.CreateChallenge(user));
+
+        await userManager.ResetAccessFailedCountAsync(user);
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login", "Pilot", pilot.Id.ToString(), label,
+            LoginDetails(pilot, trustedDevice ? "Trusted device" : null), user.Id, label), ct);
+
+        return new LoginResponse(await BuildResponseAsync(user, pilot), null);
+    }
+
+    public async Task<AuthResponse> LoginWithTwoFactorAsync(TwoFactorLoginRequest request, CancellationToken ct)
+    {
+        var user = await twoFactorTokens.ReadChallengeAsync(request.ChallengeToken)
+            ?? throw new AppException(AppErrorKind.Unauthorized, "Your sign-in expired. Sign in again.");
+
+        var pilot = await LoadPilotAsync(user.Id, ct);
+        var label = AuditContext.PilotLabel(pilot);
+
+        if (await userManager.IsLockedOutAsync(user))
+            throw new AppException(AppErrorKind.Unauthorized, TwoFactorService.LockedOutMessage);
+
+        var result = await twoFactorTokens.VerifyCodeAsync(user, request.Code);
+
+        if (result == TwoFactorCodeResult.Invalid)
+        {
+            await userManager.AccessFailedAsync(user);
+            await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login failed", "Pilot", pilot.Id.ToString(), label,
+                "Wrong two-factor code", ActorName: "Visitor"), ct);
+            throw new AppException(AppErrorKind.Validation, "Invalid code.");
+        }
+
+        await userManager.ResetAccessFailedCountAsync(user);
+        await auditLog.WriteAsync(new AuditEntry(AuditCategory.Logins, "Login", "Pilot", pilot.Id.ToString(), label,
+            LoginDetails(pilot, result == TwoFactorCodeResult.RecoveryCode ? "Recovery code used" : "Two-factor code"), user.Id, label), ct);
+
+        var response = await BuildResponseAsync(user, pilot);
+        return request.RememberDevice ? response with { TrustedDevice = twoFactorTokens.CreateTrustedDevice(user) } : response;
     }
 
     public async Task<PilotSummary> GetCurrentAsync(string userId, CancellationToken ct)
@@ -100,7 +143,7 @@ public sealed class AuthService(
         var pilot = await LoadPilotAsync(userId, ct);
         var roles = await userManager.GetRolesAsync(user);
 
-        return PilotSummaryMapper.ToSummary(user.Email!, pilot, roles.ToList());
+        return PilotSummaryMapper.ToSummary(user, pilot, roles.ToList(), twoFactorOptions.Value.RequiredForStaff);
     }
 
     private async Task<int> NextPilotNumberAsync(CancellationToken ct)
@@ -117,6 +160,12 @@ public sealed class AuthService(
         return next;
     }
 
+    private static string? LoginDetails(Pilot pilot, string? method)
+    {
+        var parts = new[] { method, pilot.IsActive ? null : "Account is inactive" }.OfType<string>().ToList();
+        return parts.Count == 0 ? null : string.Join(" · ", parts);
+    }
+
     private async Task<Pilot> LoadPilotAsync(string userId, CancellationToken ct) =>
         await db.Pilots.Include(p => p.Rank).FirstOrDefaultAsync(p => p.UserId == userId, ct)
         ?? throw new AppException(AppErrorKind.NotFound, "Pilot not found.");
@@ -126,6 +175,6 @@ public sealed class AuthService(
         var roles = (await userManager.GetRolesAsync(user)).ToList();
         var (token, expiresAt) = tokenGenerator.Generate(user, pilot, roles);
 
-        return new AuthResponse(token, expiresAt, PilotSummaryMapper.ToSummary(user.Email!, pilot, roles));
+        return new AuthResponse(token, expiresAt, PilotSummaryMapper.ToSummary(user, pilot, roles, twoFactorOptions.Value.RequiredForStaff));
     }
 }

@@ -12,7 +12,8 @@ public sealed record RegisterRequest(
 
 public sealed record LoginRequest(
     [Required, EmailAddress] string Email,
-    [Required] string Password);
+    [Required] string Password,
+    [MaxLength(2000)] string? TrustedDevice = null);
 
 public sealed record PilotSummary(
     int PilotNumber,
@@ -28,6 +29,15 @@ public sealed record PilotSummary(
     string? SimBriefUsername,
     IReadOnlyList<string> StaffPositions,
     string DisplayName,
-    string? PhotoUrl);
+    string? PhotoUrl,
+    bool TwoFactorEnabled,
+    bool TwoFactorRequired);
 
-public sealed record AuthResponse(string Token, DateTime ExpiresAt, PilotSummary Pilot);
+public sealed record AuthResponse(string Token, DateTime ExpiresAt, PilotSummary Pilot, string? TrustedDevice = null);
+
+public sealed record LoginResponse(AuthResponse? Session, string? ChallengeToken);
+
+public sealed record TwoFactorLoginRequest(
+    [Required, MaxLength(2000)] string ChallengeToken,
+    [Required, MaxLength(20)] string Code,
+    bool RememberDevice);

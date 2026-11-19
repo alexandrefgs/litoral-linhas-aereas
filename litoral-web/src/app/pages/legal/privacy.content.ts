@@ -23,7 +23,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
             ['Account', 'First and last name, e-mail, password (stored only as a secure hash) and base', 'When you register'],
             ['Profile (optional)', 'Date of birth, country, state and city, VATSIM, IVAO and Discord IDs, SimBrief username, simulator aircraft, profile photo and cover', 'When you fill in Settings'],
             ['Flights', 'Bookings, flight reports (PIREPs), aircraft position and track during the flight, simulator events, scores, hours and points', 'When you book and fly'],
-            ['Security', 'IP address, date and time of logins, failed logins and important actions', 'When you sign in and use the site']
+            ['Security', 'IP address, date and time of logins, failed logins, important actions and your two-factor authentication settings (authenticator key and recovery codes)', 'When you sign in, use the site or enable two-factor authentication']
           ]
         },
         note: 'We do not collect documents, payment data or any sensitive data.'
@@ -68,7 +68,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'storage',
         title: '6. Browser storage',
         items: [
-          'The site uses the browser local storage only for your login session and your theme preference (light, dark or system).',
+          'The site uses the browser local storage only for your login session, your theme preference (light, dark or system) and, when you choose "Trust this device for 30 days", a marker that skips the two-factor code on that browser.',
           'We do not use advertising or tracking cookies, and we do not use analytics tools that follow you across other sites.'
         ]
       },
@@ -101,6 +101,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         title: '9. Security',
         items: [
           'Passwords are stored only as a secure hash. Nobody, including the staff, can see your password.',
+          'You can protect your account with two-factor authentication in Settings. It is required for staff members.',
           'The site uses HTTPS, staff access is limited to what each position needs, and important actions are recorded in audit logs.',
           'No system is 100% secure. Use a strong password that you do not use on other sites and never share it.'
         ]
@@ -147,7 +148,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
             ['Conta', 'Nome e sobrenome, e-mail, senha (guardada apenas como hash seguro) e base', 'No cadastro'],
             ['Perfil (opcional)', 'Data de nascimento, país, estado e cidade, IDs da VATSIM, IVAO e Discord, usuário do SimBrief, aeronaves do simulador, foto de perfil e capa', 'Quando você preenche o Settings'],
             ['Voos', 'Reservas, PIREPs, posição e trilha da aeronave durante o voo, eventos do simulador, pontuação, horas e pontos', 'Quando você reserva e voa'],
-            ['Segurança', 'Endereço IP, data e hora dos logins, tentativas de login com erro e ações importantes', 'Quando você entra e usa o site']
+            ['Segurança', 'Endereço IP, data e hora dos logins, tentativas de login com erro, ações importantes e as configurações da autenticação em dois fatores (chave do autenticador e códigos de recuperação)', 'Quando você entra, usa o site ou ativa a autenticação em dois fatores']
           ]
         },
         note: 'Não coletamos documentos, dados de pagamento nem dados sensíveis.'
@@ -192,7 +193,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         id: 'storage',
         title: '6. Armazenamento no navegador',
         items: [
-          'O site usa o armazenamento local do navegador apenas para a sua sessão de login e para o tema escolhido (claro, escuro ou do sistema).',
+          'O site usa o armazenamento local do navegador apenas para a sua sessão de login, para o tema escolhido (claro, escuro ou do sistema) e, quando você marca "Trust this device for 30 days", para um marcador que dispensa o código de dois fatores naquele navegador.',
           'Não usamos cookies de publicidade ou rastreamento, nem ferramentas de análise que acompanham você em outros sites.'
         ]
       },
@@ -225,6 +226,7 @@ export const PRIVACY: Record<LegalLanguage, LegalDocument> = {
         title: '9. Segurança',
         items: [
           'As senhas são guardadas apenas como hash seguro. Ninguém, nem o staff, consegue ver a sua senha.',
+          'Você pode proteger a sua conta com a autenticação em dois fatores em Settings. Ela é obrigatória para os membros do staff.',
           'O site usa HTTPS, o acesso do staff é limitado ao que cada posição precisa, e as ações importantes ficam registradas em logs de auditoria.',
           'Nenhum sistema é 100% seguro. Use uma senha forte, que você não use em outros sites, e nunca a compartilhe.'
         ]

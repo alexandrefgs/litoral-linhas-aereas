@@ -20,6 +20,7 @@ export interface AdminPilot {
   isActive: boolean;
   staffPositions: string[];
   canDelete: boolean;
+  twoFactorEnabled: boolean;
 }
 
 const BASE_URL = '/api/admin/pilots';
@@ -38,6 +39,10 @@ export class AdminPilotsService {
 
   activate(id: string): Promise<AdminPilot> {
     return firstValueFrom(this.http.post<AdminPilot>(`${BASE_URL}/${id}/activate`, {}));
+  }
+
+  resetTwoFactor(id: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${BASE_URL}/${id}/two-factor/reset`, {}));
   }
 
   remove(id: string): Promise<void> {

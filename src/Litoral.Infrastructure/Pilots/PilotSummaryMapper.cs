@@ -1,16 +1,17 @@
 using Litoral.Application.Auth;
 using Litoral.Domain.Entities;
+using Litoral.Infrastructure.Identity;
 
 namespace Litoral.Infrastructure.Pilots;
 
 internal static class PilotSummaryMapper
 {
-    public static PilotSummary ToSummary(string email, Pilot pilot, IReadOnlyList<string> roles) => new(
+    public static PilotSummary ToSummary(ApplicationUser user, Pilot pilot, IReadOnlyList<string> roles, bool requireStaffTwoFactor) => new(
         pilot.PilotNumber,
         pilot.DisplayId,
         pilot.FirstName,
         pilot.LastName,
-        email,
+        user.Email!,
         pilot.Rank.Code,
         pilot.Rank.Name,
         pilot.CurrentLocationIcao,
@@ -19,5 +20,7 @@ internal static class PilotSummaryMapper
         pilot.SimBriefUsername,
         roles,
         pilot.PublicName,
-        pilot.PhotoUrl);
+        pilot.PhotoUrl,
+        user.TwoFactorEnabled,
+        requireStaffTwoFactor && roles.Count > 0);
 }

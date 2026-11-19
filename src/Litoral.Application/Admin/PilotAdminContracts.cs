@@ -17,7 +17,8 @@ public sealed record AdminPilotDto(
     DateTime JoinedAt,
     bool IsActive,
     IReadOnlyList<string> StaffPositions,
-    bool CanDelete);
+    bool CanDelete,
+    bool TwoFactorEnabled);
 
 public interface IPilotAdminService
 {

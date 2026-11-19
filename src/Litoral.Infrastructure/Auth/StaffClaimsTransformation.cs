@@ -1,10 +1,16 @@
 using System.Security.Claims;
 using Litoral.Infrastructure.Admin;
+using Litoral.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Litoral.Infrastructure.Auth;
 
-public sealed class StaffClaimsTransformation(StaffRoles staffRoles) : IClaimsTransformation
+public sealed class StaffClaimsTransformation(
+    StaffRoles staffRoles,
+    LitoralDbContext db,
+    IOptions<TwoFactorOptions> twoFactorOptions) : IClaimsTransformation
 {
     private const string RoleClaim = "role";
     private const string RefreshedMarker = "roles_refreshed";
@@ -19,7 +25,13 @@ public sealed class StaffClaimsTransformation(StaffRoles staffRoles) : IClaimsTr
         foreach (var claim in identity.FindAll(RoleClaim).ToList())
             identity.RemoveClaim(claim);
 
-        foreach (var role in await staffRoles.OfUserAsync(userId, CancellationToken.None))
+        var roles = await staffRoles.OfUserAsync(userId, CancellationToken.None);
+
+        if (roles.Count > 0 && twoFactorOptions.Value.RequiredForStaff
+            && !await db.Users.AnyAsync(u => u.Id == userId && u.TwoFactorEnabled))
+            roles = [];
+
+        foreach (var role in roles)
             identity.AddClaim(new Claim(RoleClaim, role));
 
         identity.AddClaim(new Claim(RefreshedMarker, "1"));

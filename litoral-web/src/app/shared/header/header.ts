@@ -19,7 +19,8 @@ const NOTIFICATION_STYLE: Record<string, { icon: string; tone: string }> = {
   InactivityPenalty: { icon: 'ti-clock-minus', tone: 'bg-danger/10 text-danger' },
   AccountDeactivated: { icon: 'ti-user-off', tone: 'bg-danger/10 text-danger' },
   SpecialFlight: { icon: 'ti-calendar-star', tone: 'bg-primary/15 text-primary' },
-  BookingExpired: { icon: 'ti-hourglass-empty', tone: 'bg-surface-alt text-ink-muted' }
+  BookingExpired: { icon: 'ti-hourglass-empty', tone: 'bg-surface-alt text-ink-muted' },
+  Security: { icon: 'ti-shield-lock', tone: 'bg-danger/10 text-danger' }
 };
 
 interface NavItem {

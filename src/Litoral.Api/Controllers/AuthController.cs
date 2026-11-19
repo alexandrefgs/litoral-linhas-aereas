@@ -13,8 +13,12 @@ public class AuthController(IAuthService auth) : ControllerBase
         Ok(await auth.RegisterAsync(request, ct));
 
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken ct) =>
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken ct) =>
         Ok(await auth.LoginAsync(request, ct));
+
+    [HttpPost("login/two-factor")]
+    public async Task<ActionResult<AuthResponse>> LoginWithTwoFactor(TwoFactorLoginRequest request, CancellationToken ct) =>
+        Ok(await auth.LoginWithTwoFactorAsync(request, ct));
 
     [Authorize]
     [HttpGet("me")]

@@ -2,10 +2,11 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { AuthResponse, LoginRequest, PilotSummary, RegisterRequest } from './auth.models';
+import { AuthResponse, LoginRequest, LoginResponse, LoginResult, PilotSummary, RegisterRequest } from './auth.models';
 
 const TOKEN_KEY = 'litoral.token';
 const EXPIRES_KEY = 'litoral.tokenExpiresAt';
+const TRUSTED_DEVICES_KEY = 'litoral.trustedDevices';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,6 +17,10 @@ export class AuthService {
   readonly pilot = signal<PilotSummary | null>(null);
   readonly isAuthenticated = computed(() => this.token() !== null);
   readonly isStaff = computed(() => (this.pilot()?.staffPositions.length ?? 0) > 0);
+  readonly needsTwoFactor = computed(() => {
+    const pilot = this.pilot();
+    return !!pilot && pilot.twoFactorRequired && !pilot.twoFactorEnabled;
+  });
 
   async init(): Promise<void> {
     if (!this.token()) return;
@@ -27,8 +32,26 @@ export class AuthService {
     }
   }
 
-  async login(request: LoginRequest): Promise<void> {
-    const response = await firstValueFrom(this.http.post<AuthResponse>('/api/auth/login', request));
+  async login(request: LoginRequest): Promise<LoginResult> {
+    const email = request.email.trim().toLowerCase();
+    const trustedDevice = this.trustedDevices()[email] ?? null;
+    const response = await firstValueFrom(this.http.post<LoginResponse>('/api/auth/login', { ...request, trustedDevice }));
+
+    if (response.session) {
+      this.store(response.session);
+      return { done: true };
+    }
+
+    if (trustedDevice) this.setTrustedDevice(email, null);
+    return { done: false, challengeToken: response.challengeToken! };
+  }
+
+  async loginWithTwoFactor(email: string, challengeToken: string, code: string, rememberDevice: boolean): Promise<void> {
+    const response = await firstValueFrom(
+      this.http.post<AuthResponse>('/api/auth/login/two-factor', { challengeToken, code, rememberDevice })
+    );
+
+    if (response.trustedDevice) this.setTrustedDevice(email.trim().toLowerCase(), response.trustedDevice);
     this.store(response);
   }
 
@@ -44,6 +67,11 @@ export class AuthService {
 
   updatePilot(pilot: PilotSummary): void {
     this.pilot.set(pilot);
+  }
+
+  forgetTrustedDevice(): void {
+    const email = this.pilot()?.email;
+    if (email) this.setTrustedDevice(email.toLowerCase(), null);
   }
 
   logout(): void {
@@ -69,6 +97,25 @@ export class AuthService {
 
     this.token.set(null);
     this.pilot.set(null);
+  }
+
+  private trustedDevices(): Record<string, string> {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(TRUSTED_DEVICES_KEY) ?? '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private setTrustedDevice(email: string, token: string | null): void {
+    const devices = this.trustedDevices();
+    if (token) devices[email] = token;
+    else delete devices[email];
+
+    try {
+      localStorage.setItem(TRUSTED_DEVICES_KEY, JSON.stringify(devices));
+    } catch {}
   }
 
   private readToken(): string | null {

@@ -27,6 +27,9 @@ export function staffGuard(area?: StaffArea): CanActivateFn {
     if (!auth.isAuthenticated())
       return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 
+    if (auth.needsTwoFactor())
+      return router.createUrlTree(['/profile'], { queryParams: { tab: 'settings' } });
+
     const positions = auth.pilot()?.staffPositions ?? [];
     const allowed = area ? hasStaffArea(positions, area) : positions.length > 0;
 

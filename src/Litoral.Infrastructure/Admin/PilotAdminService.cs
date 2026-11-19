@@ -79,9 +79,10 @@ public sealed class PilotAdminService(
         var ids = pilots.Select(p => p.Id).ToList();
         var userIds = pilots.Select(p => p.UserId).ToList();
 
-        var emails = await db.Users.AsNoTracking()
+        var users = await db.Users.AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Email ?? "", ct);
+            .Select(u => new { u.Id, u.Email, u.TwoFactorEnabled })
+            .ToDictionaryAsync(u => u.Id, ct);
 
         var flights = await db.Pireps.AsNoTracking()
             .Where(p => ids.Contains(p.PilotId))
@@ -95,13 +96,13 @@ public sealed class PilotAdminService(
         return pilots.Select(p =>
         {
             flights.TryGetValue(p.Id, out var stats);
-            var positions = roles.GetValueOrDefault(p.UserId) ?? [];
+            var user = users.GetValueOrDefault(p.UserId);var positions = roles.GetValueOrDefault(p.UserId) ?? [];
             return new AdminPilotDto(
                 p.Id,
                 p.PilotNumber,
                 p.DisplayId,
                 $"{p.FirstName} {p.LastName}",
-                emails.GetValueOrDefault(p.UserId, ""),
+                user?.Email ?? "",
                 p.Rank.Code,
                 p.PhotoUrl,
                 p.BaseIcao,
@@ -113,7 +114,8 @@ public sealed class PilotAdminService(
                 p.CreatedAt,
                 p.IsActive,
                 positions,
-                positions.Count == 0 && !blocked.Contains(p.Id));
+                positions.Count == 0 && !blocked.Contains(p.Id),
+                user?.TwoFactorEnabled ?? false);
         }).ToList();
     }
 }

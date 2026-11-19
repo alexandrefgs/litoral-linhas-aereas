@@ -109,17 +109,30 @@ const PAGE_SIZE = 25;
                   <td class="px-4 py-3 text-ink-muted">{{ p.lastFlightAt ? (p.lastFlightAt | date: 'd MMM y') : '—' }}</td>
                   <td class="px-4 py-3 text-ink-muted">{{ p.joinedAt | date: 'd MMM y' }}</td>
                   <td class="px-4 py-3">
-                    @if (p.isActive) {
-                      <span class="rounded-full bg-onda-500/15 px-2.5 py-1 text-xs font-semibold text-onda-600">Active</span>
-                    } @else {
-                      <span class="rounded-full bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger">Inactive</span>
-                    }
+                    <div class="flex flex-col items-start gap-1.5">
+                      @if (p.isActive) {
+                        <span class="rounded-full bg-onda-500/15 px-2.5 py-1 text-xs font-semibold text-onda-600">Active</span>
+                      } @else {
+                        <span class="rounded-full bg-danger/10 px-2.5 py-1 text-xs font-semibold text-danger">Inactive</span>
+                      }
+                      @if (p.twoFactorEnabled) {
+                        <span class="flex items-center gap-1 text-xs font-medium text-ink-muted" title="Two-factor authentication enabled">
+                          <i class="ti ti-shield-check text-onda-600" aria-hidden="true"></i>2FA
+                        </span>
+                      }
+                    </div>
                   </td>
                   <td class="px-4 py-3">
-                    @if (isLocked(p)) {
-                      <p class="text-right text-xs text-ink-muted">{{ p.pilotNumber === myNumber() ? 'You' : 'Staff' }}</p>
-                    } @else {
-                      <div class="flex justify-end gap-1">
+                    <div class="flex items-center justify-end gap-1">
+                      @if (canResetTwoFactor(p)) {
+                        <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" title="Reset two-factor authentication" aria-label="Reset two-factor authentication"
+                          [disabled]="busy()" (click)="resetTwoFactor(p)">
+                          <i class="ti ti-shield-x" aria-hidden="true"></i>
+                        </button>
+                      }
+                      @if (isLocked(p)) {
+                        <p class="text-right text-xs text-ink-muted">{{ p.pilotNumber === myNumber() ? 'You' : 'Staff' }}</p>
+                      } @else {
                         @if (p.isActive) {
                           <button type="button" class="icon-btn h-9 w-9 text-lg hover:text-danger" title="Deactivate" aria-label="Deactivate pilot"
                             [disabled]="busy()" (click)="deactivate(p)">
@@ -136,8 +149,8 @@ const PAGE_SIZE = 25;
                           [disabled]="!p.canDelete" (click)="askDelete(p)">
                           <i class="ti ti-trash" aria-hidden="true"></i>
                         </button>
-                      </div>
-                    }
+                      }
+                    </div>
                     @if (rowError()?.id === p.id) {
                       <p class="mt-1 text-right text-xs text-danger">{{ rowError()!.message }}</p>
                     }
@@ -253,6 +266,33 @@ export class AdminPilots implements OnInit {
 
   protected isLocked(pilot: AdminPilot): boolean {
     return pilot.staffPositions.length > 0 || pilot.pilotNumber === this.myNumber();
+  }
+
+  protected canResetTwoFactor(pilot: AdminPilot): boolean {
+    return pilot.twoFactorEnabled && pilot.pilotNumber !== this.myNumber() && !pilot.staffPositions.includes('CEO_FOUNDER');
+  }
+
+  protected async resetTwoFactor(pilot: AdminPilot): Promise<void> {
+    this.rowError.set(null);
+    const ok = await this.confirm.ask({
+      title: `Reset two-factor authentication for ${pilot.fullName}?`,
+      message: 'Use this only when the pilot lost access to the authenticator app and the recovery codes. Confirm the identity of the pilot before you continue.',
+      details: ['The authenticator, the recovery codes and the trusted devices stop working.', 'The pilot is notified and can set it up again in Settings.'],
+      confirmLabel: 'Yes, reset',
+      tone: 'danger',
+      icon: 'ti-shield-x'
+    });
+    if (!ok) return;
+
+    this.busy.set(true);
+    try {
+      await this.api.resetTwoFactor(pilot.id);
+      this.pilots.update(list => list.map(p => (p.id === pilot.id ? { ...p, twoFactorEnabled: false } : p)));
+    } catch (error) {
+      this.rowError.set({ id: pilot.id, message: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected askDelete(pilot: AdminPilot): void {
