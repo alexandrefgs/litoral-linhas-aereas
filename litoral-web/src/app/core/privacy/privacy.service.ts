@@ -54,6 +54,10 @@ export class PrivacyService {
   createRequest(type: PrivacyRequestType, message: string): Promise<PrivacyRequest> {
     return firstValueFrom(this.http.post<PrivacyRequest>('/api/account/privacy/requests', { type, message }));
   }
+  
+  removeOptionalData(): Promise<void> {
+    return firstValueFrom(this.http.post<void>('/api/account/privacy/remove-optional-data', {}));
+  }
 
   async downloadExport(): Promise<void> {
     const response = await firstValueFrom(this.http.get('/api/account/privacy/export', { observe: 'response', responseType: 'blob' }));

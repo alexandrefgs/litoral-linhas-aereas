@@ -1,9 +1,19 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../core/api/api-error';
+import { AuthService } from '../../core/auth/auth.service';
 import { PRIVACY_REQUEST_TYPES, PrivacyOverview, PrivacyRequestStatus, PrivacyRequestType, PrivacyService } from '../../core/privacy/privacy.service';
+import { ConfirmService } from '../../shared/confirm-dialog/confirm.service';
+
+const SHORTCUTS: Partial<Record<PrivacyRequestType, string>> = {
+  Access: 'You can get all your data right now with Download my data.',
+  Portability: 'You can get all your data right now, in a readable format, with Download my data.',
+  Correction: 'Most of your data can be edited in Profile details and Config. Use this form only for data you can not edit, like flights, hours or points.',
+  Deletion: 'To delete everything, use Delete my account. To remove only the optional data, use Remove optional data. Use this form for anything more specific.',
+  ConsentWithdrawal: 'You can withdraw your consent right now with Remove optional data.'
+};
 
 const STATUS_STYLE: Record<PrivacyRequestStatus, string> = {
   Open: 'bg-highlight/25 text-ink',
@@ -48,6 +58,15 @@ const STATUS_STYLE: Record<PrivacyRequestStatus, string> = {
             </button>
           </div>
 
+          <div>
+            <p class="font-semibold text-ink">Remove optional data</p>
+            <p class="mt-1 text-sm text-ink-muted">Clears your birth date, location, network IDs, SimBrief username, simulator aircraft, photo and cover, and keeps your account.</p>
+            <button type="button" class="mt-3 flex items-center gap-2 rounded-md border border-danger px-4 py-2 text-sm font-medium text-danger hover:bg-danger hover:text-white disabled:opacity-50"
+              [disabled]="removing()" (click)="removeOptional()">
+              <i class="ti ti-eraser" aria-hidden="true"></i>{{ removing() ? 'Removing...' : 'Remove optional data' }}
+            </button>
+          </div>
+
           <form [formGroup]="form" (ngSubmit)="send()" class="flex flex-col gap-3" novalidate>
             <div>
               <p class="font-semibold text-ink">Make a privacy request</p>
@@ -58,6 +77,11 @@ const STATUS_STYLE: Record<PrivacyRequestStatus, string> = {
                 <option [value]="t.value">{{ t.label }}</option>
               }
             </select>
+            @if (shortcut(); as tip) {
+              <p class="flex gap-2 rounded-lg bg-surface-alt px-3 py-2 text-sm text-ink">
+                <i class="ti ti-bulb mt-0.5 shrink-0 text-primary" aria-hidden="true"></i>{{ tip }}
+              </p>
+            }
             <textarea formControlName="message" rows="3" maxlength="2000" class="field-input" placeholder="Describe your request" aria-label="Request"></textarea>
             <div>
               <button type="submit" class="btn-primary px-5" [disabled]="form.invalid || sending()">
@@ -105,6 +129,10 @@ const STATUS_STYLE: Record<PrivacyRequestStatus, string> = {
 })
 export class PrivacyPanel implements OnInit {
   private readonly api = inject(PrivacyService);
+  private readonly auth = inject(AuthService);
+  private readonly confirm = inject(ConfirmService);
+
+  readonly removed = output<void>();
 
   protected readonly types = PRIVACY_REQUEST_TYPES;
   protected readonly statusStyle = STATUS_STYLE;
@@ -112,6 +140,7 @@ export class PrivacyPanel implements OnInit {
   protected readonly loadError = signal(false);
   protected readonly exporting = signal(false);
   protected readonly sending = signal(false);
+  protected readonly removing = signal(false);
   protected readonly message = signal<{ ok: boolean; text: string } | null>(null);
   protected readonly requests = computed(() => this.overview()?.requests ?? []);
 
@@ -119,6 +148,13 @@ export class PrivacyPanel implements OnInit {
     type: ['Access' as PrivacyRequestType, Validators.required],
     message: ['', [Validators.required, Validators.maxLength(2000)]]
   });
+
+  private readonly selectedType = signal<PrivacyRequestType>('Access');
+  protected readonly shortcut = computed(() => SHORTCUTS[this.selectedType()] ?? null);
+
+  constructor() {
+    this.form.controls.type.valueChanges.subscribe(type => this.selectedType.set(type));
+  }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -144,6 +180,36 @@ export class PrivacyPanel implements OnInit {
     }
   }
 
+  protected async removeOptional(): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Remove your optional data?',
+      message: 'Your account, flights, hours and points stay. You can fill in the data again later in Settings.',
+      details: [
+        'Birth date, country, state and city',
+        'VATSIM, IVAO and Discord IDs',
+        'SimBrief username (you need it again to book flights) and simulator aircraft',
+        'Profile photo and cover'
+      ],
+      confirmLabel: 'Yes, remove',
+      tone: 'danger',
+      icon: 'ti-eraser'
+    });
+    if (!ok) return;
+
+    this.removing.set(true);
+    this.message.set(null);
+    try {
+      await this.api.removeOptionalData();
+      await this.auth.refreshProfile();
+      this.removed.emit();
+      this.message.set({ ok: true, text: 'Your optional data was removed.' });
+    } catch (error) {
+      this.message.set({ ok: false, text: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });
+    } finally {
+      this.removing.set(false);
+    }
+  }
+
   protected async send(): Promise<void> {
     if (this.form.invalid) return;
 
@@ -154,6 +220,7 @@ export class PrivacyPanel implements OnInit {
       const created = await this.api.createRequest(type, message.trim());
       this.overview.update(o => (o ? { ...o, requests: [created, ...o.requests] } : o));
       this.form.reset({ type: 'Access', message: '' });
+      this.selectedType.set('Access');
       this.message.set({ ok: true, text: 'Request sent. You will get a notification when the staff answers.' });
     } catch (error) {
       this.message.set({ ok: false, text: apiErrorMessage(error) ?? 'Something went wrong. Try again.' });

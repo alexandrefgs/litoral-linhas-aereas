@@ -48,6 +48,7 @@ public interface IPrivacyService
     Task AcceptTermsAsync(string userId, CancellationToken ct);
     Task<PrivacyRequestDto> CreateRequestAsync(string userId, CreatePrivacyRequest request, CancellationToken ct);
     Task<DataExport> ExportAsync(string userId, CancellationToken ct);
+    Task RemoveOptionalDataAsync(string userId, CancellationToken ct);
     Task<IReadOnlyList<AdminPrivacyRequestDto>> ListAsync(bool openOnly, CancellationToken ct);
     Task<AdminPrivacyRequestDto> ResolveAsync(Guid requestId, ResolvePrivacyRequest request, CancellationToken ct);
 }

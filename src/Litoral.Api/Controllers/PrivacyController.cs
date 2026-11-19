@@ -24,6 +24,13 @@ public class PrivacyController(IPrivacyService privacy) : ControllerBase
     [HttpPost("requests")]
     public async Task<ActionResult<PrivacyRequestDto>> CreateRequest(CreatePrivacyRequest request, CancellationToken ct) =>
         Ok(await privacy.CreateRequestAsync(User.GetUserId(), request, ct));
+    
+    [HttpPost("remove-optional-data")]
+    public async Task<IActionResult> RemoveOptionalData(CancellationToken ct)
+    {
+        await privacy.RemoveOptionalDataAsync(User.GetUserId(), ct);
+        return NoContent();
+    }
 
     [HttpGet("export")]
     public async Task<IActionResult> Export(CancellationToken ct)

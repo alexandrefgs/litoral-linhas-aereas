@@ -536,7 +536,8 @@ Por enquanto as notificações são só no site. Os e-mails entram junto com o S
 ### LGPD na prática
 
 - **Download my data:** em Settings, o piloto baixa um JSON com conta, perfil, reservas, voos, extrato de pontos, prêmios, notificações, pedidos de privacidade e o seu log de atividade.
-- **Pedidos de privacidade:** acesso, correção, exclusão, portabilidade, revogação de consentimento ou outro assunto, com prazo de resposta de **15 dias** (no máximo 3 abertos por piloto). O staff responde em **Admin › Privacy**, que destaca os atrasados, e o piloto é notificado.
+- **Remove optional data:** o próprio piloto apaga de uma vez os dados opcionais (nascimento, localização, IDs das networks, SimBrief, aeronaves do simulador, foto e capa) sem excluir a conta.
+- **Pedidos de privacidade:** para o que o piloto não resolve sozinho. Ao escolher o tipo, o formulário mostra antes o atalho que resolve na hora (download, edição em Settings, remover dados opcionais ou excluir a conta). Os tipos são acesso, correção, exclusão, portabilidade, revogação de consentimento ou outro assunto, com prazo de resposta de **15 dias** (no máximo 3 abertos por piloto). O staff responde em **Admin › Privacy**, que destaca os atrasados, e o piloto é notificado.
 - **Retenção:** um job diário anonimiza os logs com mais de **2 anos** (nome, e-mail, IP e detalhes de pilotos) e apaga os pedidos de privacidade respondidos há mais de 2 anos. O prazo fica em `Privacy:AuditLogRetentionDays`.
 
 ---

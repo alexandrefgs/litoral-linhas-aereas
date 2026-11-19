@@ -21,6 +21,7 @@ public sealed class PrivacyService(
     UserManager<ApplicationUser> userManager,
     StaffRoles staffRoles,
     Notifier notifier,
+    IPhotoStorage photos,
     IAuditLog auditLog,
     AuditContext auditContext) : IPrivacyService
 {
@@ -229,6 +230,25 @@ public sealed class PrivacyService(
 
         var content = JsonSerializer.SerializeToUtf8Bytes(export, ExportJson);
         return new DataExport($"litoral-data-{pilot.DisplayId}-{DateTime.UtcNow:yyyyMMdd}.json", content);
+    }
+
+    public async Task RemoveOptionalDataAsync(string userId, CancellationToken ct)
+    {
+        var pilot = await FindPilotAsync(userId, ct);
+
+        pilot.UpdatePersonal(pilot.FirstName, pilot.LastName, null, null, null, null);
+        pilot.SetNetworkIds(null, null, null);
+        pilot.SetSimBriefUsername(null);
+        pilot.SetSimAircraft([]);
+        var photo = pilot.SetPhoto(null);
+        var cover = pilot.SetCover(null);
+
+        await db.SaveChangesAsync(ct);
+        photos.Delete(photo);
+        photos.Delete(cover);
+
+        await WriteOwnAuditAsync(userId, pilot, "Optional data removed",
+            "Birth date, country, state, city, VATSIM, IVAO and Discord IDs, SimBrief username, simulator aircraft, photo and cover", ct);
     }
 
     public async Task<IReadOnlyList<AdminPrivacyRequestDto>> ListAsync(bool openOnly, CancellationToken ct)

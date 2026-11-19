@@ -254,7 +254,7 @@ const DIGITS = Validators.pattern(/^\d*$/);
 
         <app-two-factor-panel />
         
-        <app-privacy-panel />
+        <app-privacy-panel (removed)="optionalDataRemoved()" />
 
         <div class="panel flex flex-wrap items-center justify-between gap-4 border-danger/40 px-6 py-5">
           <div>
@@ -363,6 +363,11 @@ export class ProfileSettings implements OnInit {
     } catch {
       this.loadError.set(true);
     }
+  }
+
+  protected async optionalDataRemoved(): Promise<void> {
+    await this.load();
+    this.changed.emit();
   }
 
   protected cover(url: string | null): string {
