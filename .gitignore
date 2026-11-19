@@ -484,6 +484,7 @@ $RECYCLE.BIN/
 src/Litoral.Api/wwwroot/uploads/*
 !src/Litoral.Api/wwwroot/uploads/.gitkeep
 /uploads/
+/downloads/
 
 # Admin › Logs page (not a log folder)
 !litoral-web/src/app/pages/admin/logs/

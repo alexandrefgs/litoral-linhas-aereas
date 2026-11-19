@@ -14,5 +14,6 @@ public enum AuditCategory
     Awards,
     Bookings,
     Logins,
-    Privacy
+    Privacy,
+    Downloads
 }

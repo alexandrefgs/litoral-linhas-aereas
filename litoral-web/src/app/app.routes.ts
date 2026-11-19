@@ -99,6 +99,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/operations/admin-operations').then(m => m.AdminOperations)
       },
       {
+        path: 'awards',
+        canActivate: [staffGuard('operations')],
+        loadComponent: () => import('./pages/admin/awards/admin-awards').then(m => m.AdminAwards)
+      },
+      {
+        path: 'downloads',
+        canActivate: [staffGuard('downloads')],
+        loadComponent: () => import('./pages/admin/downloads/admin-downloads').then(m => m.AdminDownloads)
+      },
+      {
         path: 'scoring',
         canActivate: [staffGuard('pireps')],
         loadComponent: () => import('./pages/admin/scoring/admin-scoring').then(m => m.AdminScoring)

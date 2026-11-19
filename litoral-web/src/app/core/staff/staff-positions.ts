@@ -10,7 +10,7 @@ export const STAFF_POSITION_NAMES: Record<string, string> = {
   SAFETY_MANAGER: 'Safety Manager'
 };
 
-export type StaffArea = 'routes' | 'fleet' | 'pilots' | 'staff' | 'operations' | 'pireps' | 'reports';
+export type StaffArea = 'routes' | 'fleet' | 'pilots' | 'staff' | 'operations' | 'pireps' | 'reports' | 'downloads';
 
 const FULL_ACCESS = 'CEO_FOUNDER';
 
@@ -21,7 +21,8 @@ const STAFF_AREA_POSITIONS: Record<StaffArea, string[]> = {
   staff: ['CHAIRMAN', 'VICE_CHAIRMAN'],
   operations: ['DIRECTOR_OF_OPERATIONS'],
   pireps: ['SAFETY_MANAGER'],
-  reports: ['GENERAL_DIRECTOR']
+  reports: ['GENERAL_DIRECTOR'],
+  downloads: ['FLEET_MANAGER', 'DIRECTOR_OF_OPERATIONS']
 };
 
 export function hasStaffArea(positions: readonly string[], area: StaffArea): boolean {

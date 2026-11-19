@@ -151,6 +151,12 @@ public sealed class PrivacyService(
             .OrderBy(a => a.Year).ThenBy(a => a.Month)
             .Select(a => new { a.Year, a.Month, a.Category, a.Position, a.Value, a.Points, a.AwardedAt })
             .ToListAsync(ct);
+        
+        var medals = await db.PilotAwards.AsNoTracking()
+            .Where(a => a.PilotId == pilotId)
+            .OrderBy(a => a.GrantedAt)
+            .Select(a => new { a.Award.Name, a.Award.Kind, a.Note, a.GrantedAt })
+            .ToListAsync(ct);
 
         var notifications = await db.Notifications.AsNoTracking()
             .Where(n => n.PilotId == pilotId)
@@ -221,6 +227,7 @@ public sealed class PrivacyService(
             Flights = flights,
             PointTransactions = points,
             MonthlyAwards = awards,
+            Awards = medals,
             Notifications = notifications,
             PrivacyRequests = requests,
             ActivityLog = activity

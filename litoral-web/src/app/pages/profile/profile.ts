@@ -6,6 +6,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { DEFAULT_COVER_URL, PilotProfile, countryFlagByCode } from '../../core/profile/profile.models';
 import { ProfileService } from '../../core/profile/profile.service';
 import { PilotAvatar } from './pilot-avatar';
+import { ProfileAwards } from './profile-awards';
+import { ProfileDownloads } from './profile-downloads';
 import { ProfileFlights } from './profile-flights';
 import { ProfileOverview } from './profile-overview';
 import { ProfileSettings } from './profile-settings';
@@ -29,7 +31,7 @@ const TABS: TabItem[] = [
 
 @Component({
   selector: 'app-profile',
-  imports: [PilotAvatar, ProfileOverview, ProfileFlights, ProfileSettings],
+  imports: [PilotAvatar, ProfileOverview, ProfileFlights, ProfileAwards, ProfileDownloads, ProfileSettings],
   template: `
     <section class="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
       @if (loading() && !profile()) {
@@ -98,18 +100,8 @@ const TABS: TabItem[] = [
         @switch (tab()) {
           @case ('profile') { <app-profile-overview [profile]="p" /> }
           @case ('flights') { <app-profile-flights [pilotNumber]="p.pilotNumber" [isOwner]="p.isOwner" /> }
-          @case ('awards') {
-            <div class="panel flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <i class="ti ti-award text-4xl text-ink-muted" aria-hidden="true"></i>
-              <p class="text-ink-muted">No awards yet.</p>
-            </div>
-          }
-          @case ('downloads') {
-            <div class="panel flex flex-col items-center gap-3 px-6 py-16 text-center">
-              <i class="ti ti-download text-4xl text-ink-muted" aria-hidden="true"></i>
-              <p class="text-ink-muted">Documents, liveries and manuals will be available here soon.</p>
-            </div>
-          }
+          @case ('awards') { <app-profile-awards [pilotNumber]="p.pilotNumber" [isOwner]="p.isOwner" /> }
+          @case ('downloads') { <app-profile-downloads /> }
           @case ('settings') { <app-profile-settings (changed)="refresh()" /> }
         }
       }
@@ -181,7 +173,7 @@ export class Profile {
     }
   }
 
-    protected async refresh(): Promise<void> {
+  protected async refresh(): Promise<void> {
     if (!this.pilotNumber) return;
     try {
       this.profile.set(await this.api.get(this.pilotNumber));

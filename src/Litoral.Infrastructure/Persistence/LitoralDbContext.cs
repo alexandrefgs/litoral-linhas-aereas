@@ -35,6 +35,9 @@ public sealed class LitoralDbContext(DbContextOptions<LitoralDbContext> options)
     public DbSet<PilotApplication> PilotApplications => Set<PilotApplication>();
     public DbSet<RegistrationBlock> RegistrationBlocks => Set<RegistrationBlock>();
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<Award> Awards => Set<Award>();
+    public DbSet<PilotAward> PilotAwards => Set<PilotAward>();
+    public DbSet<DownloadItem> DownloadItems => Set<DownloadItem>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {

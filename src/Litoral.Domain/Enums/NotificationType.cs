@@ -14,5 +14,6 @@ public enum NotificationType
     BookingExpired,
     Security,
     Privacy,
-    Application
+    Application,
+    Award
 }

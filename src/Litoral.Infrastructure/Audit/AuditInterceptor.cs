@@ -26,6 +26,12 @@ public sealed partial class AuditInterceptor(AuditContext audit) : SaveChangesIn
     ];
 
     private static readonly HashSet<string> PirepProperties = [nameof(Pirep.Status), nameof(Pirep.ReviewNote)];
+    
+    private static readonly HashSet<string> DownloadProperties =
+    [
+        nameof(DownloadItem.Title), nameof(DownloadItem.Description), nameof(DownloadItem.Category), nameof(DownloadItem.AircraftType),
+        nameof(DownloadItem.Version), nameof(DownloadItem.ExternalUrl), nameof(DownloadItem.FileName), nameof(DownloadItem.SizeBytes)
+    ];
 
     private sealed record Subject(AuditCategory Category, string Type, string Name, IReadOnlySet<string>? Only = null);
 
@@ -92,6 +98,8 @@ public sealed partial class AuditInterceptor(AuditContext audit) : SaveChangesIn
         Aircraft a => new(AuditCategory.Fleet, "Aircraft", a.Registration),
         ScoringRule r => new(AuditCategory.Scoring, "Scoring rule", r.Description),
         SpecialFlight f => new(AuditCategory.Operations, "Special flight", f.Title),
+        Award a => new(AuditCategory.Awards, "Award", a.Name),
+        DownloadItem d => new(AuditCategory.Downloads, "Download", d.Title, DownloadProperties),
         Pirep p => new(AuditCategory.Pireps, "PIREP", p.Callsign, PirepProperties),
         Pilot p => new(AuditCategory.Pilots, "Pilot", AuditContext.PilotLabel(p), PilotProperties),
         _ => null

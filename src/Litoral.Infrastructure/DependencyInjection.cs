@@ -39,6 +39,10 @@ using Litoral.Infrastructure.Airports;
 using Litoral.Application.Operations;
 using Litoral.Infrastructure.Operations;
 using Microsoft.AspNetCore.Authentication;
+using Litoral.Application.Awards;
+using Litoral.Infrastructure.Awards;
+using Litoral.Application.Downloads;
+using Litoral.Infrastructure.Downloads;
 
 namespace Litoral.Infrastructure;
 
@@ -130,6 +134,11 @@ public static class DependencyInjection
         services.AddScoped<IFleetAdminService, FleetAdminService>();
         services.AddScoped<IScoringRuleService, ScoringRuleService>();
         services.AddSingleton<IPhotoStorage, LocalPhotoStorage>();
+        services.AddSingleton<IDownloadStorage, LocalDownloadStorage>();
+        services.AddScoped<IAwardService, AwardService>();
+        services.AddScoped<IAwardAdminService, AwardAdminService>();
+        services.AddScoped<IDownloadService, DownloadService>();
+        services.AddScoped<IDownloadAdminService, DownloadAdminService>();
         services.AddHostedService<MaintenanceReleaseService>();
         services.AddScoped<IStatisticsService, StatisticsService>();
         services.AddScoped<IPointsStatementService, PointsStatementService>();

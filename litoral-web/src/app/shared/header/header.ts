@@ -22,7 +22,8 @@ const NOTIFICATION_STYLE: Record<string, { icon: string; tone: string }> = {
   BookingExpired: { icon: 'ti-hourglass-empty', tone: 'bg-surface-alt text-ink-muted' },
   Security: { icon: 'ti-shield-lock', tone: 'bg-danger/10 text-danger' },
   Privacy: { icon: 'ti-lock', tone: 'bg-primary/15 text-primary' },
-  Application: { icon: 'ti-user-plus', tone: 'bg-onda-500/15 text-onda-600' }
+  Application: { icon: 'ti-user-plus', tone: 'bg-onda-500/15 text-onda-600' },
+  Award: { icon: 'ti-award', tone: 'bg-sol-400/25 text-ink' }
 };
 
 interface NavItem {
