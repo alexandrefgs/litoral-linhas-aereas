@@ -84,7 +84,7 @@ public static class ScoringCatalog
         new(ScoringCheck.SimultaneousNetworks, "Simultaneous flights", ScoringSource.Review, Once),
         new(ScoringCheck.UnregisteredNetworkId, "Network ID not registered", ScoringSource.Acars, Once),
         new(ScoringCheck.UnreportedDiversion, "Unreported diversion or incomplete flight", ScoringSource.Acars, Once),
-        new(ScoringCheck.SopDeviation, "Operation not following FCOM/FCTM/OM", ScoringSource.Review, Once),
+        new(ScoringCheck.SopDeviation, "Operation not following the Litoral procedures", ScoringSource.Review, Once),
         new(ScoringCheck.SpecialFlightDomestic, "Ferry/charter, domestic leg", ScoringSource.Flight, Once),
         new(ScoringCheck.SpecialFlightInternational, "Ferry/charter, international leg", ScoringSource.Flight, Once),
         new(ScoringCheck.NetworkEventVatsim, "VATSIM event", ScoringSource.Flight, Once),

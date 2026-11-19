@@ -202,7 +202,7 @@ public static class DbSeeder
             new(ScoringCategory.Rejection, ScoringCheck.SimultaneousNetworks, "Networks: simultaneous flights on two networks or in another VA (subject to account removal)", reject, 0, once, order: 12),
             new(ScoringCategory.Rejection, ScoringCheck.UnregisteredNetworkId, "ACARS: log sent on a network whose ID is not registered on the VA website", reject, 0, once, order: 13),
             new(ScoringCategory.Rejection, ScoringCheck.UnreportedDiversion, "ACARS: diversion not reported, or incomplete flight sent", reject, 0, once, order: 14),
-            new(ScoringCategory.Rejection, ScoringCheck.SopDeviation, "ACARS: operations not following the FCOM/FCTM/OM", reject, 0, once, order: 15),
+            new(ScoringCategory.Rejection, ScoringCheck.SopDeviation, "ACARS: operations not following the Litoral standard procedures", reject, 0, once, order: 15),
 
             new(ScoringCategory.SpecialFlights, ScoringCheck.SpecialFlightDomestic, "Domestic leg", pts, 300, once, order: 1),
             new(ScoringCategory.SpecialFlights, ScoringCheck.SpecialFlightInternational, "International leg", pts, 500, once, order: 2),

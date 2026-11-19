@@ -5,4 +5,7 @@
     <Project Path="src/Litoral.Domain/Litoral.Domain.csproj" />
     <Project Path="src/Litoral.Infrastructure/Litoral.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Litoral.Domain.Tests/Litoral.Domain.Tests.csproj" />
+  </Folder>
 </Solution>
