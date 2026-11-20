@@ -158,6 +158,7 @@ Cada aeroporto tem uma **patente mínima**, definida pelo Route Manager no cadas
 - Cada aeronave acumula **horas, ciclos** e as **horas desde o último A, C e D-check**.
 - Status de cada aeronave: **Disponível**, **Reservada**, **Em voo**, **Manutenção** ou **Inativa**.
 - Fotos das aeronaves são enviadas manualmente, com campo de **crédito do fotógrafo**. Use apenas fotos próprias ou autorizadas.
+- Cada aeronave pode ter um **SimBrief airframe ID** (o *Internal ID* de um airframe salvo, ex.: `195966_1795129909…`). Com ele, o SimBrief abre com o perfil da Litoral: pesos, equipamentos, SELCAL e motor daquela aeronave. Sem ele, vai o perfil genérico do ICAO. Veja [Link do SimBrief](#link-do-simbrief).
 
 #### Matrículas
 
@@ -302,7 +303,7 @@ Cada piloto tem um perfil público em `/profile/{número}`:
 - **Awards:** os awards do piloto, com imagem, descrição e data (veja [Awards e Downloads](#awards-e-downloads)).
 - **Downloads:** liveries, documentos e software da companhia, só para membros.
 
-Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, cria as **chaves de ACARS**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
+Em **Settings**, o piloto edita os dados pessoais (data de nascimento, país, estado e cidade), os IDs da **VATSIM**, da **IVAO** e do **Discord**, o **SimBrief Username**, as aeronaves que tem no simulador, a senha, a foto e a capa. Também é lá que ele ativa a **autenticação em dois fatores**, baixa os **seus dados** e faz **pedidos de privacidade** (veja [Segurança e privacidade](#segurança-e-privacidade)).
 
 **Excluir conta:** também em Settings, o piloto pode excluir a própria conta. São duas confirmações: a primeira lista tudo o que será apagado, e a segunda (*Are you sure?*) pede a senha. A exclusão é **permanente** e apaga perfil, fotos, voos, PIREPs, flight logs, horas, pontos, escala, reservas, login e e-mail. Não é possível excluir com um voo aberto ou uma Special Flight em andamento, nem sendo do staff.
 
@@ -370,7 +371,6 @@ Com uma reserva aberta, o menu leva ao **Briefing**, uma página única com tudo
 **Coluna da esquerda**
 - **Voo:** callsign, rota, distância e tempo, botões para atualizar (tempo e OFP) e cancelar a reserva.
 - **Flight plan:** prefile na **VATSIM** e na **IVAO** (já preenchido quando o OFP está carregado) e o callsign alternativo para a network.
-- **Item 18:** os links de prefile já saem com `OPR/LITORAL PIC/<ID do piloto> CS/LITORAL` (o `CS/` mostra a telefonia "LITORAL" no Aurora da IVAO), e o texto aparece abaixo dos botões para copiar.
 - **Tripulação:** cards do Captain e do First Officer.
 - **Menu:** Briefing, Loadsheet e OFP, que levam à seção na página.
 - **Aeronave:** foto, matrícula, modelo e último voo, com as abas **Tech log** (itens de MEL e CDL abertos) e **Crew Docs** (documentos do tipo de aeronave; o 800BCF usa os do B738).
@@ -383,6 +383,52 @@ Com uma reserva aberta, o menu leva ao **Briefing**, uma página única com tudo
 - **Flight report:** PIREP manual e, em desenvolvimento, o simulador de voo.
 
 Cada reserva usa um `static_id` próprio no SimBrief, e o briefing busca exatamente o OFP daquela reserva.
+
+### Item 18 do plano de voo
+
+Todo plano de voo da Litoral precisa ter no item 18:
+
+```
+OPR/LITORAL PIC/<ID do piloto> CS/LITORAL
+```
+
+Exemplo: `OPR/LITORAL PIC/FO1000 CS/LITORAL`. O `CS/LITORAL` faz o Aurora (IVAO) mostrar a telefonia correta. O link do SimBrief já manda esse texto, e os botões de prefile da **VATSIM** e da **IVAO** corrigem o item 18 do OFP antes de abrir. A falta do `OPR/LITORAL PIC/` reprova o PIREP (veja [Regras de pontuação](#regras-de-pontuação)).
+
+### Link do SimBrief
+
+O botão do SimBrief abre o despacho já preenchido para aquela reserva:
+
+| O que vai | Valor |
+|---|---|
+| Voo | `airline=LTL`, número, callsign, matrícula, origem e destino |
+| Aeronave (`type`) | O **airframe ID** da aeronave no SimBrief ou, se não tiver, o ICAO do tipo |
+| Partida | **Agora + 45 min**, arredondado para cima de 5 em 5 minutos (UTC) |
+| Tempo de bloco | O tempo estimado da rota |
+| Comandante | O captain da tripulação |
+| Cost index | **CI 10** nas aeronaves médias. Nas pesadas (777, 787, A330/A350...) fica com o SimBrief |
+| Opções do OFP | Kg, layout **LIDO**, navlog, ETOPS, step climbs, TLR, NOTAMs, FIR NOTAMs e mapas detalhados |
+| Item 18 (`acdata.extrarmk`) | `OPR/LITORAL PIC/<ID> CS/LITORAL RMK/TCAS` |
+| DISP RMKS (`manualrmk`) | O item 18 e os **itens de MEL/CDL abertos** da aeronave |
+
+Rota e combustível ficam com o SimBrief. Nos **DISP RMKS** do OFP aparece:
+
+```
+LITORAL LINHAS AEREAS - ITEM 18: OPR/LITORAL PIC/FO1000 CS/LITORAL
+MEL/CDL: NIL - NO PENALTIES
+```
+
+ou, com itens abertos, uma linha por item com a penalidade de combustível (só informativa, o SimBrief não soma esse combustível):
+
+```
+MEL/CDL: MEL 21-01 PACK 1 INOP - FUEL +2.5%
+```
+
+A geração por popup (com a chave da API) usa os mesmos parâmetros.
+
+**Perfis de airframe no SimBrief:** os perfis da Litoral ficam numa conta do SimBrief da companhia, um por tipo (ou por matrícula, se quiser um SELCAL por avião). Para cada perfil: Base Type do add-on usado, matrícula do bloco, SELCAL, layout LIDO, unidades em kg, nome `LITORAL <tipo>` e **Extra FPL Info vazio** (o item 18 vai pelo link). Depois de salvar, copie o **Internal ID** e cole em **Admin › Fleet** na aeronave.
+
+- Se o piloto trocar de airframe na tela do SimBrief, o item 18 enviado pelo link é apagado.
+- Se o airframe for excluído no SimBrief, o ID para de funcionar e precisa ser trocado no Admin.
 
 ---
 
@@ -459,9 +505,14 @@ A API tem uma camada de ACARS **neutra**: o [Litoral ACARS](#litoral-acars-windo
 | Etapa | Endpoint | O que acontece |
 |---|---|---|
 | Antes do voo | `GET /api/acars/booking` | Devolve o voo reservado (callsign, rota, aeronave e coordenadas) para o ACARS mostrar ao piloto |
+| Antes do voo | `GET /api/acars/briefing` | Briefing do voo: tripulação, METAR/TAF, item 18 e links de prefile |
+| Antes do voo | `GET /api/acars/briefing/ofp` | Resumo do OFP do SimBrief daquela reserva (rota, combustível e pesos) |
 | Início do voo | `POST /api/acars/flight` | Cria a sessão de voo e passa a reserva e a aeronave para "em voo" |
+| Durante o voo | `GET /api/acars/flight` | Sessão em andamento (para saber se o voo já foi iniciado) |
 | Durante o voo | `POST /api/acars/flight/positions` | Grava a trilha (até 500 posições por lote) e a última posição para o mapa ao vivo |
+| Durante o voo | `POST /api/acars/flight/network` | Troca a rede do voo (Offline, VATSIM ou IVAO). O PIREP sai com a última rede escolhida |
 | Fim do voo | `POST /api/acars/flight/complete` | Recebe o resumo e os eventos, aplica as regras de pontuação e cria o PIREP como **Pending** |
+| Mapa ao vivo | `GET /api/acars/live` e `GET /api/acars/live/{id}/track` | Voos em andamento e a trilha de cada um |
 
 **Ao enviar o PIREP** (antes da revisão):
 - O piloto e a aeronave vão para o **aeroporto de pouso** (ou o alternado, se divergiu).
@@ -474,8 +525,13 @@ A API tem uma camada de ACARS **neutra**: o [Litoral ACARS](#litoral-acars-windo
 
 App WPF em `src/Litoral.Acars`, que lê o simulador pelo **FSUIPC7** (MSFS 2020/2024) e entra com a **chave de ACARS** do piloto (veja [Chaves de ACARS](#chaves-de-acars)). A lógica fica em `src/Litoral.Acars.Core`, que é testada sem simulador.
 
+- **Visual:** mesma identidade do site, com barra de título própria (minimizar, maximizar e fechar), **tema claro e escuro** (salvo nas configurações) e menu lateral com **Flight**, **Briefing** e **Live map**.
 - **Configuração:** endereço do servidor e chave de ACARS. A chave fica criptografada para o usuário do Windows (DPAPI) e só trafega por https (http só para o próprio PC).
 - **Fluxo:** *Load flight* mostra o voo reservado, o piloto escolhe a rede (Offline, VATSIM ou IVAO), clica em *Start flight* e, depois do block on, em *File PIREP*.
+- **Troca de rede:** durante o voo, basta clicar em outra rede. A troca vai para o site na hora (mapa ao vivo e PIREP) e fica no log. Depois do PIREP, a rede não muda mais.
+- **Log ao vivo:** card **LOG** com cada evento na hora, em Z, com cores: marcos do voo (block off, decolagem com VR/pitch/flaps, nível de cruzeiro, toque com razão de descida, block on com distância e combustível), sistemas (motores, freio de estacionamento, trem, flaps, passagem pelos 10.000 ft, fases) e alertas (overspeed, stall, slew, crash, sim rate, **mais de 250 kt abaixo de 10.000 ft**, combustível adicionado em voo, falta de dados e falha de envio). Cada voo também é salvo em `%AppData%\Litoral ACARS\Logs\<callsign>_<data>Z.log`, com o botão **Open folder**.
+- **Briefing:** a mesma página do site em versão compacta: voo, tripulação, item 18 com botão de copiar, prefile na VATSIM e na IVAO, METAR/TAF de partida e destino e o resumo do OFP do SimBrief.
+- **Live map:** mapa com os voos da Litoral em andamento (o seu destacado), com tiles da CARTO no tema do app.
 - **Leitura:** 4 vezes por segundo. A posição é gravada a cada 5 s, a cada 1 s abaixo de 2.500 ft AGL e a cada 30 s no portão. O lote vai para a API a cada 30 s e, se o envio falhar, fica guardado para a próxima tentativa.
 - **Detecta sozinho:** block off/on, decolagem, pouso (um quique não conta), VR, pitch na decolagem, flaps na decolagem e no pouso, altura da recolhida dos flaps e da configuração de pouso, primeiro motor, nível de cruzeiro, táxi de chegada, combustível em kg e distância.
 - **Fases:** Preflight, TaxiOut, Takeoff, Climb, Cruise, Descent, Approach, Landing, TaxiIn e Arrived.
@@ -484,7 +540,7 @@ App WPF em `src/Litoral.Acars`, que lê o simulador pelo **FSUIPC7** (MSFS 2020/
 - **Dados incompletos:** se a leitura do simulador parar por mais de 60 s durante o voo, o PIREP vai marcado como incompleto.
 - **Alternado:** se o block on for a mais de 5 NM do destino, o app avisa para informar o aeroporto de pouso.
 - **Demo flight:** com o servidor em `localhost`, grava um voo roteirizado para testar sem abrir o simulador.
-- **Ainda não faz:** retomar um voo depois de fechar o app, porcentagem online e frequência do COM1 (ficam para o Safety).
+- **Ainda não faz:** retomar um voo depois de fechar o app, porcentagem online e frequência do COM1 (ficam para o Safety). O histórico de trocas de rede também ainda não é guardado.
 
 **PIREP manual:** se o ACARS falhar, o piloto envia o PIREP pelo Briefing, com comentário obrigatório. Ele **sempre passa pela revisão**.
 
@@ -537,7 +593,7 @@ Cada regra tem uma **categoria**, um **check** (o que o sistema verifica), o res
 | Trem de pouso | 737: subir acima de 235 kt e baixar acima de 270 kt (reprova). 777: 270 kt nos dois |
 | Simulador | Slew −100, stall −150, pause −50, simulation rate −600, refuel −300 |
 | Procedimentos | Ordem de partida dos motores, taxi-in, motores cortados no envio do log, taxi acima de 30 kt |
-| Reprovação | Offline, crash, item 18 sem `OPR/LITORAL PIC/<ID do piloto> CS/LITORAL`, combustível abaixo de 4.400 kg (737) ou 12.000 kg (777) no pushback, menos de 80% online... |
+| Reprovação | Offline, crash, remarks sem `OPR/LITORAL PIC/`, combustível abaixo de 4.400 kg (737) ou 12.000 kg (777) no pushback, menos de 80% online... |
 | Voos especiais e eventos | Traslados e fretamentos (+300/+500), eventos IVAO/VATSIM (+500) e eventos da Litoral (+300/+500) |
 | MEL & CDL | Procedimento da MEL cumprido (+50) ou não cumprido (−500) |
 
@@ -603,7 +659,8 @@ O dashboard mostra os voos da Litoral em andamento (sessões de ACARS com posiç
 
 - Cada avião aparece com uma etiqueta: **callsign** e **partida ✈ destino**.
 - Ao clicar, abre o painel do voo (piloto, foto da aeronave, progresso, fase, GS, altitude, distância restante, tempo para chegada e rede), com os pins **DEP** e **ARR**, a **rota planejada** tracejada e a **trilha voada** em laranja. As linhas sempre seguem o caminho mais curto, sem cruzar o planeta pelo lado errado.
-- Abaixo do mapa, a tabela com todos os voos: piloto, voo e aeronave, rota com progresso, dados de voo e rede.
+- Abaixo do mapa, a tabela com todos os voos: piloto (com a **foto do perfil**, ou as iniciais se não tiver), voo e aeronave, rota com progresso, dados de voo e rede.
+- A rede mostrada é a atual: se o piloto trocar de rede no ACARS durante o voo, o mapa acompanha.
 - O callsign abre o voo no **VATSIM Radar** ou no **Webeye** (IVAO).
 - Em desenvolvimento, o botão **Demo traffic** coloca voos fictícios no mapa para teste.
 
@@ -769,13 +826,14 @@ As métricas ficam em memória e recomeçam quando a API reinicia.
 - WPF (.NET 10) para Windows
 - FSUIPCClientDLL (FSUIPC7) para ler o MSFS 2020/2024
 - DPAPI para guardar a chave de ACARS
+- WebView2 + Leaflet + CARTO no mapa ao vivo
 
 **Testes**
 - xUnit
 - WebApplicationFactory + Testcontainers (SQL Server)
 
 **Integrações**
-- SimBrief (leitura do OFP, PDF e geração por popup com a API)
+- SimBrief (link de despacho por reserva com airframe salvo, item 18 e MEL/CDL, leitura do OFP, PDF e geração por popup com a API)
 - aviationweather.gov (METAR e TAF)
 - **ChartFox**: link para as cartas de cada aeroporto
 - **FSUIPC7**: leitura do simulador pelo Litoral ACARS
@@ -808,8 +866,8 @@ flowchart LR
 | **Application** | Contratos e casos de uso: cadastro, perfil, booking, aeroportos, Special Flights, ACARS, PIREP, revisão, pontuação e estatísticas |
 | **Infrastructure** | Banco de dados, Identity, JWT, migrations, seed, armazenamento de fotos, logs de auditoria (interceptor do EF Core) e jobs em segundo plano (expiração de reservas e Special Flights, manutenção, pagamento dos pilotos do mês, inatividade e retenção de dados) |
 | **Api** | Endpoints HTTP, tratamento de erros e documentação |
-| **Acars.Core** | Conversão dos offsets do FSUIPC, gravador do voo (fases, eventos e resumo), tabela de flaps e cliente da API |
-| **Acars** | App WPF: leitura do FSUIPC7, tela do voo e configurações |
+| **Acars.Core** | Conversão dos offsets do FSUIPC, gravador do voo (fases, eventos e resumo), log do voo, tabela de flaps, formatação do briefing, mensagens do mapa e cliente da API |
+| **Acars** | App WPF: leitura do FSUIPC7, telas Flight, Briefing e Live map, temas claro e escuro, arquivo de log e configurações |
 
 ---
 
@@ -825,8 +883,8 @@ litoral-linhas-aereas/
 │   ├── Litoral.Acars.Core/      # Lógica do ACARS: FSUIPC, gravador do voo e cliente da API
 │   └── Litoral.Acars/           # App WPF do Litoral ACARS (Windows)
 ├── tests/
-│   ├── Litoral.Domain.Tests/          # Motor de pontuação e chaves de ACARS
-│   ├── Litoral.Acars.Tests/           # Conversões, gravador do voo e cliente do ACARS
+│   ├── Litoral.Domain.Tests/          # Motor de pontuação, chaves de ACARS, item 18, link do SimBrief e airframe
+│   ├── Litoral.Acars.Tests/           # Conversões, gravador e log do voo, briefing, mapa e cliente do ACARS
 │   └── Litoral.Api.IntegrationTests/  # API com SQL Server no Testcontainers
 ├── litoral-web/                 # Front-end Angular
 │   ├── public/                  # favicon, insígnias das patentes e logos das networks
@@ -921,7 +979,9 @@ Precisa de Windows, do **MSFS 2020 ou 2024** e do **FSUIPC7** abertos.
 3. Em **Connection**, informe o servidor (`https://localhost:7112` em desenvolvimento), cole a chave e clique em **Save**.
 4. Clique em **Load flight**, escolha a rede e clique em **Start flight** com a aeronave no portão.
 
-Sem simulador, com a API em `localhost`, o botão **Demo flight** grava um voo roteirizado para testar o fluxo inteiro. As configurações ficam em `%AppData%\Litoral ACARS\settings.json`, com a chave criptografada.
+Sem simulador, com a API em `localhost`, o botão **Demo flight** grava um voo roteirizado para testar o fluxo inteiro. As configurações ficam em `%AppData%\Litoral ACARS\settings.json`, com a chave criptografada, e os logs dos voos em `%AppData%\Litoral ACARS\Logs`.
+
+**Mapa ao vivo do ACARS:** precisa do **WebView2 Runtime** (já vem no Windows 10/11 atualizado). A página do mapa é servida no domínio local `acars.localhost` (`MapTiles.Host`). Coloque a chave da CARTO em `src/Litoral.Acars/Map/MapSettings.cs` e libere esse domínio na chave, no painel da CARTO. Sem chave, o mapa usa os tiles do OpenStreetMap.
 
 ### Testes
 
@@ -1045,6 +1105,11 @@ Os testes de integração sobem um SQL Server no **Docker** (Testcontainers), en
 - [x] Camada de ACARS neutra: voo reservado, início do voo, posições, eventos e conclusão
 - [x] Chave pessoal de ACARS (Settings), aceita só nos endpoints de ACARS
 - [x] **Litoral ACARS v0** (Windows, FSUIPC7, MSFS 2020/2024) com trilha, eventos e PIREP automático
+- [x] Visual do site no ACARS: barra de título própria, tema claro/escuro e menu com Flight, Briefing e Live map
+- [x] Log ao vivo no ACARS, salvo em arquivo por voo
+- [x] Troca de rede durante o voo
+- [x] Link do SimBrief por reserva: airframe salvo, partida +45 min, CI 10 nas médias, item 18 e MEL/CDL nos DISP RMKS
+- [x] Item 18 `OPR/LITORAL PIC/<ID> CS/LITORAL` no SimBrief e nos prefiles da VATSIM e da IVAO
 - [ ] Retomar um voo depois de fechar o Litoral ACARS
 - [ ] Porcentagem online (feed da VATSIM/IVAO) e checagem da frequência do COM1
 - [x] Trilha do voo e última posição gravadas por sessão
@@ -1088,7 +1153,7 @@ Os testes de integração sobem um SQL Server no **Docker** (Testcontainers), en
 
 ### 🔜 Fase 6: Produção
 - [x] Monitor do sistema para o CEO (saúde da API e do banco, tráfego, integrações, jobs, erros e armazenamento)
-- [x] Testes unitários do Domain (motor de pontuação e chaves de ACARS) e do ACARS (conversões do FSUIPC, gravador do voo e cliente da API)
+- [x] Testes unitários do Domain (motor de pontuação, chaves de ACARS, item 18, link do SimBrief e airframe) e do ACARS (conversões do FSUIPC, gravador e log do voo, briefing, mapa e cliente da API)
 - [x] Testes de integração da API com Testcontainers (fluxo de ACARS, chaves e voo completo pelo cliente do Litoral ACARS)
 - [ ] CI com GitHub Actions (build e testes)
 - [ ] Configuração de ambiente de produção (segredos, connection strings, chave CARTO e chaves do Data Protection)
@@ -1108,7 +1173,7 @@ Os testes de integração sobem um SQL Server no **Docker** (Testcontainers), en
 
 **Alexandre**, CEO & Founder da Litoral Linhas Aéreas
 
-[![GitHub](https://img.shields.io/badge/GitHub-alexandrefgs/181717?logo=github)](https://github.com/alexandrefgs)
+[![GitHub](https://img.shields.io/badge/GitHub-alexandrefgs-181717?logo=github)](https://github.com/alexandrefgs)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-alexandre--fgs-0A66C2?logo=linkedin)](https://www.linkedin.com/in/alexandre-fgs)
 
 ---
