@@ -42,6 +42,9 @@ public sealed class LitoralApiClient(HttpClient http)
 
     public async Task<FlightSession> StartFlightAsync(StartFlightRequest request, CancellationToken ct = default) =>
         await PostAsync<FlightSession>("api/acars/flight", request, ct);
+    
+    public async Task<FlightSession> ChangeNetworkAsync(string network, CancellationToken ct = default) =>
+        await PostAsync<FlightSession>("api/acars/flight/network", new ChangeNetworkRequest(network), ct);
 
     public async Task<int> SendPositionsAsync(IReadOnlyList<PositionReport> positions, CancellationToken ct = default)
     {

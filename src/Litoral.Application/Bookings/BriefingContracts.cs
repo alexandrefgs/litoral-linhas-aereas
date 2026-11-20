@@ -1,4 +1,5 @@
 using Litoral.Application.Flights;
+using Litoral.Domain.Flights;
 
 namespace Litoral.Application.Bookings;
 
@@ -67,17 +68,7 @@ public sealed record SimBriefOfpDto(
     SimBriefLoadsheetDto Loadsheet,
     string? PlanHtml);
 
-public sealed record SimBriefRequest(
-    string StaticId,
-    string Origin,
-    string Destination,
-    string AircraftType,
-    string Registration,
-    string FlightNumber,
-    string Callsign,
-    string Captain,
-    string FirstOfficer,
-    string Remarks);
+public sealed record SimBriefRequest(string StaticId, SimBriefFlight Flight, string FirstOfficer);
 
 public sealed record SimBriefGenerateDto(string Url);
 

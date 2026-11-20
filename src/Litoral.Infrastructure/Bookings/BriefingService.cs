@@ -17,17 +17,9 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
             ?? throw new AppException(AppErrorKind.NotFound, "You don't have an open flight.");
 
         var route = booking.Route;
-        var dispatch = "https://dispatch.simbrief.com/options/custom"
-            + $"?airline={Airline.Icao}"
-            + $"&fltnum={route.FlightNumber}"
-            + $"&callsign={Uri.EscapeDataString(booking.Callsign)}"
-            + $"&type={Uri.EscapeDataString(booking.Aircraft.AircraftType.IcaoCode)}"
-            + $"&reg={Uri.EscapeDataString(booking.Aircraft.Registration)}"
-            + $"&orig={route.DepartureAirport.Icao}"
-            + $"&dest={route.ArrivalAirport.Icao}";
-
         var weather = await metars.GetAsync([route.DepartureAirport.Icao, route.ArrivalAirport.Icao], ct);
         var (captain, firstOfficer) = await crewCards.BuildAsync(pilot, booking.CrewPilot, ct);
+        var dispatch = SimBriefDispatch.Url(Flight(booking, pilot, captain), DateTime.UtcNow);
         var bases = await support.GetBaseIcaosAsync(ct);
 
         return new BriefingDto(
@@ -62,19 +54,8 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
             ?? throw new AppException(AppErrorKind.NotFound, "You don't have an open flight.");
 
         var (captain, firstOfficer) = await crewCards.BuildAsync(pilot, booking.CrewPilot, ct);
-        var route = booking.Route;
 
-        var url = simBrief.BuildGenerateUrl(new SimBriefRequest(
-            StaticId(booking),
-            route.DepartureAirport.Icao,
-            route.ArrivalAirport.Icao,
-            booking.Aircraft.AircraftType.IcaoCode,
-            booking.Aircraft.Registration,
-            route.FlightNumber.ToString(),
-            booking.Callsign,
-            CrewName(captain),
-            CrewName(firstOfficer),
-            FlightPlanRemarks.Required(pilot.DisplayId)));
+        var url = simBrief.BuildGenerateUrl(new SimBriefRequest(StaticId(booking), Flight(booking, pilot, captain), CrewName(firstOfficer)));
 
         return new SimBriefGenerateDto(url);
     }
@@ -110,6 +91,19 @@ public sealed class BriefingService(BookingSupport support, IMetarProvider metar
     }
 
     private static string StaticId(Booking booking) => $"{Airline.Icao}_{booking.Id:N}";
+
+    private static SimBriefFlight Flight(Booking booking, Pilot pilot, FlightCrewMemberDto captain) => new(
+        Airline.Icao,
+        booking.Route.FlightNumber,
+        booking.Callsign,
+        booking.Aircraft.SimBriefType,
+        booking.Aircraft.AircraftType.IcaoCode,
+        booking.Aircraft.Registration,
+        booking.Route.DepartureAirport.Icao,
+        booking.Route.ArrivalAirport.Icao,
+        booking.Route.EstimatedMinutes,
+        CrewName(captain),
+        pilot.DisplayId);
 
     private static string CrewName(FlightCrewMemberDto member) =>
         member.DisplayId is null ? member.Name : $"{member.DisplayId} - {member.Name}";

@@ -17,6 +17,7 @@
     <SolidColorBrush x:Key="HighlightLine" Color="#8F5C0E" />
     <SolidColorBrush x:Key="OnHighlight" Color="#FFE69A" />
     <SolidColorBrush x:Key="Danger" Color="#F87171" />
+    <SolidColorBrush x:Key="Warn" Color="#FBBF24" />
     <SolidColorBrush x:Key="DangerSoft" Color="#4A1D1D" />
     <SolidColorBrush x:Key="Header" Color="#061529" />
     <SolidColorBrush x:Key="HeaderSoft" Color="#14355F" />

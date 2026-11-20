@@ -44,6 +44,10 @@ public class AcarsController(IFlightTrackingService tracking, IBriefingService b
     public async Task<ActionResult<int>> Positions(PositionBatchRequest request, CancellationToken ct) =>
         Ok(await tracking.ReportPositionsAsync(User.GetUserId(), request, ct));
 
+    [HttpPost("flight/network")]
+    public async Task<ActionResult<FlightSessionDto>> Network(ChangeNetworkRequest request, CancellationToken ct) =>
+        Ok(await tracking.ChangeNetworkAsync(User.GetUserId(), request, ct));
+
     [HttpPost("flight/complete")]
     public async Task<ActionResult<PirepDto>> Complete(CompleteFlightRequest request, CancellationToken ct) =>
         Ok(await tracking.CompleteAsync(User.GetUserId(), request, ct));

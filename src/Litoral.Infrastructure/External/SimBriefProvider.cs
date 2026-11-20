@@ -6,6 +6,7 @@ using System.Text.Json;
 using Litoral.Application.Bookings;
 using Litoral.Application.Common;
 using Litoral.Domain.Common;
+using Litoral.Domain.Flights;
 using Microsoft.Extensions.Options;
 
 namespace Litoral.Infrastructure.External;
@@ -17,43 +18,25 @@ public sealed class SimBriefProvider(HttpClient http, IOptions<SimBriefOptions> 
 
     public bool CanGenerate => !string.IsNullOrWhiteSpace(options.Value.ApiKey);
 
-    public string BuildGenerateUrl(SimBriefRequest request)
+        public string BuildGenerateUrl(SimBriefRequest request)
     {
         if (!CanGenerate)
             throw new AppException(AppErrorKind.Conflict, "The SimBrief API is not configured.");
 
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
+        var now = DateTimeOffset.UtcNow;
+        var timestamp = now.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
         var outputPage = options.Value.OutputPage;
+        var flight = request.Flight;
         var apiCode = Convert.ToHexStringLower(MD5.HashData(Encoding.UTF8.GetBytes(
-            options.Value.ApiKey + request.Origin + request.Destination + request.AircraftType + timestamp + outputPage)));
+            options.Value.ApiKey + flight.Origin + flight.Destination + flight.Type + timestamp + outputPage)));
 
-        var query = new Dictionary<string, string>
-        {
-            ["orig"] = request.Origin,
-            ["dest"] = request.Destination,
-            ["type"] = request.AircraftType,
-            ["reg"] = request.Registration,
-            ["airline"] = Airline.Icao,
-            ["fltnum"] = request.FlightNumber,
-            ["callsign"] = request.Callsign,
-            ["cpt"] = request.Captain,
-            ["fo"] = request.FirstOfficer,
-            ["units"] = "KGS",
-            ["navlog"] = "1",
-            ["etops"] = "1",
-            ["stepclimbs"] = "1",
-            ["tlr"] = "1",
-            ["notams"] = "1",
-            ["firnot"] = "1",
-            ["maps"] = "detail",
-            ["planformat"] = "lido",
-            ["find_sidstar"] = "R",
-            ["acdata"] = JsonSerializer.Serialize(new { extrarmk = request.Remarks }),
-            ["static_id"] = request.StaticId,
-            ["outputpage"] = outputPage,
-            ["timestamp"] = timestamp,
-            ["apicode"] = apiCode
-        };
+        var query = SimBriefDispatch.Parameters(flight, now.UtcDateTime).ToDictionary(p => p.Key, p => p.Value);
+        query["fo"] = request.FirstOfficer;
+        query["find_sidstar"] = "R";
+        query["static_id"] = request.StaticId;
+        query["outputpage"] = outputPage;
+        query["timestamp"] = timestamp;
+        query["apicode"] = apiCode;
 
         return LoaderUrl + "?" + string.Join('&', query.Select(q => $"{q.Key}={Uri.EscapeDataString(q.Value)}"));
     }

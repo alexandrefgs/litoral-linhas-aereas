@@ -12,6 +12,7 @@ public sealed class AircraftConfiguration : IEntityTypeConfiguration<Aircraft>
         builder.Property(a => a.Registration).HasMaxLength(6).IsRequired();
         builder.HasIndex(a => a.Registration).IsUnique();
         builder.Property(a => a.Variant).HasMaxLength(40);
+        builder.Property(a => a.SimBriefAirframeId).HasMaxLength(40);
         builder.Property(a => a.PhotoUrl).HasMaxLength(500);
         builder.Property(a => a.PhotoCredit).HasMaxLength(120);
         builder.Property(a => a.MaintenanceReason).HasMaxLength(300);

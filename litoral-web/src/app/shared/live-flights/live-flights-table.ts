@@ -24,8 +24,12 @@ import { altitudeFt, initials, minutesLabel } from './live-format';
               [class]="f.id === selectedId() ? 'bg-primary/5' : 'hover:bg-surface-alt/60'" (click)="selected.emit(f.id)">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-base font-bold text-primary">
-                    {{ initials(f.pilotName) }}
+                  <span class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-base font-bold text-primary">
+                    @if (f.pilotPhotoUrl) {
+                      <img [src]="f.pilotPhotoUrl" [alt]="f.pilotName" class="h-full w-full object-cover" />
+                    } @else {
+                      {{ initials(f.pilotName) }}
+                    }
                   </span>
                   <div>
                     <p class="font-medium text-ink">{{ f.pilotName }}</p>

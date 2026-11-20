@@ -33,6 +33,7 @@ public sealed record AdminAircraftDto(
     string AircraftTypeName,
     bool IsCargo,
     string? Variant,
+    string? SimBriefAirframeId,
     string? PhotoUrl,
     string? PhotoCredit,
     string CurrentAirportIcao,
@@ -55,7 +56,8 @@ public sealed record AircraftRequest(
     string Registration,
     Guid AircraftTypeId,
     string? Variant,
-    string CurrentAirportIcao);
+    string CurrentAirportIcao,
+    string? SimBriefAirframeId = null);
 
 public sealed record RegistrationSuggestionDto(string Block, string? Registration, int Free);
 

@@ -63,6 +63,7 @@ public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport su
             booking.Callsign,
             booking.Pilot.DisplayId,
             $"{booking.Pilot.FirstName} {booking.Pilot.LastName}",
+            booking.Pilot.PhotoUrl,
             booking.Aircraft.Registration,
             booking.Aircraft.AircraftType.IcaoCode,
             booking.Aircraft.AircraftType.Name,
@@ -156,6 +157,18 @@ public sealed class FlightTrackingService(LitoralDbContext db, BookingSupport su
         var added = session.AddPositions(request.Positions.Select(ToSample));
         await db.SaveChangesAsync(ct);
         return added;
+    }
+
+    public async Task<FlightSessionDto> ChangeNetworkAsync(string userId, ChangeNetworkRequest request, CancellationToken ct)
+    {
+        var pilot = await support.GetPilotAsync(userId, ct);
+        var network = PirepFiling.ParseNetwork(request.Network);
+        var session = await ActiveSessionAsync(pilot.Id, ct)
+            ?? throw new AppException(AppErrorKind.Conflict, "You don't have a flight in progress.");
+
+        session.ChangeNetwork(network);
+        await db.SaveChangesAsync(ct);
+        return ToDto(session);
     }
 
     public async Task<PirepDto> CompleteAsync(string userId, CompleteFlightRequest request, CancellationToken ct)

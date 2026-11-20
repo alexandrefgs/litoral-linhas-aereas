@@ -8,11 +8,13 @@ namespace Litoral.Domain.Entities;
 public sealed class Aircraft : Entity
 {
     private static readonly Regex RegistrationPattern = new("^P[PRSTU]-[A-Z]{3}$");
+    private static readonly Regex SimBriefAirframePattern = new(@"^\d{1,12}_\d{6,16}$");
 
     public string Registration { get; private set; } = null!;
     public Guid AircraftTypeId { get; private set; }
     public AircraftType AircraftType { get; private set; } = null!;
     public string? Variant { get; private set; }
+    public string? SimBriefAirframeId { get; private set; }
     public string? PhotoUrl { get; private set; }
     public string? PhotoCredit { get; private set; }
     public Guid CurrentAirportId { get; private set; }
@@ -29,7 +31,7 @@ public sealed class Aircraft : Entity
     public DateTime? MaintenanceUntil { get; private set; }
     public DateTime? LastMaintenanceAt { get; private set; }
     public DateTime? LastFlightAt { get; private set; }
-
+    public string SimBriefType => SimBriefAirframeId ?? AircraftType.IcaoCode;
     public bool IsAvailable => Status == AircraftStatus.Available;
     public bool IsInUse => Status is AircraftStatus.Reserved or AircraftStatus.InFlight;
         public MaintenanceCheck? DueCheck =>
@@ -65,6 +67,21 @@ public sealed class Aircraft : Entity
         AircraftTypeId = aircraftType.Id;
         Variant = string.IsNullOrWhiteSpace(variant) ? null : variant.Trim();
         MoveTo(currentAirport);
+    }
+
+    public void SetSimBriefAirframe(string? airframeId)
+    {
+        var value = (airframeId ?? "").Trim();
+        if (value.Length == 0)
+        {
+            SimBriefAirframeId = null;
+            return;
+        }
+
+        if (!SimBriefAirframePattern.IsMatch(value))
+            throw new DomainException("The SimBrief airframe ID must look like 123456_1582090020 (Saved Airframes › Edit › Internal ID).");
+
+        SimBriefAirframeId = value;
     }
 
     public void SetPhoto(string? url, string? credit)

@@ -211,7 +211,9 @@
 
                                 <TextBlock Style="{StaticResource Label}" Text="Network" />
                                 <ListBox Style="{StaticResource Chips}" ItemsSource="{Binding Networks}" SelectedItem="{Binding SelectedNetwork}"
-                                         IsEnabled="{Binding FlightStarted, Converter={StaticResource Inverse}}" Margin="0,0,0,16" />
+                                         IsEnabled="{Binding NetworkEditable}" Margin="0,0,0,4" />
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,16"
+                                           Text="Switched networks mid-flight? Pick the new one here. It is sent to the website right away." />
 
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="Load flight" Command="{Binding LoadBookingCommand}" />
@@ -266,6 +268,71 @@
                                 </UniformGrid>
 
                                 <TextBlock Style="{StaticResource Hint}" Text="{Binding SendStatus}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <Button DockPanel.Dock="Right" Content="Open folder" Margin="0" Command="{Binding OpenLogFolderCommand}"
+                                            ToolTip="Each flight is also saved as a text file." />
+                                    <TextBlock Style="{StaticResource Eyebrow}" Text="LOG" Margin="0" VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <Border Style="{StaticResource CodeBox}" Padding="0">
+                                    <Grid>
+                                        <TextBlock Style="{StaticResource Hint}" Margin="12,10" Text="Load a flight. Engines, brakes, gear, flaps, phases and warnings appear here as they happen."
+                                                   Visibility="{Binding HasLog, Converter={StaticResource InverseVisible}}" />
+                                        <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl ItemsSource="{Binding LogEntries}" Margin="12,8">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,2">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="78" />
+                                                                <ColumnDefinition Width="16" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Time}" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource Muted}" />
+                                                            <Ellipse Grid.Column="1" Width="7" Height="7" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                                <Ellipse.Style>
+                                                                    <Style TargetType="Ellipse">
+                                                                        <Setter Property="Fill" Value="{DynamicResource Line}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Level}" Value="Milestone">
+                                                                                <Setter Property="Fill" Value="{DynamicResource Accent}" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                                                <Setter Property="Fill" Value="{DynamicResource Warn}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Ellipse.Style>
+                                                            </Ellipse>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Message}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource Ink}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding Level}" Value="Milestone">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Primary}" />
+                                                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                                                <Setter Property="Foreground" Value="{DynamicResource Warn}" />
+                                                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                         </Border>
 

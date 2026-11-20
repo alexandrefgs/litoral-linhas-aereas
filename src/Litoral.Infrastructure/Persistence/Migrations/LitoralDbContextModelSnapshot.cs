@@ -120,6 +120,10 @@ namespace Litoral.Infrastructure.Persistence.Migrations
                         .HasMaxLength(6)
                         .HasColumnType("nvarchar(6)");
 
+                    b.Property<string>("SimBriefAirframeId")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)

@@ -15,6 +15,8 @@ public sealed record AcarsBookingDto(
 
 public sealed record StartFlightRequest(string Network, string? Simulator, string? Client);
 
+public sealed record ChangeNetworkRequest(string Network);
+
 public sealed record PositionReport(
     DateTime At,
     double Latitude,
@@ -152,6 +154,7 @@ public interface IFlightTrackingService
     Task<FlightSessionDto?> GetActiveAsync(string userId, CancellationToken ct);
     Task<FlightSessionDto> StartAsync(string userId, StartFlightRequest request, CancellationToken ct);
     Task<int> ReportPositionsAsync(string userId, PositionBatchRequest request, CancellationToken ct);
+    Task<FlightSessionDto> ChangeNetworkAsync(string userId, ChangeNetworkRequest request, CancellationToken ct);
     Task<PirepDto> CompleteAsync(string userId, CompleteFlightRequest request, CancellationToken ct);
     Task<IReadOnlyList<LiveFlightDto>> LiveAsync(CancellationToken ct);
     Task<IReadOnlyList<TrackPointDto>> LiveTrackAsync(Guid sessionId, CancellationToken ct);
@@ -171,6 +174,7 @@ public sealed record LiveFlightDto(
     string Callsign,
     string PilotId,
     string PilotName,
+    string? PilotPhotoUrl,
     string Registration,
     string AircraftTypeIcao,
     string AircraftTypeName,

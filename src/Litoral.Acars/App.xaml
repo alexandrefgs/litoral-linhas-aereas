@@ -11,6 +11,7 @@
 
             <BooleanToVisibilityConverter x:Key="Visible" />
             <ui:InverseBoolConverter x:Key="Inverse" />
+            <ui:InverseVisibleConverter x:Key="InverseVisible" />
             <ui:NetworkLabelConverter x:Key="NetworkLabel" />
             <ui:PageIsConverter x:Key="PageIs" />
             <ui:PageVisibleConverter x:Key="PageVisible" />
@@ -257,6 +258,13 @@
             <Style x:Key="Chips" TargetType="ListBox">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBox">
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
                 <Setter Property="ItemsPanel">
                     <Setter.Value>

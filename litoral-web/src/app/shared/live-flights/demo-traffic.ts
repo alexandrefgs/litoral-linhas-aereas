@@ -73,6 +73,7 @@ export function demoTraffic(now: number): LiveFlight[] {
       callsign: r.callsign,
       pilotId: r.pilotId,
       pilotName: r.pilotName,
+      pilotPhotoUrl: null,
       registration: r.registration,
       aircraftTypeIcao: r.type,
       aircraftTypeName: r.typeName,

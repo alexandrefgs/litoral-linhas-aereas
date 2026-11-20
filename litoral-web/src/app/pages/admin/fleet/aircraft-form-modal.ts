@@ -84,6 +84,16 @@ type AirportState = 'empty' | 'typing' | 'ok' | 'missing' | 'noOperation';
             </div>
           </div>
 
+          <div>
+            <label for="simBriefAirframeId" class="field-label">SimBrief airframe ID <span class="font-normal text-ink-muted">(optional)</span></label>
+            <input id="simBriefAirframeId" formControlName="simBriefAirframeId" placeholder="123456_1582090020"
+              autocomplete="off" class="field-input font-mono sm:w-1/2" />
+            @if (showError('simBriefAirframeId')) {
+              <p class="field-error">Use the Internal ID from SimBrief, e.g. 123456_1582090020.</p>
+            } @else {
+              <p class="mt-1 text-xs text-ink-muted">SimBrief › Saved Airframes › Edit › Internal ID. Empty uses the generic {{ selectedTypeIcao() || 'type' }} profile.</p>
+            }
+          </div>
           @if (blockFull(); as block) {
             <div class="flex items-start gap-3 rounded-lg border border-highlight bg-highlight/15 px-4 py-3 text-sm text-ink">
               <i class="ti ti-alert-triangle mt-0.5 text-lg" aria-hidden="true"></i>
@@ -207,6 +217,7 @@ export class AircraftFormModal implements OnInit, OnDestroy {
     registration: ['', [Validators.required, Validators.pattern(/^P[PRSTU]-[A-Z]{3}$/)]],
     aircraftTypeId: ['', Validators.required],
     variant: [''],
+    simBriefAirframeId: ['', Validators.pattern(/^\s*(\d{1,12}_\d{6,16})?\s*$/)],
     currentAirportIcao: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]{4}$/)]],
     photoCredit: ['']
   });
@@ -248,6 +259,8 @@ export class AircraftFormModal implements OnInit, OnDestroy {
     return null;
   });
 
+  protected readonly selectedTypeIcao = computed(() => this.types().find(t => t.id === this.value().aircraftTypeId)?.icaoCode ?? '');
+
   protected readonly cargo = computed(() => this.types().find(t => t.id === this.value().aircraftTypeId)?.isCargo ?? false);
 
   protected readonly operationAirports = computed(() => {
@@ -282,6 +295,7 @@ export class AircraftFormModal implements OnInit, OnDestroy {
       registration: aircraft.registration,
       aircraftTypeId: aircraft.aircraftTypeId,
       variant: aircraft.variant ?? '',
+      simBriefAirframeId: aircraft.simBriefAirframeId ?? '',
       currentAirportIcao: aircraft.currentAirportIcao,
       photoCredit: aircraft.photoCredit ?? ''
     });
@@ -430,8 +444,9 @@ export class AircraftFormModal implements OnInit, OnDestroy {
       registration: value.registration,
       aircraftTypeId: value.aircraftTypeId,
       variant: value.variant.trim() || null,
-      currentAirportIcao: value.currentAirportIcao
-    };
+      currentAirportIcao: value.currentAirportIcao,
+      simBriefAirframeId: value.simBriefAirframeId.trim() || null
+    };    
     const credit = value.photoCredit.trim() || null;
 
     this.saving.set(true);

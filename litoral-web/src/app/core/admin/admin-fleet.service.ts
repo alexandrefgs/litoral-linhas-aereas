@@ -46,6 +46,7 @@ export interface AdminAircraft {
   aircraftTypeName: string;
   isCargo: boolean;
   variant: string | null;
+  simBriefAirframeId: string | null;
   photoUrl: string | null;
   photoCredit: string | null;
   currentAirportIcao: string;
@@ -70,6 +71,7 @@ export interface AircraftPayload {
   aircraftTypeId: string;
   variant: string | null;
   currentAirportIcao: string;
+  simBriefAirframeId: string | null;
 }
 
 export interface FleetAirport {

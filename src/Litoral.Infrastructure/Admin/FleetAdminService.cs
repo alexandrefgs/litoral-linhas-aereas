@@ -108,6 +108,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos,
         await EnsureRegistrationFitsBlockAsync(request.Registration, type, null, ct);
 
         var aircraft = new Aircraft(request.Registration, type, airport, request.Variant);
+        aircraft.SetSimBriefAirframe(request.SimBriefAirframeId);
         db.Aircraft.Add(aircraft);
         await db.SaveChangesAsync(ct);
 
@@ -126,6 +127,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos,
             await EnsureRegistrationFitsBlockAsync(request.Registration, type, id, ct);
 
         aircraft.Update(request.Registration, type, airport, request.Variant);
+        aircraft.SetSimBriefAirframe(request.SimBriefAirframeId);
 
         await db.SaveChangesAsync(ct);
         return ToDto(aircraft);
@@ -310,6 +312,7 @@ public sealed class FleetAdminService(LitoralDbContext db, IPhotoStorage photos,
             aircraft.AircraftType.Name,
             aircraft.AircraftType.IsCargo,
             aircraft.Variant,
+            aircraft.SimBriefAirframeId,
             aircraft.PhotoUrl,
             aircraft.PhotoCredit,
             aircraft.CurrentAirport.Icao,

@@ -1,3 +1,6 @@
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Windows.Threading;
 using Litoral.Acars.Core.Api;
@@ -22,6 +25,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private string? _key;
     private LitoralApiClient? _api;
     private AcarsFlight? _flight;
+    private FlightLogFile? _logFile;
+    private bool _sendFailing;
 
     private string _serverUrl;
     private bool _hasKey;
@@ -74,6 +79,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         LoadBookingCommand = new AsyncCommand(_ => Guard(LoadBookingAsync), () => HasKey && !FlightStarted);
         StartFlightCommand = new AsyncCommand(_ => Guard(StartFlightAsync), () => CanStart);
         FilePirepCommand = new AsyncCommand(_ => Guard(FilePirepAsync), () => CanFile);
+        OpenLogFolderCommand = new AsyncCommand(_ => OpenLogFolder());
         DemoFlightCommand = new AsyncCommand(_ => Guard(DemoFlightAsync), () => IsLocalServer && _flight is not null && !FlightStarted);
 
         _readTimer.Tick += (_, _) => ReadSimulator();
@@ -87,8 +93,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public AsyncCommand StartFlightCommand { get; }
     public AsyncCommand FilePirepCommand { get; }
     public AsyncCommand DemoFlightCommand { get; }
+    public AsyncCommand OpenLogFolderCommand { get; }
     public AsyncCommand NavigateCommand { get; }
     public AsyncCommand ToggleThemeCommand { get; }
+
+    public const int MaxLogLines = 500;
+    public ObservableCollection<FlightLogEntry> LogEntries { get; } = [];
+    public bool HasLog => LogEntries.Count > 0;
 
     public BriefingViewModel Briefing { get; }
     public LiveMapViewModel LiveMap { get; }
@@ -123,7 +134,17 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public bool StatusIsError { get => _statusIsError; private set => Set(ref _statusIsError, value); }
     public string SimStatus { get => _simStatus; private set => Set(ref _simStatus, value); }
     public string BookingText { get => _bookingText; private set => Set(ref _bookingText, value); }
-    public string SelectedNetwork { get => _selectedNetwork; set => Set(ref _selectedNetwork, value); }
+    public string SelectedNetwork
+    {
+        get => _selectedNetwork;
+        set
+        {
+            var previous = _selectedNetwork;
+            if (Set(ref _selectedNetwork, value) && FlightInProgress) _ = Guard(() => ChangeNetworkAsync(previous, value));
+        }
+    }
+
+    public bool NetworkEditable => _flight?.Pirep is null;
     public string Phase { get => _phase; private set => Set(ref _phase, value); }
     public string Ias { get => _ias; private set => Set(ref _ias, value); }
     public string Altitude { get => _altitude; private set => Set(ref _altitude, value); }
@@ -213,8 +234,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private async Task LoadBookingAsync()
     {
         var api = Api();
+        if (_flight is not null) _flight.Log.Added -= OnLogEntry;
         _flight = await AcarsFlight.LoadAsync(api);
         Raise(nameof(HasFlight));
+        Raise(nameof(NetworkEditable));
+        LogEntries.Clear();
+        Raise(nameof(HasLog));
+        _logFile = null;
         if (_flight is null)
         {
             BookingText = "No open flight. Book a flight on the website first.";
@@ -230,6 +256,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         AircraftText = $"{b.Registration} · {b.AircraftTypeName}";
         ArrivalIcao = b.ArrivalIcao;
         PirepText = "";
+        _logFile = new FlightLogFile(b.Callsign, DateTime.UtcNow);
+        _flight.Log.Added += OnLogEntry;
+        _flight.Log.Info(DateTime.UtcNow, $"Flight loaded · {b.Callsign} {b.DepartureIcao} → {b.ArrivalIcao} · {b.Registration}");
 
         if (Briefing.Loaded) await Briefing.LoadAsync();
 
@@ -243,10 +272,36 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         if (_flight is null) return;
 
-        await _flight.StartAsync(SelectedNetwork, _sim.Simulator);
+        var session = await _flight.StartAsync(SelectedNetwork, _sim.Simulator);
+        _selectedNetwork = Networks.FirstOrDefault(n => n.Equals(session.Network, StringComparison.OrdinalIgnoreCase)) ?? _selectedNetwork;
+        Raise(nameof(SelectedNetwork));
         Raise(nameof(FlightStarted));
-        ShowInfo($"Flight started on {SelectedNetwork}. Positions are sent every {SendInterval.TotalSeconds:0} seconds.");
+        Raise(nameof(NetworkEditable));
+        Raise(nameof(NetworkEditable));
+        ShowInfo($"Flight started on {NetworkLabel(SelectedNetwork)}. Positions are sent every {SendInterval.TotalSeconds:0} seconds.");
     }
+
+        private async Task ChangeNetworkAsync(string previous, string network)
+    {
+        try
+        {
+            await _flight!.ChangeNetworkAsync(network);
+            ShowInfo($"Network changed to {NetworkLabel(network)}.");
+        }
+        catch
+        {
+            _selectedNetwork = previous;
+            Raise(nameof(SelectedNetwork));
+            throw;
+        }
+    }
+
+    private static string NetworkLabel(string network) => network.ToLowerInvariant() switch
+    {
+        "vatsim" => "VATSIM",
+        "ivao" => "IVAO",
+        _ => "Offline"
+    };
 
     private async Task FilePirepAsync()
     {
@@ -267,10 +322,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         await _flight.StartAsync("Offline", "Scripted demo");
         Raise(nameof(FlightStarted));
+        Raise(nameof(NetworkEditable));
 
         var b = _flight.Booking;
         var options = new ScriptedFlightOptions(b.AircraftTypeIcao, b.DepartureLatitude, b.DepartureLongitude, b.ArrivalLatitude, b.ArrivalLongitude);
-        foreach (var snapshot in ScriptedFlight.Generate(DateTime.UtcNow.AddMinutes(-25), options))
+        foreach (var snapshot in ScriptedFlight.Generate(DateTime.UtcNow.AddMinutes(-40), options))
             _flight.OnSnapshot(snapshot);
 
         await _flight.FlushAsync();
@@ -322,7 +378,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         var r = flight.Recorder;
         Flaps = FlapTable.ToDegrees(flight.Booking.AircraftTypeIcao, s.FlapsHandle, s.FlapDetents)?.ToString() ?? "?";
-        Phase = FlightInProgress ? r.Phase.ToString() : "-";
+        Phase = FlightInProgress ? FlightLog.PhaseName(r.Phase) : "-";
         BlockOff = Time(r.BlockOffAt);
         Takeoff = Time(r.TakeoffAt);
         Landing = Time(r.LandingAt);
@@ -340,15 +396,46 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         {
             var sent = await _flight!.FlushAsync();
             SendStatus = $"Last send {DateTime.Now:HH:mm:ss}: {sent} positions.";
+            if (_sendFailing)
+            {
+                _sendFailing = false;
+                _flight.Log.Info(DateTime.UtcNow, $"Connection to the server restored · {sent} positions sent");
+            }
         }
         catch (Exception ex) when (ex is LitoralApiException or HttpRequestException or TaskCanceledException)
         {
             SendStatus = $"Send failed at {DateTime.Now:HH:mm:ss} ({ex.Message}). {_flight!.Recorder.PendingPositions} positions kept, trying again.";
+            if (!_sendFailing)
+            {
+                _sendFailing = true;
+                _flight.Log.Warning(DateTime.UtcNow, $"Could not send positions ({ex.Message}). They are kept and sent again every {SendInterval.TotalSeconds:0} s.");
+            }
         }
         finally
         {
             _sending = false;
         }
+    }
+
+    private void OnLogEntry(FlightLogEntry entry)
+    {
+        _logFile?.Append(entry);
+        LogEntries.Insert(0, entry);
+        while (LogEntries.Count > MaxLogLines) LogEntries.RemoveAt(LogEntries.Count - 1);
+        Raise(nameof(HasLog));
+    }
+
+    private static Task OpenLogFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(FlightLogFile.Folder);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{FlightLogFile.Folder}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
+        {
+        }
+        return Task.CompletedTask;
     }
 
     private LitoralApiClient Api()

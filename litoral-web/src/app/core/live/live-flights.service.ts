@@ -16,6 +16,7 @@ export interface LiveFlight {
   callsign: string;
   pilotId: string;
   pilotName: string;
+  pilotPhotoUrl: string | null;
   registration: string;
   aircraftTypeIcao: string;
   aircraftTypeName: string;

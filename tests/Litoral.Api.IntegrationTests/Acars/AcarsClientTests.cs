@@ -158,6 +158,33 @@ public class AcarsClientTests(LitoralApiFactory api)
         Assert.Contains(flight.Booking.Callsign, LiveMapMessages.Flights(live, flight.Booking.Callsign));
     }
 
+    [Fact]
+    public async Task The_network_can_be_changed_during_the_flight()
+    {
+        var pilot = await BookAsync();
+        var client = await AcarsClientAsync(pilot);
+        var flight = (await AcarsFlight.LoadAsync(client))!;
+        await flight.StartAsync("Vatsim", "MSFS 2024");
+        await client.SendPositionsAsync(
+            [new PositionReport(DateTime.UtcNow, -25.0, -48.0, 35000, 34900, 280, 450, 30, 0, 0, false, false, "Cruise")]);
+
+        await flight.ChangeNetworkAsync("Ivao");
+
+        Assert.Equal("Ivao", (await client.GetActiveFlightAsync())!.Network);
+        Assert.Equal("Ivao", Assert.Single(await client.GetLiveFlightsAsync(), f => f.Id == flight.Session!.Id).Network);
+    }
+
+    [Fact]
+    public async Task Changing_the_network_needs_a_flight_in_progress()
+    {
+        var pilot = await BookAsync();
+        var client = await AcarsClientAsync(pilot);
+
+        var ex = await Assert.ThrowsAsync<LitoralApiException>(() => client.ChangeNetworkAsync("Ivao"));
+
+        Assert.Contains("flight in progress", ex.Message);
+    }
+
     private static List<SimSnapshot> Script(AcarsBooking booking, int takeoffFlaps = 5)
     {
         var options = new ScriptedFlightOptions(booking.AircraftTypeIcao, booking.DepartureLatitude, booking.DepartureLongitude,

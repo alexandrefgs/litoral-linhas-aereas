@@ -15,6 +15,8 @@ public sealed record AcarsBooking(
 
 public sealed record StartFlightRequest(string Network, string? Simulator, string? Client);
 
+public sealed record ChangeNetworkRequest(string Network);
+
 public sealed record FlightSession(Guid Id, Guid BookingId, string Callsign, string Network, string Status, DateTime StartedAt);
 
 public sealed record PositionReport(

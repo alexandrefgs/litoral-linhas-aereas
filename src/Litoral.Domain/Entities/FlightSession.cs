@@ -72,6 +72,13 @@ public sealed class FlightSession : Entity
         return added;
     }
 
+    public void ChangeNetwork(FlightNetwork network)
+    {
+        if (!IsActive) throw new DomainException("This flight is no longer active.");
+        if (!Enum.IsDefined(network)) throw new DomainException("Choose Offline, VATSIM or IVAO.");
+        Network = network;
+    }
+
     public void Complete()
     {
         if (!IsActive) throw new DomainException("This flight is no longer active.");

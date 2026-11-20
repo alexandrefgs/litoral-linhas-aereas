@@ -21,6 +21,7 @@ public class AcarsFlightTests
         "/api/acars/booking" => FakeHandler.Json(BookingJson),
         "/api/acars/flight" => FakeHandler.Json(SessionJson),
         "/api/acars/flight/positions" => FakeHandler.Json("1"),
+        "/api/acars/flight/network" => FakeHandler.Json(SessionJson.Replace("\"Vatsim\"", "\"Ivao\"")),
         "/api/acars/flight/complete" => FakeHandler.Json(PirepJson),
         _ => new HttpResponseMessage(HttpStatusCode.NotFound)
     });
@@ -131,6 +132,68 @@ public class AcarsFlightTests
         Assert.Contains("/api/acars/flight/positions", paths);
         Assert.Equal("Pending", pirep.Summary.Status);
         Assert.Equal(0, flight.Recorder.PendingPositions);
+    }
+
+        [Fact]
+    public async Task The_network_can_be_changed_during_the_flight()
+    {
+        var (flight, handler) = await StartedAsync();
+
+        var session = await flight.ChangeNetworkAsync("Ivao");
+
+        var request = handler.Requests.Single(r => r.Request.RequestUri!.AbsolutePath == "/api/acars/flight/network");
+        using var body = JsonDocument.Parse(request.Body);
+        Assert.Equal("Ivao", body.RootElement.GetProperty("network").GetString());
+        Assert.Equal("Ivao", session.Network);
+        Assert.Same(session, flight.Session);
+        Assert.Equal("Network changed from VATSIM to IVAO", flight.Log.Entries[^1].Message);
+    }
+
+    [Fact]
+    public async Task Picking_the_same_network_sends_nothing()
+    {
+        var (flight, handler) = await StartedAsync();
+
+        await flight.ChangeNetworkAsync("vatsim");
+
+        Assert.DoesNotContain(handler.Requests, r => r.Request.RequestUri!.AbsolutePath == "/api/acars/flight/network");
+    }
+
+    [Fact]
+    public async Task The_network_needs_a_started_flight_and_a_known_network()
+    {
+        var handler = Api();
+        var flight = (await AcarsFlight.LoadAsync(handler.Client()))!;
+        await LitoralApiClientTests.AssertThrowsAsync<InvalidOperationException>(() => flight.ChangeNetworkAsync("Ivao"));
+
+        await flight.StartAsync("Vatsim", null);
+        await LitoralApiClientTests.AssertThrowsAsync<ArgumentException>(() => flight.ChangeNetworkAsync("PilotEdge"));
+    }
+    
+    [Fact]
+    public async Task The_log_covers_the_start_the_flight_and_the_pirep()
+    {
+        var (flight, _) = await StartedAsync();
+        foreach (var s in TestFlights.Script()) flight.OnSnapshot(s);
+        await flight.CompleteAsync(null, null);
+
+        var messages = flight.Log.Entries.Select(e => e.Message).ToList();
+        Assert.StartsWith("Flight LTL1001 ", messages[0]);
+        Assert.Contains("· VATSIM · MSFS 2024", messages[0]);
+        Assert.Contains(messages, m => m.StartsWith("Touchdown"));
+        Assert.Equal("PIREP filed · 30 min · landing -150 fpm · 12 points · Pending", messages[^1]);
+    }
+
+    [Fact]
+    public async Task A_repeated_snapshot_is_logged_once()
+    {
+        var (flight, _) = await StartedAsync();
+        var first = TestFlights.Script()[0];
+
+        flight.OnSnapshot(first);
+        flight.OnSnapshot(first);
+
+        Assert.Single(flight.Log.Entries, e => e.Message.StartsWith("Recording started"));
     }
 
     [Fact]
